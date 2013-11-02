@@ -125,7 +125,28 @@ SC_REPAINT_SCREEN MACRO
 		trap	#15
 		ENDM		
 		
+***********************************************************
+
+
+*---------------------------------------------------------
+* Macro to draw a rectangle
+* Parameters: \1: Left X
+* Parameters: \2: Upper Y
+* Parameters: \3: Right X
+* Parameters: \4: Lower Y
+* Modifies: D0, D1, D2, D3, D4
+*----------------------------------------------------------------------
+
+SC_DRAW_RECTANGLE MACRO
+		move.w	\1, D1
+		move.w	\2, D2
+		move.w	\3, D3
+		move.w	\4, D4
+		move.b	#87, D0
+		trap	#15
+		
 	
+
 
 
 
