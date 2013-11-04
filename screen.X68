@@ -144,8 +144,10 @@ SC_DRAW_RECTANGLE MACRO
 		move.w	\4, D4
 		move.b	#87, D0
 		trap	#15
+		ENDM
 		
 	
+
 
 
 
