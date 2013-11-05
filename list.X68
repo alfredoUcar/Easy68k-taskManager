@@ -194,19 +194,19 @@ LS_FIRST:
 		movem.w	D1-D2, -(A7)	; paso de parametros
 		movem.l	A0, -(A7)
 		jsr 	LS_ULTIMO_ELEMENTO		
-		addi.w	#4, A7 ; POP de los parametros
+		addi.w	#4, A7 		; POP de los parametros
 
 	; nota: (A7) contiene el resultado de la anterior subrutina
 	; y se mantiene en la pila(sin hacer POP) para usarlo como parametro
 	; en la siguiente subrutina
 		
-		move.l	A0, -(A7) ;paso de parametros
+		move.l	A0, -(A7) 	;paso de parametros
 		move.w	D2, -(A7)
 		jsr 	LS_BUSCA_OCUPADO
-		move.l	8(A7), A0 ; guarda resultado
-		add.w	#6, A7 ; POP de los parametros
+		move.l	8(A7), A0 	; guarda resultado
+		add.w	#6, A7 		; POP de los parametros
 		
-		move.l	A0, 12(A7) ;guarda el resultado en la pila
+		move.l	A0, 12(A7) 	;guarda el resultado en la pila
 
 		; restaura los registros
 		movem.w	D1-D2, -(A7)
@@ -250,19 +250,19 @@ LS_NEXT:
 		movem.w	D1-D2, -(A7)	; paso de parametros
 		movem.l	A0, -(A7)
 		jsr 	LS_ULTIMO_ELEMENTO		
-		addi.w	#4, A7 ; POP de los parametros
+		addi.w	#4, A7 		; POP de los parametros
 
 	; nota: (A7) contiene el resultado de la anterior subrutina
 	; y se mantiene en la pila(sin hacer POP) para usarlo como parametro
 	; en la siguiente subrutina
 		
-		move.l	A0, -(A7) ;paso de parametros
+		move.l	A0, -(A7) 	;paso de parametros
 		move.w	D2, -(A7)
 		jsr 	LS_BUSCA_OCUPADO
-		move.l	8(A7), A0 ; guarda resultado
-		add.w	#6, A7 ; POP de los parametros
+		move.l	8(A7), A0 	; guarda resultado
+		add.w	#6, A7 		; POP de los parametros
 		
-		move.l	A0, 12(A7) ;guarda el resultado en la pila
+		move.l	A0, 12(A7) 	;guarda el resultado en la pila
 
 		; restaura los registros
 		movem.w	D1-D2, -(A7)
@@ -296,13 +296,13 @@ LS_ULTIMO_ELEMENTO:
 		movem.l	D3, -(A7)
 		movem.w	D1-D2, -(A7)
 
-		move.w	18(A7), D1 ; tamaño de elemento (M)
-		add.w	#1, D1 ; D1 = M+1
-		move.w	16(A7), D2 ; tamaño de la lista (N)
-		sub.w	#1, D2 ; D2 = N-1
-		move.l	12(A7), D3 ; puntero al primer elemento
-		lsl.l	D2, D3 ; D3 = (N-1)*(M+1), ultimo elemento | que pasa si N-1=0 ??????
-		move.l	D3,12(A7) ; guarda el resultado en la pila	
+		move.w	18(A7), D1 	; tamaño de elemento (M)
+		add.w	#1, D1 		; D1 = M+1
+		move.w	16(A7), D2 	; tamaño de la lista (N)
+		sub.w	#1, D2 		; D2 = N-1
+		move.l	12(A7), D3 	; puntero al primer elemento
+		lsl.l	D2, D3 		; D3 = (N-1)*(M+1), ultimo elemento | que pasa si N-1=0 ??????
+		move.l	D3,12(A7) 	; guarda el resultado en la pila	
 		
 		; POP registers
 		movem.w	(A7)+, D1-D2
@@ -315,8 +315,8 @@ LS_ULTIMO_ELEMENTO:
 *-------------------------------------------------------------
 LS_BUSCA_OCUPADO:
 * Subrutina de biblioteca para buscar el primer el elemento ocupado de una lista
-* a partir de una posici?n dada.
-* Pre:   	-Offset 4: tama?o de los elementos en words (M)
+* a partir de una posicion dada.
+* Pre:   	-Offset 4: tamaño de los elementos en words (M)
 *    		-Offset 6: puntero al elemento a partir del cual se busca
 *    		-Offset 10: puntero al ultimo elemento de la lista
 *
@@ -329,18 +329,18 @@ LS_BUSCA_OCUPADO:
 		movem.l	A1-A2, -(A7)
 		movem.w	D0, -(A7)
 		
-		move.l 	6(A7),A1  ;elemento actual
-		move.l 	10(A7),A2  :elemento final
-		move.w	4(A7),D0 ;tamaño de los elementos (M)	
+		move.l 	6(A7),A1  	;elemento actual
+		move.l 	10(A7),A2  	;elemento final
+		move.w	4(A7),D0 	;tamaño de los elementos (M)	
 		move.l  #$FFFFFFFF,6(A7) ;inicializa resultado a 'no encontrado'
-.LOOP:		cmp  	A1,A2  ;A2<A1 => ha llegado al final de la lista sin encontrar nada
-		blt   	.END  ;no encontrado
-		cmp  	#$FFFF,(A1) ;mira si est? ocupado
+.LOOP:		cmp  	A1,A2  		;A2<A1 => ha llegado al final de la lista sin encontrar nada
+		blt   	.END  		;no encontrado
+		cmp  	#$FFFF,(A1) 	;mira si est? ocupado
 		beq  	.ENCONTRADO
-		add.w  	D0,A1 ; A1+M => A1
-		add.w  	#1,A1 ; A1++
+		add.w  	D0,A1 		; A1+M => A1
+		add.w  	#1,A1 		; A1 = M+1
 		bra  	.LOOP
-.ENCONTRADO:	move.l  A1,6(A7) ;guarda la posici?n encontrada
+.ENCONTRADO:	move.l  A1,6(A7) 	;guarda la posici?n encontrada
 
 .END:    	; restaura los registros		
 		movem.w	(A7)+, D0
@@ -349,6 +349,7 @@ LS_BUSCA_OCUPADO:
 		rts
 
 	
+
 
 
 
