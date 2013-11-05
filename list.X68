@@ -155,7 +155,12 @@ LS_REMOVE:
 * Note        : When calling this subroutine, the pointer is
 *               supposed to point to an item.
 *-----------------------------------------------------------
+		;TODO: guardar registros a usar
 
+		move.l 4(A7),A0  ;tenemos el puntero del elemento a borrar
+
+		
+		;TODO: devolver los registros a la pila
 		rts				
 *-----------------------------------------------------------
 
@@ -187,8 +192,8 @@ LS_FIRST:
 		movem.w	D1-D2, -(A7)		
 
 		move.l	12(A7), A0	; guardamos el puntero a la lista
-		move.w	(A0)+, D1	; tamaño de lista (N)
-		move.w	(A0)+, D2	; tamaño de elemento (M)
+		move.w	(A0)+, D1	; tamaï¿½o de lista (N)
+		move.w	(A0)+, D2	; tamaï¿½o de elemento (M)
 		; nota: A0 apunta al primer elemento de la lista
 
 		movem.w	D1-D2, -(A7)	; paso de parametros
@@ -243,8 +248,8 @@ LS_NEXT:
 		movem.w	D1-D2, -(A7)		
 
 		move.l	12(A7), A0	; guardamos el puntero a la lista
-		move.w	(A0)+, D1	; tamaño de lista (N)
-		move.w	(A0)+, D2	; tamaño de elemento (M)
+		move.w	(A0)+, D1	; tamaï¿½o de lista (N)
+		move.w	(A0)+, D2	; tamaï¿½o de elemento (M)
 		move.l	16(A7), A0	; A0 = puntero elemento actual
 
 		movem.w	D1-D2, -(A7)	; paso de parametros
@@ -284,8 +289,8 @@ LS_ULTIMO_ELEMENTO:
 *               Stack offsets from 0 to 3 contain the return 
 *               address.
 *		  - Offset 4: 	puntero al primer elemento de la lista
-*		  - Offset 8: 	tamaño de la lista (N)
-*		  - Offset 10:	tamaño de los elementos en words (M)
+*		  - Offset 8: 	tamaï¿½o de la lista (N)
+*		  - Offset 10:	tamaï¿½o de los elementos en words (M)
 *
 * Post:		El resultado se guarda en la misma posicion donde se
 *		guardaba el puntero a la lista(Offset 4).
@@ -296,9 +301,9 @@ LS_ULTIMO_ELEMENTO:
 		movem.l	D3, -(A7)
 		movem.w	D1-D2, -(A7)
 
-		move.w	18(A7), D1 	; tamaño de elemento (M)
+		move.w	18(A7), D1 	; tamaï¿½o de elemento (M)
 		add.w	#1, D1 		; D1 = M+1
-		move.w	16(A7), D2 	; tamaño de la lista (N)
+		move.w	16(A7), D2 	; tamaï¿½o de la lista (N)
 		sub.w	#1, D2 		; D2 = N-1
 		move.l	12(A7), D3 	; puntero al primer elemento
 		lsl.l	D2, D3 		; D3 = (N-1)*(M+1), ultimo elemento | que pasa si N-1=0 ??????
@@ -316,7 +321,7 @@ LS_ULTIMO_ELEMENTO:
 LS_BUSCA_OCUPADO:
 * Subrutina de biblioteca para buscar el primer el elemento ocupado de una lista
 * a partir de una posicion dada.
-* Pre:   	-Offset 4: tamaño de los elementos en words (M)
+* Pre:   	-Offset 4: tamaï¿½o de los elementos en words (M)
 *    		-Offset 6: puntero al elemento a partir del cual se busca
 *    		-Offset 10: puntero al ultimo elemento de la lista
 *
@@ -331,7 +336,7 @@ LS_BUSCA_OCUPADO:
 		
 		move.l 	6(A7),A1  	;elemento actual
 		move.l 	10(A7),A2  	;elemento final
-		move.w	4(A7),D0 	;tamaño de los elementos (M)	
+		move.w	4(A7),D0 	;tamaï¿½o de los elementos (M)	
 		move.l  #$FFFFFFFF,6(A7) ;inicializa resultado a 'no encontrado'
 .LOOP:		cmp  	A1,A2  		;A2<A1 => ha llegado al final de la lista sin encontrar nada
 		blt   	.END  		;no encontrado
