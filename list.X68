@@ -348,29 +348,8 @@ LS_BUSCA_OCUPADO:
 
 		rts
 
-
-*-------------------------------------------------------------
-* Macro para buscar el primer el elemento ocupado de una lista
-* a partir de una posición dada.
-* Parametros: 	\1: tamaño de los elementos en words (M)
-*		\2: puntero al elemento a partir del cual se busca
-*		\3: puntero al ultimo elemento de la lista
-* Modifica:	D0.L (resultado), A1, A2
-*--------------------------------------------------------------
-LS_BUSCA_OCUPADO MACRO
-		move.l \2,A1	;elemento actual
-		move.l \3,A2	:elemento final
-		move.l	#$FFFFFFFF,D0 ;inicializa resultado a 'no encontrado'
-.LOOP:		cmp	A1,A2	;A2<A1 => ha llegado al final de la lista sin encontrar nada
-		blt 	.END	;no encontrado
-		cmp	#$FFFF,(A1) ;mira si está ocupado
-		beq	.ENCONTRADO
-		add.w	\1,A1 ; A1+M => A1
-		add.w	#1,A1 ; A1++
-		bra	.LOOP
-.ENCONTRADO:	move.l	A1,D0 ;guarda la posición encontrada		
-.END:		ENDM
 	
+
 
 
 *~Font name~Courier New~
