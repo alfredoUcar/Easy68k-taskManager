@@ -194,7 +194,7 @@ LS_FIRST:
 		movem.w	D1-D2, -(A7)	; paso de parametros
 		movem.l	A0, -(A7)
 		jsr 	LS_ULTIMO_ELEMENTO		
-		addi.w	#4, A7 		; POP de los parametros
+		add.w	#4, A7 		; POP de los parametros
 
 	; nota: (A7) contiene el resultado de la anterior subrutina
 	; y se mantiene en la pila(sin hacer POP) para usarlo como parametro
@@ -246,11 +246,13 @@ LS_NEXT:
 		move.w	(A0)+, D1	; tamaño de lista (N)
 		move.w	(A0)+, D2	; tamaño de elemento (M)
 		move.l	16(A7), A0	; A0 = puntero elemento actual
+		add.w	D2, A0
+		add.w	#1, A0		; A0 = elemento siguiente
 
 		movem.w	D1-D2, -(A7)	; paso de parametros
 		movem.l	A0, -(A7)
 		jsr 	LS_ULTIMO_ELEMENTO		
-		addi.w	#4, A7 		; POP de los parametros
+		add.w	#4, A7 		; POP de los parametros
 
 	; nota: (A7) contiene el resultado de la anterior subrutina
 	; y se mantiene en la pila(sin hacer POP) para usarlo como parametro
@@ -349,10 +351,8 @@ LS_BUSCA_OCUPADO:
 		rts
 
 	
-<<<<<<< HEAD
-=======
 
->>>>>>> origin/alfredo
+
 
 
 
