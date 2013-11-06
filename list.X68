@@ -156,10 +156,12 @@ LS_REMOVE:
 *               supposed to point to an item.
 *-----------------------------------------------------------
 		;TODO: guardar registros a usar
+		move.l -(A7), A0 ;Puh
 
-		move.l 4(A7),A0  ;tenemos el puntero del elemento a borrar
-
-		
+		move.l (A7),A0  ;tenemos el puntero del elemento a borrar
+		move.w #$0000,(A0) ; clr(A0)
+	
+		move.l (A7)+, A0; Pop
 		;TODO: devolver los registros a la pila
 		rts				
 *-----------------------------------------------------------
@@ -352,13 +354,6 @@ LS_BUSCA_OCUPADO:
 		movem.l	(A7)+, A1-A2
 
 		rts
-
-	
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/alfredo
-
 
 
 *~Font name~Courier New~
