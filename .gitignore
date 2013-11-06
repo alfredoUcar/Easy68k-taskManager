@@ -231,3 +231,5 @@ pip-log.txt
 # others
 ######
 *.pdf
+*.L68
+*.S68
