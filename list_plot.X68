@@ -31,8 +31,11 @@ LP_INSTALL:
 * Post        : All registers are restored to their initial 
 *               values.
 *-----------------------------------------------------------
-
-
+		move.l	#LP_ISR_MOUSE_MOVE, ($64)	; Associate ISR to level 1 interrupt
+		
+		move.w	#$0106, D1		; Interrupcion 1 cuando se mueve el mouse o se suelta el boton
+		move.b	#60, D0
+		trap	#15			; habilita la interrupcion
 
 		rts
 *-----------------------------------------------------------
@@ -94,7 +97,24 @@ LP_ISR_MOUSE_MOVE:
 * Modifies: Nothing except the Output variables. All registers
 *           are restored.
 *-----------------------------------------------------------
-
+		movem.l	A0-A1, -(A7)	; push
+		movem.w	D0-D1, -(A7)
+		
+		move.b	#61, D0		; lectura del mouse
+		clr.b	D1
+		trap	#15
+		
+		move.l	#LP_MOUSE_CX, A0
+		move.l	#LP_MOUSE_CY, A1	
+		move.w	D1, A0		; guarda la coordenada X
+		swap	D1
+		move.w	D1, A0		; guarda la coordenada Y
+		move.l	#LP_MOUSE_BUT, A0
+		move.b	D0, A0		; guarda el estado del boton
+		
+		movem.w	(A7)+, D0-D1	; pop
+		movem.l	(A7)+, A0-A1
+		
 		rte		
 *-----------------------------------------------------------	
 
@@ -106,6 +126,7 @@ LP_MOUSE_CY:	ds.w	1
 LP_MOUSE_BUT:	ds.b	1
 		ds.w	0		; Memory alignment
 ************************************************************	
+
 
 
 
