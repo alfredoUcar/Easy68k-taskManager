@@ -155,12 +155,12 @@ LS_REMOVE:
 * Note        : When calling this subroutine, the pointer is
 *               supposed to point to an item.
 *-----------------------------------------------------------
-		move.l -(A7), A0 	; Push
+		move.l 	A0, -(A7) 	; Push
 
-		move.l (A7),A0  	;tenemos el puntero del elemento a borrar
-		move.w #$0000,(A0) 	; clr(A0) es equivalente ?????
+		move.l 	(A7),A0  	;tenemos el puntero del elemento a borrar
+		clr.w	(A0)
 	
-		move.l (A7)+, A0 	; Pop
+		move.l 	(A7)+, A0 	; Pop
 		rts				
 *-----------------------------------------------------------
 
@@ -354,6 +354,7 @@ LS_BUSCA_OCUPADO:
 		movem.l	(A7)+, A1-A2
 
 		rts
+
 
 
 
