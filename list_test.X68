@@ -46,8 +46,10 @@ START:		; Fill list with some random stuff.
 		; Install user interface (basically, install mouse and prepare screen)
 		bsr 	LP_INSTALL		
 				
-		; PUSH the list pointer so that next function can access it.
-		move.l	#TST_LIST, -(A7)
+		;move.w	#TST_DEF_ELEM, -(A7)	; PUSH del elemento que se quiere guardar en la lista
+		move.l	#TST_LIST, -(A7) 	; PUSH the list pointer so that next function can access it.
+		
+		;jsr LS_PUT
 		
 		; Typical double buffer operation:
 		; 1.- Clear screen
@@ -124,14 +126,40 @@ TST_FILL_LIST:
 		addq.l	#4, A7
 		bra	.LOOP2		
 *-----------------------------------------------------------
-			
+
+*-----------------------------------------------------------
+TST_CLEAR_DB:
+* Pone a 0 la variable 'TST_DATA_BLOK'
+* Pre: 
+* Post: 
+* Modifies: Nothing
+*-----------------------------------------------------------
+		move.w	D0, -(A7)	; push
+		move.l	A0, -(A7)	
 		
+		clr.w	D0		; contador ascendente desde 0
+.LOOP:		clr.w	(A0)+	
+		add.w 	#1, D0		; contador++
+		cmp.w	#TST_LIST_ITEM_SIZE, D0
+		bne	.LOOP		; si (contador = M) fin
+		
+		move.l	(A7)+, A0	; pop
+		move.w (A7)+, D0
+		rts
+*-----------------------------------------------------------
+
+
 ************************************************************
 *                         VARIABLES                        *
 ************************************************************
 TST_LIST:	ds.w	TST_LIST_WORDS_TOTAL
+TST_DATA_BLOK	ds.w	TST_LIST_ITEM_SIZE
+TST_DEF_ELEM	dc.w	1,2,3,4,5	;elemento de ejemplo	
 ************************************************************
 	END	START		; last line of source
+
+
+
 
 
 
