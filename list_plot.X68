@@ -80,6 +80,28 @@ LP_MOUSE_INTERACTION:
 *               values.
 * Modifies    : Nothing
 *-----------------------------------------------------------
+                eor.w	D1, D1
+		move.b	#11, D0
+		trap	#15		; Put text cursor to 0,0
+		lea	.STR_X, A1          ;En A1 poner los elementos de la lista
+		move.b	#14, D0
+		trap	#15		; Print "X: "
+		move.l	D3, D1
+		move.b	#4, D2
+		move.b	#20, D0
+		trap	#15		; Print the first number
+		;printa la coordenada Y
+                lea	.STR_Y, A1
+		move.b	#14, D0
+		trap	#15		; Print "Y: "
+		move.l	D4, D1
+		move.b	#4, D2
+		move.b	#20, D0
+		trap	#15		; Print the second number
+		rts
+; Static data specific to this function		
+.STR_X:		dc.b	'X: ',0
+.STR_Y:		dc.b	', Y: ',0
 
 		rts
 *-----------------------------------------------------------
