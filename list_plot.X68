@@ -19,11 +19,12 @@
 ************************************************************
 *                        CONSTANTS                         *
 ************************************************************
+LP_SQR_SIZE		EQU	32
 LP_INITIAL_Y		EQU	200
 LP_SCREEN_WIDTH		EQU	640
 LP_SCREEN_HEIGHT	EQU	480
 ************************************************************
-
+			;INCLUDE "screen.x68"	; Screen management macros
 *-----------------------------------------------------------
 LP_INSTALL:
 * Description : Installs the mouse interrupt at ISR 1
@@ -57,9 +58,48 @@ LP_PLOT_LIST:
 *               parameter (the pointer) must point to a RAM 
 *               area with enough space to store the list. 
 *-----------------------------------------------------------
-
-
-
+		; PUSH registers. 1 LONG + 6 WORD = 16 bytes. Add 16
+		; to all stack references
+		movem.l	A0, -(A7)
+		movem.w	D0-D5, -(A7)
+		
+		SC_SET_PEN #$00FFFFFF	; fija el color del borde a blanco
+		
+		clr	D4
+		move.w	#0,D4	; X inicial
+		clr	D5
+		move.w	#LP_INITIAL_Y,D5	; Y inicial		
+		
+		move.l	20(A7), A0	; guardamos el puntero a la lista
+		move.w	(A0)+, D2	; tama�o de lista (N)
+		move.w	(A0)+, D3	; tama�o de elemento (M)
+		lsl.w	#1, D3		; M*2 (bytes)
+		
+		; pinta cada elemento(N..1)
+PL_LOOP:	cmp	#1, D2	; miramos si quedan elementos
+		blt	PL_END		
+		cmp  	#$FFFF,(A0)+ 	;mira si esta ocupado
+		beq  	.OCUPADO
+;LIBRE:		fija el color de relleno a negro
+		movem.w	D0-D1, -(A7) ; push
+		SC_SET_FILL #$00000000
+		movem.w (A7)+, D0-D1 ; pop
+		bra	.DIBUJA
+.OCUPADO:	;fija el color de relleno a azul
+		SC_SET_FILL #$00FF0000
+.DIBUJA:	movem.w	D0-D4, -(A7) ; push
+		SC_DRAW_SQUARE D4, D5, LP_SQR_SIZE
+		movem.w (A7)+, D0-D4 ; pop	
+.NEXT_ELEM:	; actualiza la posicion de dibujo
+		move.w	D0, -(A7) ; push
+		SC_NEXT_POSITION D4, D5, LP_SQR_SIZE,LP_SCREEN_WIDTH
+		move.w	(A7)+, D0 ; pop
+		sub.w	#1, D2	; decrementa contador
+		add.W	D3, A0	; apuntamos al siguiente elemento
+		jmp	PL_LOOP
+		; restaura los registros
+PL_END:		movem.w	(A7)+, D0-D5
+		movem.l	(A7)+, A0
 		rts
 *-----------------------------------------------------------
 
@@ -138,13 +178,22 @@ LP_ISR_MOUSE_MOVE:
 		swap	D1
 		move.w	D1, A0		; guarda la coordenada Y
 		move.l	#LP_MOUSE_BUT, A0
-		move.b	D0, A0		; guarda el estado del boton
+		clr	D1
+		move.b	D0, D1
+		move.w	D1, A0		; guarda el estado del boton
 		
 		movem.w	(A7)+, D0-D1	; pop
 		movem.l	(A7)+, A0-A1
 		
 		rte		
-*-----------------------------------------------------------	
+*-----------------------------------------------------------
+************************************************************
+*                   Custom subrutines                     *
+************************************************************
+
+
+
+
 
 ************************************************************
 *                         VARIABLES                        *
@@ -154,6 +203,13 @@ LP_MOUSE_CY:	ds.w	1
 LP_MOUSE_BUT:	ds.b	1
 		ds.w	0		; Memory alignment
 ************************************************************	
+
+
+
+
+
+
+
 
 
 
