@@ -120,8 +120,36 @@ LP_MOUSE_INTERACTION:
 *               values.
 * Modifies    : Nothing
 *-----------------------------------------------------------
-
+                 TODO: Hacer el push, dependiendo de lo que midan los registros y direcciones del push
+;                       sumar el número de bytes correspondientes a todas las referencias a A7.
+;                       p.ej: Si los registros que se han guardado valen 16 bytes: 16 + 4(offset) = 20,
+                        ;       para coger el parámetro deseado de la pila haremos 20(A7),A0
+                        
+                move.l 4(A7),A0         ;Obtenemos el list pointer
+                eor.w	D1, D1
+		move.b	#11, D0
+		trap	#15		; Put text cursor to 0,0
+		lea	A0, A1          ;En A1 poner los elementos de la lista
+		;falta capturar el elemento de la lista que nos interese, saltando al elemento deseado --> saltar los campos de la lista y por cada
+		;elemento de la lista, iterar sobre la función que printa por pantalla (semejante a la que printa el cursor en la posición indicada por el mouse)
+		move.b	#14, D0
+		trap	#15		; Print "X: "
+		move.l	D3, D1
+		move.b	#4, D2
+		move.b	#20, D0
+		trap	#15		; Print the first number
+		;printa la coordenada Y
+                lea	.STR_Y, A1
+		move.b	#14, D0
+		trap	#15		; Print "Y: "
+		move.l	D4, D1
+		move.b	#4, D2
+		move.b	#20, D0
+		trap	#15		; Print the second number
 		rts
+		
+; Static data specific to this function		
+.STR_Y:		dc.b	', Y: ',0
 *-----------------------------------------------------------
 
 ************************************************************
