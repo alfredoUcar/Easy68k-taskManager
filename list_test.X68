@@ -23,8 +23,8 @@
 ************************************************************
 *                        CONSTANTS                         *
 ************************************************************
-TST_LIST_ITEM_SIZE:		EQU	1	; How many data words has a data block (excluding occupied field),5
-TST_LIST_LIST_SIZE:		EQU	3	; How many items has the list, 144
+TST_LIST_ITEM_SIZE:		EQU	5	; How many data words has a data block (excluding occupied field)
+TST_LIST_LIST_SIZE:		EQU	144	; How many items has the list
 TST_LIST_WORDS_HEADER:		EQU	2	; How many header words (unchangeable, this is fixed for all lists)
 TST_LIST_WORDS_TOTAL:		EQU     TST_LIST_WORDS_HEADER+TST_LIST_LIST_SIZE*(TST_LIST_ITEM_SIZE+1) ; Total size, in words, of the list
 ************************************************************
@@ -49,7 +49,6 @@ START:		; Fill list with some random stuff.
 		;move.w	#TST_DEF_ELEM, -(A7)	; PUSH del elemento que se quiere guardar en la lista
 		;move.l	#TST_LIST, -(A7) 	; PUSH the list pointer so that next function can access it.
 		move.l	#TST_LIST_SAMPLE, -(A7) 	; PUSH the list pointer so that next function can access it.
-
 		
 		;jsr LS_PUT
 		
@@ -157,9 +156,12 @@ TST_CLEAR_DB:
 TST_LIST:	ds.w	TST_LIST_WORDS_TOTAL
 TST_DATA_BLOK	ds.w	TST_LIST_ITEM_SIZE
 TST_DEF_ELEM	dc.w	1,3,2,4,6	;elemento de ejemplo
-TST_LIST_SAMPLE dc.w	21,1,$FFFF,1,$FFFF,2,$FFFF,3,$0000,4,$FFFF,5,$FFFF,6,$0000,7,$FFFF,8,$FFFF,9,$FFFF,10,$FFFF,1,$FFFF,2,$FFFF,3,$0000,4,$FFFF,5,$FFFF,6,$0000,7,$FFFF,8,$FFFF,9,$FFFF,10,$FFFF,10
+TST_LIST_SAMPLE dc.w	21,1,$0000,1,$FFFF,2,$FFF0,3,$FFFF,4,$FFFF,5,$FFFF,6,$0000,7,$FFFF,8,$FFFF,9,$FFFF,10,$FFFF,1,$FFFF,2,$FFFF,3,$0000,4,$FFFF,5,$FFFF,6,$0000,7,$FFFF,8,$FFFF,9,$FFFF,10,$FFFF,10
 ************************************************************
 	END	START		; last line of source
+
+
+
 
 
 

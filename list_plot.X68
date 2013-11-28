@@ -190,10 +190,77 @@ LP_ISR_MOUSE_MOVE:
 ************************************************************
 *                   Custom subrutines                     *
 ************************************************************
+*-------------------------------------------------------------
+LP_GET_ELEM:
+* Subrutina de biblioteca que calcula a que elemento al que 
+* corresponde una determinada posición(aunque no sea de la lista)
+* a partir de una posicion dada.
+* Pre:   	-Offset 4: coordenada X
+*    		-Offset 6: coordenada Y
+*
+* Post:  	-Offset 4: resultado. Indice del elemento (empezando en 1) 
+*		o #$FFFF si no corresponde a ninguno
+*--------------------------------------------------------------
+		; 6 WORDS = 12 bytes. Add 12 to al stack references
+		movem.w	D0-D5, -(A7) ;push
+		
+		move.w 	16(A7),D1  	;D0=X
+		move.w 	18(A7),D2  	;D1=Y		
+		move.w	#$FFFF,16(A7) ; inicializa resultado a 'no encontrado'		
+		cmp 	#LP_INITIAL_Y, D2
+		blt 	GE_END	; Y<INITIAL_Y, no puede coincidir nunca con un elemento
+				
+		move.w	#1,D3	; elemento a comprobar, inicialmente el 1
+		move.w	#LP_SQR_SIZE, D4 ; x actual
+		move.w	#LP_SQR_SIZE+LP_INITIAL_Y, D5 ; y actual
+		; si x>=X & y>=Y entonces es este
+GE_LOOP:	cmp	D1,D4	; comprueba la coordenada X
+		ble	.NEXT 	; no es, prueba el siguiente elemento
+		cmp	D2,D5	; continua, comprueba la coordenada Y
+		bgt	GE_FOUND	; X,Y corresponden al elemento D2
+.NEXT:		SC_NEXT_POSITION D4, D5, LP_SQR_SIZE,LP_SCREEN_WIDTH
+		add.w	#1, D3 ; siguiente elemento
+		jmp	GE_LOOP
 
+GE_FOUND:		move.w	D3,16(A7) ; guarda el resultado
+GE_END:    	movem.w	(A7)+, D0-D5	; pop
+		rts
 
-
-
+*-------------------------------------------------------------
+LP_CHECK_ELEM:
+* Subrutina de biblioteca que comprueba si el indice pertenece
+* a un elemento de la lista (libre o ocupado)
+* Pre:   	-Offset 4: list pointer
+*    		-Offset 8: indice del elemento (word)
+*
+* Post:  	-Offset 4: resultado. Puntero al elemento o 
+*		#$FFFFFFFF si no corresponde a ninguno
+*--------------------------------------------------------------
+		;PUSH. 1 long + 4 words = 12 bytes
+		move.l	A0,-(A7)
+		movem.w D0-D3,-(A7)		
+		
+		move.l	16(A7), A0	;puntero a la lista
+		move.w	(A0)+, D0	; N
+		move.w	(A0)+, D1	; M
+		move.w	20(A7), D2	; indice del elemento
+		; A0 apunta al primer elemento
+		move.l	#$FFFFFFFF,16(A7)	; guarda resultado por defecto 'no encontrado'		
+		cmp	D0,D2
+		bgt	CE_END	; indice > N, no puede coincidir nunca				
+		lsl	#1, D1	; D1=2*M
+		add.w	#2, D1	; D1=2(M+1), bytes que ocupa un elemento		
+.LOOP:		add.w	#1,D3	; elemento actual
+		cmp	D2,D3
+		beq	.FOUND	; elemento actual = indice
+		; no encontrado
+		add.w	D1,A0	; apuntamos al siguiente elemento
+		jmp	.LOOP
+.FOUND:		move.l	A0,16(A7)	;guarda el resultado				
+CE_END:		;POP
+		movem.w (A7)+,D0-D3
+		move.l	(A7)+,A0				
+		rts
 
 ************************************************************
 *                         VARIABLES                        *
@@ -203,6 +270,8 @@ LP_MOUSE_CY:	ds.w	1
 LP_MOUSE_BUT:	ds.b	1
 		ds.w	0		; Memory alignment
 ************************************************************	
+
+
 
 
 

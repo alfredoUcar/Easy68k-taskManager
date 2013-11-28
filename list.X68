@@ -251,7 +251,7 @@ LS_NEXT:
 		move.w	(A0)+, D1	; tama�o de lista (N)
 		move.w	(A0)+, D2	; tama�o de elemento (M)
 		move.l	16(A7), A0	; A0 = puntero elemento actual
-		add.w	D2, A0
+		add.w	D2, A0	
 		add.w	#1, A0		; A0 = elemento siguiente
 
 		movem.w	D1-D2, -(A7)	; paso de parametros
@@ -354,6 +354,7 @@ LS_BUSCA_OCUPADO:
 		movem.l	(A7)+, A1-A2
 
 		rts
+
 
 
 
