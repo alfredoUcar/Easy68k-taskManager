@@ -124,7 +124,7 @@ LP_MOUSE_INTERACTION:
 ;               TODO: Hacer el push, dependiendo de lo que midan los registros y direcciones del push
 ;                       sumar el número de bytes correspondientes a todas las referencias a A7.
 ;                       p.ej: Si los registros que se han guardado valen 16 bytes: 16 + 4(offset) = 20,
-		       para coger el parámetro deseado de la pila haremos 20(A7),A0
+;		       para coger el parámetro deseado de la pila haremos 20(A7),A0
 		       
                 ;PUSH
                 move.l 4(A7),A0         ;Obtenemos el list pointer
@@ -288,6 +288,7 @@ LP_MOUSE_CY:	ds.w	1
 LP_MOUSE_BUT:	ds.b	1
 		ds.w	0		; Memory alignment
 ************************************************************	
+
 
 
 

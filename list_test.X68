@@ -156,29 +156,6 @@ TST_LIST:	ds.w	TST_LIST_WORDS_TOTAL
 	END	START		; last line of source
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<<<<<<< HEAD
-=======
-
-
-
-
->>>>>>> alfredo
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
