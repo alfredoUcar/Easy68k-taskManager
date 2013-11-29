@@ -23,8 +23,8 @@
 ************************************************************
 *                        CONSTANTS                         *
 ************************************************************
-TST_LIST_ITEM_SIZE:		EQU	1	; How many data words has a data block (excluding occupied field),5
-TST_LIST_LIST_SIZE:		EQU	3	; How many items has the list, 144
+TST_LIST_ITEM_SIZE:		EQU	5	; How many data words has a data block (excluding occupied field)
+TST_LIST_LIST_SIZE:		EQU	144	; How many items has the list
 TST_LIST_WORDS_HEADER:		EQU	2	; How many header words (unchangeable, this is fixed for all lists)
 TST_LIST_WORDS_TOTAL:		EQU     TST_LIST_WORDS_HEADER+TST_LIST_LIST_SIZE*(TST_LIST_ITEM_SIZE+1) ; Total size, in words, of the list
 ************************************************************
@@ -154,6 +154,7 @@ TST_CLEAR_DB:
 TST_LIST:	ds.w	TST_LIST_WORDS_TOTAL
 ************************************************************
 	END	START		; last line of source
+
 
 
 *~Font name~Courier New~
