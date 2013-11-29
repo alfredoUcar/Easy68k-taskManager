@@ -242,37 +242,51 @@ LS_NEXT:
 *               supposed to point to a properly initialized list.
 *-----------------------------------------------------------
 
-		; PUSH registers. 1 LONG + 2 WORD = 8 bytes. Add 8
+		; PUSH registers. 1 LONG + 3 WORD = 10 bytes. Add 10
 		; to all stack references
 		movem.l	A0, -(A7)
-		movem.w	D1-D2, -(A7)		
+		movem.w	D1-D3, -(A7)		
 
-		move.l	12(A7), A0	; guardamos el puntero a la lista
+		move.l	14(A7), A0	; guardamos el puntero a la lista
 		move.w	(A0)+, D1	; tama�o de lista (N)
 		move.w	(A0)+, D2	; tama�o de elemento (M)
-		move.l	16(A7), A0	; A0 = puntero elemento actual
-		add.w	D2, A0	
-		add.w	#1, A0		; A0 = elemento siguiente
-
-		movem.w	D1-D2, -(A7)	; paso de parametros
-		movem.l	A0, -(A7)
-		jsr 	LS_ULTIMO_ELEMENTO		
-		add.w	#4, A7 		; POP de los parametros
-
-	; nota: (A7) contiene el resultado de la anterior subrutina
-	; y se mantiene en la pila(sin hacer POP) para usarlo como parametro
-	; en la siguiente subrutina
-		
-		move.l	A0, -(A7) 	;paso de parametros
-		move.w	D2, -(A7)
-		jsr 	LS_BUSCA_OCUPADO
-		move.l	8(A7), A0 	; guarda resultado
-		add.w	#6, A7 		; POP de los parametros
-		
-		move.l	A0, 12(A7) 	;guarda el resultado en la pila
+		move.l	18(A7), A1	; A1 = puntero elemento actual
+		lsl.w	#1, D2		; D2 = M*2
+		add.w	#2, D2		; D2 = 2(M+1) , bytes/elemento
+		move.w	D2, D3		; copia
+		sub.w	#1, D1		; N-1
+		;TODO: revisar.............
+		lsl.l	D1, D2		; D2 = (N-1)(M+1)2
+		add.l	D2, A0		; A0 = ultimo elemento
+		;.........................
+		move.l	#$FFFFFFFF, 18(A7) ; resultado por defecto 'no encontrado'
+N_LOOP:		add.w	D3, A1		; A1 = elemento siguiente		
+		cmp	A1,A0
+		blt	N_END	; @ mayor que la del ultimo elemento
+		cmp	#$FFFF,(A1)
+		bne	N_LOOP
+		move.l	A1, 18(A7) ; encontrado, guarda resultado
+N_END:		
+*************************************************************************
+*		movem.w	D1-D2, -(A7)	; paso de parametros
+*		movem.l	A0, -(A7)
+*		jsr 	LS_ULTIMO_ELEMENTO		
+*		add.w	#4, A7 		; POP de los parametros
+*
+*	; nota: (A7) contiene el resultado de la anterior subrutina
+*	; y se mantiene en la pila(sin hacer POP) para usarlo como parametro
+*	; en la siguiente subrutina
+*		
+*		move.l	A0, -(A7) 	;paso de parametros
+*		move.w	D2, -(A7)
+*		jsr 	LS_BUSCA_OCUPADO
+*		move.l	8(A7), A0 	; guarda resultado
+*		add.w	#6, A7 		; POP de los parametros
+*		
+*		move.l	A0, 12(A7) 	;guarda el resultado en la pila
 
 		; restaura los registros
-		movem.w	D1-D2, -(A7)
+		movem.w	D1-D3, -(A7)
 		movem.l	A0, -(A7)		
 		rts	
 *-------------------------------------------------------------
@@ -354,6 +368,8 @@ LS_BUSCA_OCUPADO:
 		movem.l	(A7)+, A1-A2
 
 		rts
+
+
 
 
 
