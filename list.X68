@@ -195,27 +195,36 @@ LS_FIRST:
 		move.w	(A0)+, D1	; tama�o de lista (N)
 		move.w	(A0)+, D2	; tama�o de elemento (M)
 		; nota: A0 apunta al primer elemento de la lista
-
-		movem.w	D1-D2, -(A7)	; paso de parametros
-		movem.l	A0, -(A7)
-		jsr 	LS_ULTIMO_ELEMENTO		
-		add.w	#4, A7 		; POP de los parametros
-
-	; nota: (A7) contiene el resultado de la anterior subrutina
-	; y se mantiene en la pila(sin hacer POP) para usarlo como parametro
-	; en la siguiente subrutina
 		
-		move.l	A0, -(A7) 	;paso de parametros
-		move.w	D2, -(A7)
-		jsr 	LS_BUSCA_OCUPADO
-		move.l	8(A7), A0 	; guarda resultado
-		add.w	#6, A7 		; POP de los parametros
+		cmp	#$FFFF, (A0)
+		beq	F_END	; se trata del primer elemento
+		;buscamos a partir del primero
+		move.l	A0, -(A7) 	; parametro: elemento actual
+		move.l	12(A7), -(A7)	; parametro: puntero a la lista
+		bsr 	LS_NEXT
+		move.l	(A7)+, A0	; resultado
+		add	#4, A7		; restaura la pila		
 		
-		move.l	A0, 12(A7) 	;guarda el resultado en la pila
 
+*		movem.w	D1-D2, -(A7)	; paso de parametros
+*		movem.l	A0, -(A7)
+*		jsr 	LS_ULTIMO_ELEMENTO		
+*		add.w	#4, A7 		; POP de los parametros
+*
+*	; nota: (A7) contiene el resultado de la anterior subrutina
+*	; y se mantiene en la pila(sin hacer POP) para usarlo como parametro
+*	; en la siguiente subrutina
+*		
+*		move.l	A0, -(A7) 	;paso de parametros
+*		move.w	D2, -(A7)
+*		jsr 	LS_BUSCA_OCUPADO
+*		move.l	8(A7), A0 	; guarda resultado
+*		add.w	#6, A7 		; POP de los parametros
+*		
+F_END:		move.l	A0, 12(A7) 	;guarda el resultado en la pila
 		; restaura los registros
-		movem.w	D1-D2, -(A7)
-		movem.l	A0, -(A7)		
+		movem.w (A7)+, D1-D2
+		movem.l	(A7)+,A0		
 		rts
 *-----------------------------------------------------------
 		
@@ -255,10 +264,8 @@ LS_NEXT:
 		add.w	#2, D2		; D2 = 2(M+1) , bytes/elemento
 		move.w	D2, D3		; copia
 		sub.w	#1, D1		; N-1
-		;TODO: revisar.............
-		lsl.l	D1, D2		; D2 = (N-1)(M+1)2
+		mulu	D1, D2		; D2 = (N-1)(M+1)2
 		add.l	D2, A0		; A0 = ultimo elemento
-		;.........................
 		move.l	#$FFFFFFFF, 18(A7) ; resultado por defecto 'no encontrado'
 N_LOOP:		add.w	D3, A1		; A1 = elemento siguiente		
 		cmp	A1,A0
@@ -267,27 +274,9 @@ N_LOOP:		add.w	D3, A1		; A1 = elemento siguiente
 		bne	N_LOOP
 		move.l	A1, 18(A7) ; encontrado, guarda resultado
 N_END:		
-*************************************************************************
-*		movem.w	D1-D2, -(A7)	; paso de parametros
-*		movem.l	A0, -(A7)
-*		jsr 	LS_ULTIMO_ELEMENTO		
-*		add.w	#4, A7 		; POP de los parametros
-*
-*	; nota: (A7) contiene el resultado de la anterior subrutina
-*	; y se mantiene en la pila(sin hacer POP) para usarlo como parametro
-*	; en la siguiente subrutina
-*		
-*		move.l	A0, -(A7) 	;paso de parametros
-*		move.w	D2, -(A7)
-*		jsr 	LS_BUSCA_OCUPADO
-*		move.l	8(A7), A0 	; guarda resultado
-*		add.w	#6, A7 		; POP de los parametros
-*		
-*		move.l	A0, 12(A7) 	;guarda el resultado en la pila
-
 		; restaura los registros
-		movem.w	D1-D3, -(A7)
-		movem.l	A0, -(A7)		
+		movem.w	(A7)+, D1-D3
+		movem.l	(A7)+, A0		
 		rts	
 *-------------------------------------------------------------
 
@@ -368,6 +357,7 @@ LS_BUSCA_OCUPADO:
 		movem.l	(A7)+, A1-A2
 
 		rts
+
 
 
 
