@@ -41,17 +41,14 @@ TST_LIST_WORDS_TOTAL:		EQU     TST_LIST_WORDS_HEADER+TST_LIST_LIST_SIZE*(TST_LIS
 *                       MAIN PROGRAM                       *
 ************************************************************
 START:		; Fill list with some random stuff.
-		;bsr	TST_FILL_LIST		
+		bsr	TST_FILL_LIST		
 		
 		; Install user interface (basically, install mouse and prepare screen)
 		bsr 	LP_INSTALL		
 				
 		;move.w	#TST_DEF_ELEM, -(A7)	; PUSH del elemento que se quiere guardar en la lista
-		;move.l	#TST_LIST, -(A7) 	; PUSH the list pointer so that next function can access it.
 
-		move.l	#TST_LIST_SAMPLE, -(A7) 	; PUSH the list pointer so that next function can access it.
-		
-		;jsr LS_PUT
+		move.l	#TST_LIST, -(A7) 	; PUSH the list pointer so that next function can access it.
 		
 		; Typical double buffer operation:
 		; 1.- Clear screen
@@ -155,9 +152,6 @@ TST_CLEAR_DB:
 *                         VARIABLES                        *
 ************************************************************
 TST_LIST:	ds.w	TST_LIST_WORDS_TOTAL
-TST_DATA_BLOK	ds.w	TST_LIST_ITEM_SIZE
-TST_DEF_ELEM	dc.w	1,3,2,4,6	;elemento de ejemplo
-TST_LIST_SAMPLE dc.w	21,1,$FFFF,1,$FFFF,2,$FFFF,3,$0000,4,$FFFF,5,$FFFF,6,$0000,7,$FFFF,8,$FFFF,9,$FFFF,10,$FFFF,1,$FFFF,2,$FFFF,3,$0000,4,$FFFF,5,$FFFF,6,$0000,7,$FFFF,8,$FFFF,9,$FFFF,10,$FFFF,10
 ************************************************************
 	END	START		; last line of source
 
@@ -178,6 +172,13 @@ TST_LIST_SAMPLE dc.w	21,1,$FFFF,1,$FFFF,2,$FFFF,3,$0000,4,$FFFF,5,$FFFF,6,$0000,
 
 
 
+<<<<<<< HEAD
+=======
+
+
+
+
+>>>>>>> alfredo
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
