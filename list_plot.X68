@@ -23,8 +23,8 @@ LP_SQR_SIZE		EQU	32
 LP_INITIAL_Y		EQU	200
 LP_SCREEN_WIDTH		EQU	640
 LP_SCREEN_HEIGHT	EQU	480
-LP_SHOW_X1		EQU	(LP_SCREEN_WIDTH/2)-LP_SQR_SIZE
-LP_SHOW_X2		EQU	LP_SCREEN_WIDTH+LP_SQR_SIZE
+LP_SHOW_X		EQU	255
+
 ************************************************************
 			;INCLUDE "screen.x68"	; Screen management macros
 *-----------------------------------------------------------
@@ -65,12 +65,14 @@ LP_PLOT_LIST:
 		movem.l	A0, -(A7)
 		movem.w	D0-D5, -(A7)
 		
+		
 		SC_SET_PEN #$00FFFFFF	; fija el color del borde a blanco
 		
 		clr	D4
 		move.w	#0,D4	; X inicial
 		clr	D5
 		move.w	#LP_INITIAL_Y,D5	; Y inicial		
+		SC_LOCATE D4, D5	; coloca el cursor	
 		
 		move.l	20(A7), A0	; guardamos el puntero a la lista
 		move.w	(A0)+, D2	; tama�o de lista (N)
@@ -140,9 +142,7 @@ LP_MOUSE_INTERACTION:
 		;elemento de la lista, iterar sobre la función que printa por pantalla 
 		;(semejante a la que printa el cursor en la posición indicada por el mouse)
 		
-		clr	D1
-		move.b	#11, D0
-		trap	#15		;Put text cursor to 0,0
+		SC_LOCATE #0, #0	; poe el cursor en (0,0)
 		
 		;obtenemos la coordenada del mouse
 		;lectura del mouse
@@ -217,6 +217,7 @@ MI_DRAW:        SC_SET_FILL #$00CCCCCC ; color de relleno gris
 		move.b	#4, D2
 		move.b	#20, D0
 		trap	#15		; printa el numero
+		SC_NEW_LINE
                 DBRA D3, .LOOP
                 
 		

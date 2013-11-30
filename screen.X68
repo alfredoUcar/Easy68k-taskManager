@@ -185,8 +185,19 @@ SC_NEXT_POSITION MACRO
 		add	#\3, \2 ;incrementa la Y			
 END\@		
 		ENDM	
+*----------------------------------------------
+* Salto de linea
+*----------------------------------------------
+SC_NEW_LINE	MACRO
+		movem.w	D0-D1, -(A7)
+		clr	D1
+		clr	D0
+		trap	#15
+		movem.w	(A7)+, D0-D1
+		ENDM
 
 		
+
 
 
 
