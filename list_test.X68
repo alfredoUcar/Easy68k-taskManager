@@ -46,8 +46,7 @@ START:		; Fill list with some random stuff.
 		; Install user interface (basically, install mouse and prepare screen)
 		bsr 	LP_INSTALL		
 				
-		;move.w	#TST_DEF_ELEM, -(A7)	; PUSH del elemento que se quiere guardar en la lista
-
+		;move.w	#TST_DEF_ELEM, -(A7)	; PUSH del elemento que se quiere guardar en la lista		
 		move.l	#TST_LIST, -(A7) 	; PUSH the list pointer so that next function can access it.
 		
 		; Typical double buffer operation:
@@ -154,6 +153,7 @@ TST_CLEAR_DB:
 TST_LIST:	ds.w	TST_LIST_WORDS_TOTAL
 ************************************************************
 	END	START		; last line of source
+
 
 
 
