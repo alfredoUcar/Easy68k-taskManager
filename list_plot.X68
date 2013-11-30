@@ -128,9 +128,9 @@ LP_MOUSE_INTERACTION:
 ;                       p.ej: Si los registros que se han guardado valen 16 bytes: 16 + 4(offset) = 20,
 ;		       para coger el parÃ¡metro deseado de la pila haremos 20(A7),A0
 		       
-                ;PUSH. 4 long + 3 word = 22 bytes. Add 22 to all stack references
+                ;PUSH. 4 long + 4 word = 24 bytes. Add 24 to all stack references
                 movem.l	A0-A3, -(A7)
-		movem.w	D0-D2, -(A7)
+		movem.w	D0-D3, -(A7)
                 
                 ;move.l 26(A7),A0         ;Obtenemos el list pointer
 		
@@ -157,38 +157,39 @@ LP_MOUSE_INTERACTION:
 *		swap	D1
 *		move.w	D1, A1		; guarda la coordenada Y
 		;fin de coordenadas del mouse
-		
+
 		;saltamos a la subrutina que nos coge el elemento apuntado por la coordenada
 		move.w 	(A1),-(A7)
 		move.w 	(A0),-(A7)
 		jsr 	LP_GET_ELEM
 		move.w 	(A7)+, D0 ;D0 contiene el indice del elemento
 		add.w 	#2, A7
-		
+		move.l	28(A7),A0 ;todo: borrar
 		;saltamos a la subrutina que nos dice si el elemento que estamos apuntando está en la lista
-		move.w D0, -(A7)
-		move.l 26(A7), -(A7)
-		jsr LP_CHECK_ELEM
-		move.l (A7)+, A0 ;PUNTERO AL ELEMENTO
-		add.w #2, A7  ;RESTAURAR LA PILA
+		move.l	28(A7), A3
+		move.w	D0, -(A7)		
+		move.l 	A3, -(A7)
+		jsr 	LP_CHECK_ELEM
+		move.l 	(A7)+, A0 ;PUNTERO AL ELEMENTO
+		add.w 	#2, A7  ;RESTAURAR LA PILA
 		
 		;COMPARAMOS CON FFF PORQUE LA SUBRUTINA ANTERIOR DEVUELVE ESE NÚMERO SI SE DA EL CASO
 		;DE QUE ESTUVIERA VACÍO. (A0)+ -> PASAMOS AL SIGUIENTE ELEMENTO DEL PUNTERO QUE NOS APUNTA AL ELEMENTO DE LA LISTA
 		;NO PERTENECE A LA LISTA
-		cmp #$FFFFFFFF, A0 
-		beq MI_END	
+		cmp 	#$FFFFFFFF, A0 
+		beq 	MI_END	
 		
 		;ESTO NOS INDICA SI LA CABECERA DEL ELEMENTO ES VACÍA. 		
-                cmp #$FFFF, (A0)+
-		bne MI_VOID_ELEM
+                cmp 	#$FFFF, (A0)+
+		bne 	MI_VOID_ELEM
 		
 		;NOTA: Ahora mismo (A0)+ apuntara al primer elemento de la lista
 		;a continuación hacemos una iteración para capturar los elementos de la lista
 		
 		;preparamos el contador
-		move.l 26(A7),A2
-		add.w #2, A2   ;ahora apunta a M
-		move.w (A2)+, D2  D2 = M
+		move.l 	28(A7),A2
+		add.w 	#2, A2   ;ahora apunta a M
+		move.w 	(A2)+, D2  ;D2 = M
 		
 		;le paso la direccion del vector a A3
 *		lea VECTOR, A3
@@ -202,28 +203,28 @@ LP_MOUSE_INTERACTION:
 		SC_SET_PEN #$00CCCCCC ; color de lapiz gris (igual que el fondo)
 		
 MI_DRAW:        SC_SET_FILL #$00CCCCCC ; color de relleno gris
-		SC_DRAW_RECTANGLE #0 #30 #0 #30
+		;SC_DRAW_RECTANGLE #0 #30 #0 #30
                 ;MOVEMOS LA DIRECCIÓN A0 A A1 PARA PRINTAR
                 ;antes:         lea     .STR_Y, A1   --> printa la coordenada Y
 *		move.l 	A0,A1
 *		move.b	#14, D0
 *		trap	#15		; Print "Y: "
 		
-		sub.b #1, D2 
+		sub.b 	#1, D2
+		move.l	D2, D3		; copia
 .LOOP:          clr	D1
 		move.w	(A3), D1          ;(A3) = Nº que ha de enseñar
 		move.b	#4, D2
 		move.b	#20, D0
-		trap	#15		; Print the second number
-		;fin de printar
-                DBRA D2, .LOOP
+		trap	#15		; printa el numero
+                DBRA D3, .LOOP
                 
 		
 		
 		;Falta implementar el click, que borra la lista a la que está apuntando
 
 MI_END:     	;POP
-		movem.w (A7)+, D0-D2
+		movem.w (A7)+, D0-D3
 		movem.l	(A7)+, A0-A3
 		rts
 		
@@ -255,13 +256,13 @@ LP_ISR_MOUSE_MOVE:
 		
 		move.l	#LP_MOUSE_CX, A0
 		move.l	#LP_MOUSE_CY, A1	
-		move.w	D1, A0		; guarda la coordenada X
+		move.w	D1, (A0)		; guarda la coordenada X
 		swap	D1
-		move.w	D1, A0		; guarda la coordenada Y
+		move.w	D1, (A1)		; guarda la coordenada Y
 		move.l	#LP_MOUSE_BUT, A0
 		clr	D1
 		move.b	D0, D1
-		move.w	D1, A0		; guarda el estado del boton
+		move.w	D1, (A0)		; guarda el estado del boton
 		
 		movem.w	(A7)+, D0-D1	; pop
 		movem.l	(A7)+, A0-A1
@@ -354,6 +355,7 @@ LP_MOUSE_BUT:	ds.b	1
 VECTOR:         ds.w    TST_LIST_ITEM_SIZE
 		ds.w	0		; Memory alignment
 ************************************************************	
+
 
 
 
