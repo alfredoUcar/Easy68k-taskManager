@@ -40,6 +40,8 @@ LP_INSTALL:
 *-----------------------------------------------------------
 		move.l	#LP_ISR_MOUSE_MOVE, ($64)	; Associate ISR to level 1 interrupt
 		
+		SC_ENABLE_DBUFFER
+		
 		move.w	#$0106, D1		; Interrupcion 1 cuando se mueve el mouse o se suelta el boton
 		move.b	#60, D0
 		trap	#15			; habilita la interrupcion
@@ -161,8 +163,14 @@ LP_MOUSE_INTERACTION:
 		move.l 	28(A7),A2
 		add.w 	#2, A2   ;ahora apunta a M
 		move.w 	(A2)+, D2  ;D2 = M
-
-		cmp 	#$FFFF, (A0)+
+		
+		btst.b	#0, LP_MOUSE_BUT
+		beq	MI_CONTINUA	;si no se ha hecho click pasamos a continuar
+		move.l 	A0,-(A7)
+		bsr 	LS_REMOVE		;en este punto se ha hecho click, pasamos a eliminar 
+		move.l (A7)+,A0
+				
+MI_CONTINUA:	cmp 	#$FFFF, (A0)+
 		bne 	MI_VOID_ELEM	; elemento vacío
 		
 		SC_SET_FONT #$00000000, #LP_FONT_PROP
@@ -218,9 +226,8 @@ LP_ISR_MOUSE_MOVE:
 		swap	D1
 		move.w	D1, (A1)		; guarda la coordenada Y
 		move.l	#LP_MOUSE_BUT, A0
-		clr	D1
-		move.b	D0, D1
-		move.w	D1, (A0)		; guarda el estado del boton
+		
+		move.b	D0, (A0)	; guarda el estado del boton
 		
 		movem.w	(A7)+, D0-D1	; pop
 		movem.l	(A7)+, A0-A1
@@ -312,6 +319,7 @@ LP_MOUSE_CY:	ds.w	1
 LP_MOUSE_BUT:	ds.b	1
 		ds.w	0		; Memory alignment
 ************************************************************	
+
 
 
 

@@ -159,6 +159,7 @@ LS_REMOVE:
 		move.l 	A0, -(A7) 	; Push
 
 		move.l 	8(A7),A0  	;tenemos el puntero del elemento a borrar
+
 		clr.w	(A0)
 	
 		move.l 	(A7)+, A0 	; Pop
@@ -205,23 +206,7 @@ LS_FIRST:
 		bsr 	LS_NEXT
 		move.l	(A7)+, A0	; resultado
 		add	#4, A7		; restaura la pila		
-		
 
-*		movem.w	D1-D2, -(A7)	; paso de parametros
-*		movem.l	A0, -(A7)
-*		jsr 	LS_ULTIMO_ELEMENTO		
-*		add.w	#4, A7 		; POP de los parametros
-*
-*	; nota: (A7) contiene el resultado de la anterior subrutina
-*	; y se mantiene en la pila(sin hacer POP) para usarlo como parametro
-*	; en la siguiente subrutina
-*		
-*		move.l	A0, -(A7) 	;paso de parametros
-*		move.w	D2, -(A7)
-*		jsr 	LS_BUSCA_OCUPADO
-*		move.l	8(A7), A0 	; guarda resultado
-*		add.w	#6, A7 		; POP de los parametros
-*		
 F_END:		move.l	A0, 12(A7) 	;guarda el resultado en la pila
 		; restaura los registros
 		movem.w (A7)+, D1-D2
@@ -280,6 +265,9 @@ N_END:
 		movem.l	(A7)+, A0		
 		rts	
 *-------------------------------------------------------------
+
+
+
 
 *~Font name~Courier New~
 *~Font size~10~
