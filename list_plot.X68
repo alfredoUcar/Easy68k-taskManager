@@ -199,11 +199,22 @@ LP_MOUSE_INTERACTION:
                 
                 ;ahora en VECTOR tenemos los elementos a eneseñar por pantalla
 		
-		SC_SET_PEN #$00CCCCCC ; color de lapiz gris (igual que el fondo)
+		SC_SET_PEN $0000FF00 ;color de lapiz gris (igual que el fondo)
 		
-MI_DRAW:        SC_SET_FILL #$00CCCCCC ; color de relleno gris
-		SC_DRAW_RECTANGLE #0 #30 #0 #30
-                ;MOVEMOS LA DIRECCIÓN A0 A A1 PARA PRINTAR
+MI_DRAW:        SC_SET_FILL $0000FF00 ;color de relleno gris
+		
+*		move.w #100,D1
+*		move.w #100, D2
+*		move.w #200,D3
+*		move.w #200,D4
+*		move.b	#87, D0
+*		trap	#15
+
+		;SC_DRAW_RECT #UX, #UY, #DX, #DY
+		
+		
+		;SC_DRAW_RECTANGLE 0 0 600 300
+               	;MOVEMOS LA DIRECCIÓN A0 A A1 PARA PRINTAR
                 ;antes:         lea     .STR_Y, A1   --> printa la coordenada Y
 *		move.l 	A0,A1
 *		move.b	#14, D0
@@ -212,7 +223,7 @@ MI_DRAW:        SC_SET_FILL #$00CCCCCC ; color de relleno gris
 		sub.b #1, D2 
 .LOOP:          clr	D1
 		move.w	(A3), D1          ;(A3) = Nº que ha de enseñar
-		move.b	#4, D2
+		move.b	#4, D1
 		move.b	#20, D0
 		trap	#15		; Print the second number
 		;fin de printar
@@ -227,11 +238,13 @@ MI_END:     	;POP
 		movem.l	(A7)+, A0-A3
 		rts
 		
-		
-MI_VOID_ELEM:     SC_SET_PEN #$0000FF00  ; color de lapiz verde
+MI_VOID_ELEM:     SC_SET_PEN $0000FF00  ; color de lapiz verde
                 ;SET_PEN AL COLOR DEL CUADRO PARA NO PINTAR NADA
                 jmp MI_DRAW
 *-----------------------------------------------------------
+;GRIS $00CCCCCC
+;VERDE $0000FF00
+
 
 ************************************************************
 *                               ISRs                       *
@@ -354,6 +367,8 @@ LP_MOUSE_BUT:	ds.b	1
 VECTOR:         ds.w    TST_LIST_ITEM_SIZE
 		ds.w	0		; Memory alignment
 ************************************************************	
+
+
 
 
 
