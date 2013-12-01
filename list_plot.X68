@@ -23,8 +23,12 @@ LP_SQR_SIZE		EQU	32
 LP_INITIAL_Y		EQU	200
 LP_SCREEN_WIDTH		EQU	640
 LP_SCREEN_HEIGHT	EQU	480
-LP_SHOW_X1		EQU	(LP_SCREEN_WIDTH/2)-LP_SQR_SIZE
-LP_SHOW_X2		EQU	LP_SCREEN_WIDTH+LP_SQR_SIZE
+LP_FONT			EQU	$04	; lucida console
+LP_FONT_SIZE		EQU	$0B 	; 12
+LP_FONT_STYLE		EQU	$0001	; bold
+LP_FONT_PROP		EQU	(LP_FONT*$1000000)+(LP_FONT_SIZE*$10000)+LP_FONT_STYLE		; $040B0001
+LP_SHOW_X		EQU	(LP_SCREEN_WIDTH/LP_FONT_SIZE)/2	; posicion en funcion del tamaño de fuente
+
 ************************************************************
 			;INCLUDE "screen.x68"	; Screen management macros
 *-----------------------------------------------------------
@@ -63,7 +67,7 @@ LP_PLOT_LIST:
 		; PUSH registers. 1 LONG + 6 WORD = 16 bytes. Add 16
 		; to all stack references
 		movem.l	A0, -(A7)
-		movem.w	D0-D5, -(A7)
+		movem.w	D0-D5, -(A7)		
 		
 		SC_SET_PEN #$00FFFFFF	; fija el color del borde a blanco
 		
@@ -71,6 +75,7 @@ LP_PLOT_LIST:
 		move.w	#0,D4	; X inicial
 		clr	D5
 		move.w	#LP_INITIAL_Y,D5	; Y inicial		
+		SC_LOCATE D4, D5	; coloca el cursor	
 		
 		move.l	20(A7), A0	; guardamos el puntero a la lista
 		move.w	(A0)+, D2	; tamaï¿½o de lista (N)
@@ -121,126 +126,67 @@ LP_MOUSE_INTERACTION:
 * Post        : All registers are restored to their initial 
 *               values.
 * Modifies    : Nothing
-*-----------------------------------------------------------
-
-;               TODO: Hacer el push, dependiendo de lo que midan los registros y direcciones del push
-;                       sumar el nÃºmero de bytes correspondientes a todas las referencias a A7.
-;                       p.ej: Si los registros que se han guardado valen 16 bytes: 16 + 4(offset) = 20,
-;		       para coger el parÃ¡metro deseado de la pila haremos 20(A7),A0
-		       
-                ;PUSH. 4 long + 3 word = 22 bytes. Add 22 to all stack references
+*-----------------------------------------------------------		       
+                ;PUSH. 4 long + 4 word = 24 bytes. Add 24 to all stack references
                 movem.l	A0-A3, -(A7)
-		movem.w	D0-D2, -(A7)
-                
-                ;move.l 26(A7),A0         ;Obtenemos el list pointer
+		movem.w	D0-D3, -(A7)
 		
-		;lea	A0, A1       ;En A1 poner los elementos de la lista
-		;falta capturar el elemento de la lista que nos interese, 
-		;saltando al elemento deseado --> saltar los campos de la lista y por cada
-		;elemento de la lista, iterar sobre la funciÃ³n que printa por pantalla 
-		;(semejante a la que printa el cursor en la posiciÃ³n indicada por el mouse)
-		
-		clr	D1
-		move.b	#11, D0
-		trap	#15		;Put text cursor to 0,0
-		
-		;obtenemos la coordenada del mouse
-		;lectura del mouse
-*                move.b	#61, D0		
-*		clr.b	D1
-*		trap	#15
+		SC_LOCATE #LP_SHOW_X, #0	; coloca el cursor donde se mostrara el contenido
 
 		;coordenadas del mouse
 		lea	LP_MOUSE_CX, A0
 		lea	LP_MOUSE_CY, A1	
-*		move.w	D1, A0		; guarda la coordenada X
-*		swap	D1
-*		move.w	D1, A1		; guarda la coordenada Y
-		;fin de coordenadas del mouse
-		
+
 		;saltamos a la subrutina que nos coge el elemento apuntado por la coordenada
 		move.w 	(A1),-(A7)
 		move.w 	(A0),-(A7)
 		jsr 	LP_GET_ELEM
 		move.w 	(A7)+, D0 ;D0 contiene el indice del elemento
 		add.w 	#2, A7
-		
 		;saltamos a la subrutina que nos dice si el elemento que estamos apuntando está en la lista
-		move.w D0, -(A7)
-		move.l 26(A7), -(A7)
-		jsr LP_CHECK_ELEM
-		move.l (A7)+, A0 ;PUNTERO AL ELEMENTO
-		add.w #2, A7  ;RESTAURAR LA PILA
+		move.l	28(A7), A3
+		move.w	D0, -(A7)		
+		move.l 	A3, -(A7)
+		jsr 	LP_CHECK_ELEM
+		move.l 	(A7)+, A0 ;PUNTERO AL ELEMENTO
+		add.w 	#2, A7  ;RESTAURAR LA PILA
 		
 		;COMPARAMOS CON FFF PORQUE LA SUBRUTINA ANTERIOR DEVUELVE ESE NÚMERO SI SE DA EL CASO
 		;DE QUE ESTUVIERA VACÍO. (A0)+ -> PASAMOS AL SIGUIENTE ELEMENTO DEL PUNTERO QUE NOS APUNTA AL ELEMENTO DE LA LISTA
 		;NO PERTENECE A LA LISTA
-		cmp #$FFFFFFFF, A0 
-		beq MI_END	
-		
-		;ESTO NOS INDICA SI LA CABECERA DEL ELEMENTO ES VACÍA. 		
-                cmp #$FFFF, (A0)+
-		bne MI_VOID_ELEM
-		
-		;NOTA: Ahora mismo (A0)+ apuntara al primer elemento de la lista
-		;a continuación hacemos una iteración para capturar los elementos de la lista
+		cmp 	#$FFFFFFFF, A0 ; 
+		beq 	MI_END
 		
 		;preparamos el contador
-		move.l 26(A7),A2
-		add.w #2, A2   ;ahora apunta a M
-		move.w (A2)+, D2  D2 = M
-		
-		;le paso la direccion del vector a A3
-*		lea VECTOR, A3
-		;como DBRA se parará cuando D2 = -1, le restamos 1 a D2 inicialmente para poder iterar correctamente
-*		sub.b #1, D2 
-*.LOOP:          move.w (A2)+, (A3)+
-*                DBRA D2, .LOOP
-                
-                ;ahora en VECTOR tenemos los elementos a eneseñar por pantalla
-		
-		SC_SET_PEN $0000FF00 ;color de lapiz gris (igual que el fondo)
-		
-MI_DRAW:        SC_SET_FILL $0000FF00 ;color de relleno gris
-		
-*		move.w #100,D1
-*		move.w #100, D2
-*		move.w #200,D3
-*		move.w #200,D4
-*		move.b	#87, D0
-*		trap	#15
+		move.l 	28(A7),A2
+		add.w 	#2, A2   ;ahora apunta a M
+		move.w 	(A2)+, D2  ;D2 = M
 
-		;SC_DRAW_RECT #UX, #UY, #DX, #DY
+		cmp 	#$FFFF, (A0)+
+		bne 	MI_VOID_ELEM	; elemento vacío
 		
+		SC_SET_FONT #$00000000, #LP_FONT_PROP
+		jmp MI_DRAW
+MI_VOID_ELEM:   SC_SET_FONT #$00CCCCCC, #LP_FONT_PROP
 		
-		;SC_DRAW_RECTANGLE 0 0 600 300
-               	;MOVEMOS LA DIRECCIÓN A0 A A1 PARA PRINTAR
-                ;antes:         lea     .STR_Y, A1   --> printa la coordenada Y
-*		move.l 	A0,A1
-*		move.b	#14, D0
-*		trap	#15		; Print "Y: "
-		
-		sub.b #1, D2 
-.LOOP:          clr	D1
-		move.w	(A3), D1          ;(A3) = Nº que ha de enseñar
-		move.b	#4, D1
+MI_DRAW:        SC_SET_FILL #$00CCCCCC ; color de relleno gris		
+		sub.b 	#1, D2
+		move.l	D2, D3		; copia
+.LOOP:          clr.l	D1
+		move.w	(A0)+, D1          ;(A0) = Nº que ha de enseñar
+		move.b	#5, D2
 		move.b	#20, D0
-		trap	#15		; Print the second number
-		;fin de printar
-                DBRA D2, .LOOP
-                
-		
-		
-		;Falta implementar el click, que borra la lista a la que está apuntando
+		trap	#15		; printa el numero
+		SC_NEW_LINE
+		SC_LOCATE #$00, #$FF	; obtiene la posicion del cursor
+		move.b	D1, D0		; guarda la y		
+		SC_LOCATE #LP_SHOW_X, D0 ; ajusta la X (y se mantiene igual)
+                DBRA D3, .LOOP
 
 MI_END:     	;POP
-		movem.w (A7)+, D0-D2
+		movem.w (A7)+, D0-D3
 		movem.l	(A7)+, A0-A3
 		rts
-		
-MI_VOID_ELEM:     SC_SET_PEN $0000FF00  ; color de lapiz verde
-                ;SET_PEN AL COLOR DEL CUADRO PARA NO PINTAR NADA
-                jmp MI_DRAW
 *-----------------------------------------------------------
 ;GRIS $00CCCCCC
 ;VERDE $0000FF00
@@ -268,13 +214,13 @@ LP_ISR_MOUSE_MOVE:
 		
 		move.l	#LP_MOUSE_CX, A0
 		move.l	#LP_MOUSE_CY, A1	
-		move.w	D1, A0		; guarda la coordenada X
+		move.w	D1, (A0)		; guarda la coordenada X
 		swap	D1
-		move.w	D1, A0		; guarda la coordenada Y
+		move.w	D1, (A1)		; guarda la coordenada Y
 		move.l	#LP_MOUSE_BUT, A0
 		clr	D1
 		move.b	D0, D1
-		move.w	D1, A0		; guarda el estado del boton
+		move.w	D1, (A0)		; guarda el estado del boton
 		
 		movem.w	(A7)+, D0-D1	; pop
 		movem.l	(A7)+, A0-A1
@@ -364,26 +310,8 @@ CE_END:		;POP
 LP_MOUSE_CX:	ds.w	1
 LP_MOUSE_CY:	ds.w	1
 LP_MOUSE_BUT:	ds.b	1
-VECTOR:         ds.w    TST_LIST_ITEM_SIZE
 		ds.w	0		; Memory alignment
 ************************************************************	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
