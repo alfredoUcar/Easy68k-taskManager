@@ -155,9 +155,10 @@ LS_REMOVE:
 * Note        : When calling this subroutine, the pointer is
 *               supposed to point to an item.
 *-----------------------------------------------------------
+		;PUSH REGISTERS: 1long, add 4 to all stack references
 		move.l 	A0, -(A7) 	; Push
 
-		move.l 	(A7),A0  	;tenemos el puntero del elemento a borrar
+		move.l 	8(A7),A0  	;tenemos el puntero del elemento a borrar
 		clr.w	(A0)
 	
 		move.l 	(A7)+, A0 	; Pop
@@ -357,6 +358,7 @@ LS_BUSCA_OCUPADO:
 		movem.l	(A7)+, A1-A2
 
 		rts
+
 
 
 
