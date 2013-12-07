@@ -155,7 +155,14 @@ LS_REMOVE:
 * Note        : When calling this subroutine, the pointer is
 *               supposed to point to an item.
 *-----------------------------------------------------------
+		;PUSH REGISTERS: 1long, add 4 to all stack references
+		move.l 	A0, -(A7) 	; Push
 
+		move.l 	8(A7),A0  	;tenemos el puntero del elemento a borrar
+
+		clr.w	(A0)
+	
+		move.l 	(A7)+, A0 	; Pop
 		rts				
 *-----------------------------------------------------------
 
@@ -181,6 +188,29 @@ LS_FIRST:
 *               supposed to point to a properly initialized list.
 *-----------------------------------------------------------
 
+		; PUSH registers. 1 LONG + 2 WORD = 8 bytes. Add 8
+		; to all stack references
+		movem.l	A0, -(A7)
+		movem.w	D1-D2, -(A7)		
+
+		move.l	12(A7), A0	; guardamos el puntero a la lista
+		move.w	(A0)+, D1	; tama�o de lista (N)
+		move.w	(A0)+, D2	; tama�o de elemento (M)
+		; nota: A0 apunta al primer elemento de la lista
+		
+		cmp	#$FFFF, (A0)
+		beq	F_END	; se trata del primer elemento
+		;buscamos a partir del primero
+		move.l	A0, -(A7) 	; parametro: elemento actual
+		move.l	12(A7), -(A7)	; parametro: puntero a la lista
+		bsr 	LS_NEXT
+		move.l	(A7)+, A0	; resultado
+		add	#4, A7		; restaura la pila		
+
+F_END:		move.l	A0, 12(A7) 	;guarda el resultado en la pila
+		; restaura los registros
+		movem.w (A7)+, D1-D2
+		movem.l	(A7)+,A0		
 		rts
 *-----------------------------------------------------------
 		
@@ -207,8 +237,35 @@ LS_NEXT:
 *               supposed to point to a properly initialized list.
 *-----------------------------------------------------------
 
-		rts		
-*-----------------------------------------------------------
+		; PUSH registers. 1 LONG + 3 WORD = 10 bytes. Add 10
+		; to all stack references
+		movem.l	A0, -(A7)
+		movem.w	D1-D3, -(A7)		
+
+		move.l	14(A7), A0	; guardamos el puntero a la lista
+		move.w	(A0)+, D1	; tama�o de lista (N)
+		move.w	(A0)+, D2	; tama�o de elemento (M)
+		move.l	18(A7), A1	; A1 = puntero elemento actual
+		lsl.w	#1, D2		; D2 = M*2
+		add.w	#2, D2		; D2 = 2(M+1) , bytes/elemento
+		move.w	D2, D3		; copia
+		sub.w	#1, D1		; N-1
+		mulu	D1, D2		; D2 = (N-1)(M+1)2
+		add.l	D2, A0		; A0 = ultimo elemento
+		move.l	#$FFFFFFFF, 18(A7) ; resultado por defecto 'no encontrado'
+N_LOOP:		add.w	D3, A1		; A1 = elemento siguiente		
+		cmp	A1,A0
+		blt	N_END	; @ mayor que la del ultimo elemento
+		cmp	#$FFFF,(A1)
+		bne	N_LOOP
+		move.l	A1, 18(A7) ; encontrado, guarda resultado
+N_END:		
+		; restaura los registros
+		movem.w	(A7)+, D1-D3
+		movem.l	(A7)+, A0		
+		rts	
+*-------------------------------------------------------------
+
 
 
 
