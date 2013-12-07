@@ -46,7 +46,8 @@ START:		; Fill list with some random stuff.
 		; Install user interface (basically, install mouse and prepare screen)
 		bsr 	LP_INSTALL		
 				
-		move.l	#TST_LIST, -(A7) 	; PUSH the list pointer so that next function can access it.
+		; PUSH the list pointer so that next function can access it.
+		move.l	#TST_LIST, -(A7)
 		
 		; Typical double buffer operation:
 		; 1.- Clear screen
@@ -55,7 +56,7 @@ START:		; Fill list with some random stuff.
 .LOOP:		SC_CLEAR			; Clear screen
 		bsr	LP_PLOT_LIST
 		bsr	LP_MOUSE_INTERACTION
-		SC_REPAINT_SCREEN		
+		SC_REPAINT_SCREEN
 		bra	.LOOP
 		
 		; Restore stack. Actually not needed here, as the program
@@ -123,14 +124,15 @@ TST_FILL_LIST:
 		addq.l	#4, A7
 		bra	.LOOP2		
 *-----------------------------------------------------------
-
+			
+		
 ************************************************************
 *                         VARIABLES                        *
 ************************************************************
 TST_LIST:	ds.w	TST_LIST_WORDS_TOTAL
-TST_SAMPLE	dc.w	5,2,$FFFF,1,50,$FFFF,2,40,$0000,3,3,$FFFF,4,2,$FFFF,5,1
 ************************************************************
 	END	START		; last line of source
+
 
 
 

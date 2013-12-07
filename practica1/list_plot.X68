@@ -42,7 +42,7 @@ LP_INSTALL:
 		
 		SC_ENABLE_DBUFFER
 		
-		move.w	#$0106, D1		; Interrupcion 1 cuando se mueve el mouse o se suelta el boton
+		move.w	#$0107, D1		; Interrupcion 1 cuando se mueve el mouse o se suelta el boton
 		move.b	#60, D0
 		trap	#15			; habilita la interrupcion
 
@@ -251,23 +251,22 @@ LP_GET_ELEM:
 		; 6 WORDS = 12 bytes. Add 12 to al stack references
 		movem.w	D0-D5, -(A7) ;push
 		
-		move.w 	16(A7),D1  	;D0=X
-		move.w 	18(A7),D2  	;D1=Y		
+		clr.l	D1
+		clr.l	D2
+		move.w 	16(A7),D1  	;D1=X
+		move.w 	18(A7),D2  	;D2=Y		
 		move.w	#$FFFF,16(A7) ; inicializa resultado a 'no encontrado'		
 		cmp 	#LP_INITIAL_Y, D2
-		blt 	GE_END	; Y<INITIAL_Y, no puede coincidir nunca con un elemento
-				
-		move.w	#1,D3	; elemento a comprobar, inicialmente el 1
-		move.w	#LP_SQR_SIZE, D4 ; x actual
-		move.w	#LP_SQR_SIZE+LP_INITIAL_Y, D5 ; y actual
-		; si x>=X & y>=Y entonces es este
-GE_LOOP:	cmp	D1,D4	; comprueba la coordenada X
-		ble	.NEXT 	; no es, prueba el siguiente elemento
-		cmp	D2,D5	; continua, comprueba la coordenada Y
-		bgt	GE_FOUND	; X,Y corresponden al elemento D2
-.NEXT:		SC_NEXT_POSITION D4, D5, LP_SQR_SIZE,LP_SCREEN_WIDTH
-		add.w	#1, D3 ; siguiente elemento
-		jmp	GE_LOOP
+		ble 	GE_END	; Y<=INITIAL_Y, no puede coincidir nunca con un elemento
+		
+		sub.w	#LP_INITIAL_Y,D2
+		divs	#LP_SQR_SIZE, D2	; fila (0..f-1)
+		divs	#LP_SQR_SIZE, D1	; columna (0..c-1)
+		move.w	#LP_SCREEN_WIDTH, D3	; width
+		divs	#LP_SQR_SIZE, D3	; columnas por fila (z)
+		mulu	D2, D3		; z*fila
+		add.w	D1, D3		; resultado (0..n-1)
+		add.w	#1, D3		; ajuste (rango indice 1..n)
 
 GE_FOUND:		move.w	D3,16(A7) ; guarda el resultado
 GE_END:    	movem.w	(A7)+, D0-D5	; pop
@@ -319,7 +318,6 @@ LP_MOUSE_CY:	ds.w	1
 LP_MOUSE_BUT:	ds.b	1
 		ds.w	0		; Memory alignment
 ************************************************************	
-
 
 
 
