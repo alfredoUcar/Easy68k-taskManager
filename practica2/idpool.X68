@@ -57,7 +57,17 @@ IDP_GET_ID:
 * Note        : When calling this subroutine, the required constants
 *               are assumed to have the correct values.
 *-----------------------------------------------------------
-
+	move.l 	A0, -(A7)	; push
+	; busca el primero disponible
+	move.l	#IDP_IDLIST, -(A7)
+	bsr	LS_FIRST_FREE
+	move.l	(A7)+, A0	; puntero al elemento encontrado
+	move.b	#$FF, D0	; inicializacion resultado	
+	cmp	#$FFFFFF, A0
+	beq	.END		; no hay libre
+	move.w	#$FFFF, (A0)+	; marcamos como ocupado
+	move.w	(A0), D0	; guardamos resultado
+.END:	move.l	(A7)+, A0	: pop
 	rts	
 *-----------------------------------------------------------
 		
@@ -81,6 +91,7 @@ IDP_RELEASE_ID:
 ************************************************************
 IDP_IDLIST:		ds.w	2+TM_MAX_TASKS*(1+1)	; ID List
 ************************************************************
+
 
 
 
