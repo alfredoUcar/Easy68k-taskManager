@@ -108,10 +108,20 @@ DMM_RELEASE:
 * Note        : When calling this subroutine, the required constants
 *               are assumed to have the correct values.
 *-----------------------------------------------------------
-	move.l A0, -(A7)  ;push
+	move.l D0/A0 -(A7)  ;push
+	move.l #DMM_MEMLIST, -(A7)	
 	
+	move.w #TM_TASK_MEMORY_SIZE-1,D0
+.LOOP:	move.w (A0)+,-(A7)
+	move.l #DMM_MEMLIST, -(A7)
+	bsr LS_PUT
+	dbra D0,.LOOP
+	
+	;pop
+	move.l (A7)+,#DMM_MEMLIST
+	move.l (A7)+,A0/D0
 
-	rts
+	rts	
 *-----------------------------------------------------------
 					
 ************************************************************
