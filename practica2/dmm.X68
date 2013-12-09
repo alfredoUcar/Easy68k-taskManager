@@ -108,6 +108,8 @@ DMM_RELEASE:
 * Note        : When calling this subroutine, the required constants
 *               are assumed to have the correct values.
 *-----------------------------------------------------------
+	move.l A0, -(A7)  ;push
+	
 
 	rts
 *-----------------------------------------------------------
@@ -125,6 +127,7 @@ DMM_MEMLIST:		ds.w	2+TM_MAX_TASKS*(2+1)
 ; is available to each task.
 DMM_MEMORY:		ds.b	TM_MAX_TASKS*TM_TASK_MEMORY_SIZE
 ************************************************************
+
 
 
 *~Font name~Courier New~
