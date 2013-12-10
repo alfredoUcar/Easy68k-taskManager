@@ -202,10 +202,11 @@ LS_FIRST:
 		beq	F_END	; se trata del primer elemento
 		;buscamos a partir del primero
 		move.l	A0, -(A7) 	; parametro: elemento actual
-		move.l	12(A7), -(A7)	; parametro: puntero a la lista
+		move.l	16(A7), -(A7)	; parametro: puntero a la lista A0=16(A7)
 		bsr 	LS_NEXT
+		add	#4, A7		; restaura la pila
 		move.l	(A7)+, A0	; resultado
-		add	#4, A7		; restaura la pila		
+				
 
 F_END:		move.l	A0, 12(A7) 	;guarda el resultado en la pila
 		; restaura los registros
@@ -367,6 +368,7 @@ NF_END:
 		movem.l	(A7)+, A0		
 		rts	
 *-------------------------------------------------------------
+
 
 
 

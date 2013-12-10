@@ -33,21 +33,31 @@ TST_LIST_WORDS_TOTAL:		EQU     TST_LIST_WORDS_HEADER+TST_LIST_LIST_SIZE*(TST_LIS
 *                   SOURCE FILE INCLUDES                   *
 ************************************************************
 			INCLUDE "screen.x68"	; Screen management macros
-			INCLUDE	"list.x68"	; List library
 			INCLUDE "list_plot.x68" ; User interaction library
+			INCLUDE "taskmanager.x68"
 ************************************************************
 
 ************************************************************
 *                       MAIN PROGRAM                       *
 ************************************************************
 START:		; Fill list with some random stuff.
-		bsr	TST_FILL_LIST		
+		bsr	IDP_INIT		
 		
 		; Install user interface (basically, install mouse and prepare screen)
-		bsr 	LP_INSTALL		
+		bsr 	LP_INSTALL
+		
+		bsr 	IDP_GET_ID
+		bsr 	IDP_GET_ID		
+		bsr 	IDP_GET_ID
+		bsr 	IDP_GET_ID
+		bsr 	IDP_GET_ID		
+		bsr 	IDP_GET_ID
+		move.b	#2, D0
+		bsr	IDP_RELEASE_ID
+
 				
 		; PUSH the list pointer so that next function can access it.
-		move.l	#TST_LIST, -(A7)
+		move.l	#IDP_IDLIST, -(A7)
 		
 		; Typical double buffer operation:
 		; 1.- Clear screen
@@ -132,6 +142,11 @@ TST_FILL_LIST:
 TST_LIST:	ds.w	TST_LIST_WORDS_TOTAL
 ************************************************************
 	END	START		; last line of source
+
+
+
+
+
 
 
 
