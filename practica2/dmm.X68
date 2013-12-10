@@ -108,19 +108,28 @@ DMM_RELEASE:
 * Note        : When calling this subroutine, the required constants
 *               are assumed to have the correct values.
 *-----------------------------------------------------------
-	move.l D0/A0 -(A7)  ;push
+	move.l D0/A0, -(A7)  ;push
 	move.l #DMM_MEMLIST, -(A7)	
 	
-	move.w (A0)+,-(A7)
+	;put parameters
+	move.w A0,-(A7)
 	move.l #DMM_MEMLIST, -(A7)
 	bsr LS_PUT
-	;fer comprobacio de si ha retornat FFFF
+	;check if FFFF was the return value
+	move.w (A7)+, A0
+	cmp #$FFFF, (A0)
+	beq .ERROR
 
 	;pop
 	move.l (A7)+,#DMM_MEMLIST
 	move.l (A7)+,A0/D0
 
 	rts	
+	
+.ERROR:	;if we get here, huge error on the list
+	;halt
+	MOVE.B	#9,D0
+	TRAP	#15
 *-----------------------------------------------------------
 					
 ************************************************************
@@ -136,6 +145,7 @@ DMM_MEMLIST:		ds.w	2+TM_MAX_TASKS*(2+1)
 ; is available to each task.
 DMM_MEMORY:		ds.b	TM_MAX_TASKS*TM_TASK_MEMORY_SIZE
 ************************************************************
+
 
 
 
