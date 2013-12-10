@@ -111,12 +111,11 @@ DMM_RELEASE:
 	move.l D0/A0 -(A7)  ;push
 	move.l #DMM_MEMLIST, -(A7)	
 	
-	move.w #TM_TASK_MEMORY_SIZE-1,D0
-.LOOP:	move.w (A0)+,-(A7)
+	move.w (A0)+,-(A7)
 	move.l #DMM_MEMLIST, -(A7)
 	bsr LS_PUT
-	dbra D0,.LOOP
-	
+	;fer comprobacio de si ha retornat FFFF
+
 	;pop
 	move.l (A7)+,#DMM_MEMLIST
 	move.l (A7)+,A0/D0
@@ -137,6 +136,7 @@ DMM_MEMLIST:		ds.w	2+TM_MAX_TASKS*(2+1)
 ; is available to each task.
 DMM_MEMORY:		ds.b	TM_MAX_TASKS*TM_TASK_MEMORY_SIZE
 ************************************************************
+
 
 
 
