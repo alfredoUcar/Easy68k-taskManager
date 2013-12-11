@@ -13,7 +13,7 @@
 ************************************************************
 			INCLUDE "taskmanager.x68" 	; Task manager library
 			ds.w	0		  	; Perform memory alignment, just in case.			
-			INCLUDE "tasks.x68" 	 	; The tasks
+			INCLUDE "tasks_senzill.x68" 	 	; The tasks
 			ds.w	0		  	; Perform memory alignment, just in case.						
 ************************************************************
 
@@ -37,6 +37,7 @@ START:
 					
 			END	START		
 ************************************************************
+
 
 
 *~Font name~Courier New~
