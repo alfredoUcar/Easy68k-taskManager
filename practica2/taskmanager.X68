@@ -158,9 +158,9 @@ TM_TRAP0_DISPATCHER:
 	bra	.END
 
 	; Function 2: Start
-.F2:	; ==================
-	; PUT YOUR CODE HERE
-	; ==================	
+.F2:	move.l	#TM_TCB_LIST, -(A7)
+	bsr	LS_FIRST
+	move.l	(A7)+, (TM_CURRENT_TASK)	; puntero primer TCB	
 	bra	.END
 	
 	; Function 3: Switch to next task	
