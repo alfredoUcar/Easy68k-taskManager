@@ -103,7 +103,7 @@ TM_TRAP0_DISPATCHER:
 * D5.L: 20-23
 * D6.L: 24-27
 * D7.L: 28-31
-* A0.L: 32-34	35?
+* A0.L: 32-35
 * A1.L: 36-39
 * A2.L: 40-43
 * A3.L: 44-47
@@ -160,10 +160,11 @@ TM_TRAP0_DISPATCHER:
 	; Function 2: Start
 .F2:	move.l	#TM_TCB_LIST, -(A7)
 	bsr	LS_FIRST
-	move.l	(A7)+, (TM_CURRENT_TASK)	; puntero primer TCB
+	move.l	(A7)+, (TM_CURRENT_TASK) 	; puntero primer TCB
 	bsr	TM_CURRENT_TASK_INFO
-	move.b	D1, 7(A7)			; Mueve la ID a la pila en D1.B
-	move.l	A1, 35(A7)			;TODO: guardar post
+	move.b	D1, 7(A7)			; guarda la ID en D1.B
+	move.l	A1, 35(A7)			; guarda el puntero a la memoria de la tarea en A0
+	move.l	#TM_SHARED_MEMORY, 39(A7)
 	bra	.END
 	
 	; Function 3: Switch to next task	
@@ -171,8 +172,11 @@ TM_TRAP0_DISPATCHER:
 	move.l	#TM_TCB_LIST, -(A7)
 	bsr	LS_NEXT
 	add	#4, A7				; restaura parte de la pila
-	move.l	(A7)+, (TM_CURRENT_TASK)	
-	;TODO: guardar post
+	move.l	(A7)+, (TM_CURRENT_TASK)
+	bsr	TM_CURRENT_TASK_INFO
+	move.b	D1, 7(A7)			; guarda la ID en D1.B
+	move.l	A1, 35(A7)			; guarda el puntero a la memoria de la tarea en A0
+	move.l	#TM_SHARED_MEMORY, 39(A7)
 	bra	.END
 	
 	; Function 4: Get current task info
@@ -391,6 +395,7 @@ TM_CURRENT_TASK:	ds.l	1				; Pointer to the current TCB
 TM_MIN_CYCLE_TIME:	ds.l	1				; Minimum cycle time (units: 1/100 of second)
 TM_PREVIOUS_TIME:	ds.l	1				; Last time stamp used to measure cycle time
 ************************************************************
+
 
 
 
