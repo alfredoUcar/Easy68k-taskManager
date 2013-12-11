@@ -50,7 +50,17 @@ TM_INSTALL:
 * Note        : When calling this subroutine, the required constants
 *               are assumed to have the correct values.
 *-----------------------------------------------------------
-
+	lea	TM_MIN_CYCLE_TIME, A0
+	clr.l	(A0)			; init ciclo a 0
+	bsr	DMM_INIT		
+	bsr	IDP_INIT	
+	move.w	#5, -(A7)		; M = 2+2+1
+	move.w	#TM_MAX_TASKS, -(A7)	; N
+	lea	TM_TCB_LIST, -(A7)	
+	bsr 	LS_INIT			; init TCB list
+	add.w	#8, A7			; restaura la pila
+	move.l	#TM_TRAP0_DISPATCHER, ($80)	; instala el TRAP #0 dispatcher
+	ANDI 	#$DFFF, SR		; pasa a modo usuario
 	rts
 *-----------------------------------------------------------
 
@@ -375,6 +385,7 @@ TM_CURRENT_TASK:	ds.l	1				; Pointer to the current TCB
 TM_MIN_CYCLE_TIME:	ds.l	1				; Minimum cycle time (units: 1/100 of second)
 TM_PREVIOUS_TIME:	ds.l	1				; Last time stamp used to measure cycle time
 ************************************************************
+
 
 
 

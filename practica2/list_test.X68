@@ -45,17 +45,7 @@ START:		; Fill list with some random stuff.
 		
 		; Install user interface (basically, install mouse and prepare screen)
 		bsr 	LP_INSTALL
-		
-		bsr 	IDP_GET_ID
-		bsr 	IDP_GET_ID		
-		bsr 	IDP_GET_ID
-		bsr 	IDP_GET_ID
-		bsr 	IDP_GET_ID		
-		bsr 	IDP_GET_ID
-		move.b	#2, D0
-		bsr	IDP_RELEASE_ID
-
-				
+						
 		; PUSH the list pointer so that next function can access it.
 		move.l	#IDP_IDLIST, -(A7)
 		
