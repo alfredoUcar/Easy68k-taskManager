@@ -163,7 +163,7 @@ TM_TRAP0_DISPATCHER:
 	move.l	(A7)+, (TM_CURRENT_TASK) 	; puntero primer TCB
 	bsr	TM_CURRENT_TASK_INFO
 	move.b	D1, 7(A7)			; guarda la ID en D1.B
-	move.l	A1, 35(A7)			; guarda el puntero a la memoria de la tarea en A0
+	move.l	A1, 32(A7)			; guarda el puntero a la memoria de la tarea en A0
 	move.l	#TM_SHARED_MEMORY, 39(A7)
 	bra	.END
 	
@@ -175,7 +175,7 @@ TM_TRAP0_DISPATCHER:
 	move.l	(A7)+, (TM_CURRENT_TASK)
 	bsr	TM_CURRENT_TASK_INFO
 	move.b	D1, 7(A7)			; guarda la ID en D1.B
-	move.l	A1, 35(A7)			; guarda el puntero a la memoria de la tarea en A0
+	move.l	A1, 32(A7)			; guarda el puntero a la memoria de la tarea en A0
 	move.l	#TM_SHARED_MEMORY, 39(A7)
 	bra	.END
 	
@@ -195,7 +195,22 @@ TM_TRAP0_DISPATCHER:
 	bra	.END
 	
 	; Function 6: Get first task info
-.F6:	; ==================
+.F6:	;movemos el puntero a LS_FIRST
+	move.l TCB_LIST, -(A7)
+	bsr LS_FIRST		;output no son los siguientes
+	move.l (A7)+, A0
+	cmp #$FFFFFFFF, A0
+	beq .END
+	bsr TM_POINTER_TO_INDEX
+	move.b D1, 7(A7)	;first task index
+	add #2,A0	;2 por la cabecera
+	add #8,A0	;4 por el punto de entrada y por la memoria --> TODO: hay que coger la memoria
+	move.w (A0),D0	;ahora tenemos el id (metido en un word)
+	clr D2
+	move.b D0, D2	;ahora tenemos solo el id
+	
+*	move.b D2, 11(A7)	;first task ID
+*	move.l A1, 32(A7)	;pointer to the first memory position of the first task
 	; PUT YOUR CODE HERE
 	; ==================	
 	bra	.END
@@ -395,6 +410,7 @@ TM_CURRENT_TASK:	ds.l	1				; Pointer to the current TCB
 TM_MIN_CYCLE_TIME:	ds.l	1				; Minimum cycle time (units: 1/100 of second)
 TM_PREVIOUS_TIME:	ds.l	1				; Last time stamp used to measure cycle time
 ************************************************************
+
 
 
 
