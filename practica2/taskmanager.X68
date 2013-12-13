@@ -203,7 +203,7 @@ TM_TRAP0_DISPATCHER:
 	beq .END
 	bsr TM_POINTER_TO_INDEX
 	move.b D1, 7(A7)	;first task index
-	add #2,A0		;2 por la cabecera
+T_INFO:	add #2,A0		;2 por la cabecera
 	add #4,A0		;4 por el punto de entrada
 	move.w (A0),A1		;puntero a la memoria
 *	lea A0, A1   --> Este o el de arriba?
@@ -217,10 +217,49 @@ TM_TRAP0_DISPATCHER:
 	bra	.END
 
 	; Function 7: Get next task info	
-.F7:	; ==================
-	; PUT YOUR CODE HERE
-	; ==================	
-	bra	.END
+.F7:	;PRE: 	D1.B: ÍNDEX DE LA TASCA
+	;POST: 	D1.B: ÍNDEX DE LA TASCA SEGÜENT Ó FF
+	;	D2.B: IDENTIFICADOR DE LA TASCA SEGÜENT
+	;	A1: PUNTER A LA PRIMERA POSICIÓ DE LA TASCA SEGÜENT
+	
+*	LS_NEXT:  
+*	Pre:	
+*	- Offset 4: LONG: List pointer.
+*       - Offset 8: LONG: Current item pointer
+
+*	Post:
+*	- Offset 8: LONG: Next item pointer or $FFFFFFFF
+*                   if empty list.
+*                   The pointer points to the data block. That
+*                   is, to the occupied field of the data block.
+
+*	INDEX_TO_POINTER: 
+*	PRE:	D1.B: Index
+*	Post:	 A0: Pointer to the task in the TCB
+
+*	TM_POINTER_TO_INDEX:
+* 	Description : Given a pointer to a TCB, it outputs the zero-based index
+*               of this item in the list.
+* 	Pre         : A0: Pointer to the task in the TCB
+* 	Post        : D1.B: Index
+* 	Modifies    : D0
+
+
+	move.b D1,-(A7)		;paso de parámetros
+	bsr INDEX_TO_POINTER
+	clr D0			;limpiamos D0 (ha sido usado por la rutina anterior)
+	move.l TCB_LIST, -(A7)	;paso de parámetros
+	move.l A0,-(A7)
+	bsr LS_NEXT
+*	move.l (A7)+, A0	;quitamos y ponemos en la pila?
+*	move.l A0, -(A7)
+	bsr TM_POINTER_TO_INDEX
+	cmp D1, #$FFFFFFFFF	;D1 = indice de la siguiente tarea, si FFF... quiere decir que no hay mas
+	beq .END		;hay que salir?
+
+	bra T_INFO	;Task_information
+	;saltamos a la Task 6 porque a partir de este punto todo es igual
+*	bra	.END
 
 	; Function 8: Define minimum cycle time	
 .F8:	move.l	D1, (TM_MIN_CYCLE_TIME)
