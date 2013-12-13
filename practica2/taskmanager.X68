@@ -196,14 +196,14 @@ TM_TRAP0_DISPATCHER:
 	
 	; Function 6: Get first task info
 .F6:	;movemos el puntero a LS_FIRST
-	move.l TCB_LIST, -(A7)
+	move.l #TM_TCB_LIST, -(A7)
 	bsr LS_FIRST		;output no son los siguientes
 	move.l (A7)+, A0
-	cmp #$FFFFFFFF, A0
+T_INFO:	cmp #$FFFFFFFF, A0
 	beq .END
 	bsr TM_POINTER_TO_INDEX
 	move.b D1, 7(A7)	;first task index
-T_INFO:	add #2,A0		;2 por la cabecera
+	add #2,A0		;2 por la cabecera
 	add #4,A0		;4 por el punto de entrada
 	move.w (A0),A1		;puntero a la memoria
 *	lea A0, A1   --> Este o el de arriba?
@@ -246,16 +246,16 @@ T_INFO:	add #2,A0		;2 por la cabecera
 
 
 	move.b D1,-(A7)		;paso de parámetros
-	bsr INDEX_TO_POINTER
+	bsr TM_INDEX_TO_POINTER
 	clr D0			;limpiamos D0 (ha sido usado por la rutina anterior)
-	move.l TCB_LIST, -(A7)	;paso de parámetros
+	move.l #TM_TCB_LIST, -(A7)	;paso de parámetros
 	move.l A0,-(A7)
 	bsr LS_NEXT
 *	move.l (A7)+, A0	;quitamos y ponemos en la pila?
 *	move.l A0, -(A7)
 	bsr TM_POINTER_TO_INDEX
-	cmp D1, #$FFFFFFFFF	;D1 = indice de la siguiente tarea, si FFF... quiere decir que no hay mas
-	beq .END		;hay que salir?
+*	cmp D1, #$FFFFFFFFF	;D1 = indice de la siguiente tarea, si FFF... quiere decir que no hay mas
+*	beq .END		;hay que salir?
 
 	bra T_INFO	;Task_information
 	;saltamos a la Task 6 porque a partir de este punto todo es igual
