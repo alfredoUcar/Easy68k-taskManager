@@ -203,16 +203,17 @@ TM_TRAP0_DISPATCHER:
 	beq .END
 	bsr TM_POINTER_TO_INDEX
 	move.b D1, 7(A7)	;first task index
-	add #2,A0	;2 por la cabecera
-	add #8,A0	;4 por el punto de entrada y por la memoria --> TODO: hay que coger la memoria
-	move.w (A0),D0	;ahora tenemos el id (metido en un word)
-	clr D2
-	move.b D0, D2	;ahora tenemos solo el id
-	
-*	move.b D2, 11(A7)	;first task ID
-*	move.l A1, 32(A7)	;pointer to the first memory position of the first task
-	; PUT YOUR CODE HERE
-	; ==================	
+	add #2,A0		;2 por la cabecera
+	add #4,A0		;4 por el punto de entrada
+	move.w (A0),A1		;puntero a la memoria
+*	lea A0, A1   --> Este o el de arriba?
+	move.l A1, 32(A7)	;pointer to the first memory position of the first task
+	add #4,A0		;shift one word to get the id
+	move.w (A0),D0		;get the entire word of the id
+	clr D2			;and clean it
+	move.b D0, D2	
+	move.b D2, 11(A7)	;first task ID
+
 	bra	.END
 
 	; Function 7: Get next task info	
