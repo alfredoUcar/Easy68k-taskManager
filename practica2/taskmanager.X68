@@ -56,11 +56,11 @@ TM_INSTALL:
 	bsr	IDP_INIT	
 	move.w	#5, -(A7)		; M = 2+2+1
 	move.w	#TM_MAX_TASKS, -(A7)	; N
-	lea	TM_TCB_LIST, -(A7)	
+	move.l	#TM_TCB_LIST, -(A7)	
 	bsr 	LS_INIT			; init TCB list
 	add.w	#8, A7			; restaura la pila
 	move.l	#TM_TRAP0_DISPATCHER, ($80)	; instala el TRAP #0 dispatcher
-	ANDI 	#$DFFF, SR		; pasa a modo usuario
+	andi 	#$DFFF, SR		; pasa a modo usuario
 	rts
 *-----------------------------------------------------------
 
@@ -163,8 +163,8 @@ TM_TRAP0_DISPATCHER:
 	move.l	(A7)+, (TM_CURRENT_TASK) 	; puntero primer TCB
 	bsr	TM_CURRENT_TASK_INFO
 	move.b	D1, 7(A7)			; guarda la ID en D1.B
-	move.l	A1, 35(A7)			; guarda el puntero a la memoria de la tarea en A0
-	move.l	#TM_SHARED_MEMORY, 39(A7)
+	move.l	A1, 32(A7)			; guarda el puntero a la memoria de la tarea en A0
+	move.l	#TM_SHARED_MEMORY, 36(A7)
 	bra	.END
 	
 	; Function 3: Switch to next task	
@@ -175,8 +175,8 @@ TM_TRAP0_DISPATCHER:
 	move.l	(A7)+, (TM_CURRENT_TASK)
 	bsr	TM_CURRENT_TASK_INFO
 	move.b	D1, 7(A7)			; guarda la ID en D1.B
-	move.l	A1, 35(A7)			; guarda el puntero a la memoria de la tarea en A0
-	move.l	#TM_SHARED_MEMORY, 39(A7)
+	move.l	A1, 32(A7)			; guarda el puntero a la memoria de la tarea en A0
+	move.l	#TM_SHARED_MEMORY, 36(A7)
 	bra	.END
 	
 	; Function 4: Get current task info
@@ -395,6 +395,11 @@ TM_CURRENT_TASK:	ds.l	1				; Pointer to the current TCB
 TM_MIN_CYCLE_TIME:	ds.l	1				; Minimum cycle time (units: 1/100 of second)
 TM_PREVIOUS_TIME:	ds.l	1				; Last time stamp used to measure cycle time
 ************************************************************
+
+
+
+
+
 
 
 
