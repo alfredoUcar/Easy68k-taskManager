@@ -195,71 +195,33 @@ TM_TRAP0_DISPATCHER:
 	bra	.END
 	
 	; Function 6: Get first task info
-.F6:	;movemos el puntero a LS_FIRST
-	move.l #TM_TCB_LIST, -(A7)
-	bsr LS_FIRST		;output no son los siguientes
-	move.l (A7)+, A0
-T_INFO:	cmp #$FFFFFFFF, A0
-	beq .END
-	bsr TM_POINTER_TO_INDEX
+.F6:	move.l #TM_TCB_LIST, -(A7) 
+	bsr LS_FIRST		; output no son los siguientes
+	move.l (A7)+, A0	; pointer to first task
+	
+	cmp #$FFFFFFFF, A0	
+	beq .END		; no hay tareas
+	bsr	TM_GET_TASK_INFO
 	move.b D1, 7(A7)	;first task index
-	add #2,A0		;2 por la cabecera
-	add #4,A0		;4 por el punto de entrada
-	move.w (A0),A1		;puntero a la memoria
-*	lea A0, A1   --> Este o el de arriba?
 	move.l A1, 32(A7)	;pointer to the first memory position of the first task
-	add #4,A0		;shift one word to get the id
-	move.w (A0),D0		;get the entire word of the id
-	clr D2			;and clean it
-	move.b D0, D2	
 	move.b D2, 11(A7)	;first task ID
-
 	bra	.END
 
 	; Function 7: Get next task info	
-.F7:	;PRE: 	D1.B: ÍNDEX DE LA TASCA
-	;POST: 	D1.B: ÍNDEX DE LA TASCA SEGÜENT Ó FF
-	;	D2.B: IDENTIFICADOR DE LA TASCA SEGÜENT
-	;	A1: PUNTER A LA PRIMERA POSICIÓ DE LA TASCA SEGÜENT
-	
-*	LS_NEXT:  
-*	Pre:	
-*	- Offset 4: LONG: List pointer.
-*       - Offset 8: LONG: Current item pointer
-
-*	Post:
-*	- Offset 8: LONG: Next item pointer or $FFFFFFFF
-*                   if empty list.
-*                   The pointer points to the data block. That
-*                   is, to the occupied field of the data block.
-
-*	INDEX_TO_POINTER: 
-*	PRE:	D1.B: Index
-*	Post:	 A0: Pointer to the task in the TCB
-
-*	TM_POINTER_TO_INDEX:
-* 	Description : Given a pointer to a TCB, it outputs the zero-based index
-*               of this item in the list.
-* 	Pre         : A0: Pointer to the task in the TCB
-* 	Post        : D1.B: Index
-* 	Modifies    : D0
-
-
-	move.b D1,-(A7)		;paso de parámetros
-	bsr TM_INDEX_TO_POINTER
-	clr D0			;limpiamos D0 (ha sido usado por la rutina anterior)
-	move.l #TM_TCB_LIST, -(A7)	;paso de parámetros
-	move.l A0,-(A7)
-	bsr LS_NEXT
-*	move.l (A7)+, A0	;quitamos y ponemos en la pila?
-*	move.l A0, -(A7)
-	bsr TM_POINTER_TO_INDEX
-*	cmp D1, #$FFFFFFFFF	;D1 = indice de la siguiente tarea, si FFF... quiere decir que no hay mas
-*	beq .END		;hay que salir?
-
-	bra T_INFO	;Task_information
-	;saltamos a la Task 6 porque a partir de este punto todo es igual
-*	bra	.END
+.F7:	bsr 	TM_INDEX_TO_POINTER	
+	move.l 	A0,-(A7)
+	move.l	#TM_TCB_LIST, -(A7)
+	bsr 	LS_NEXT
+	add	#4, A7
+	move.l	(A7),A0
+	move.b	#$FF, D1	; resultado por defecto 'no hay más tareas'
+	cmp 	#$FFFFFFFF, A0	
+	beq 	.END		; termina con el resultado por defecto
+	bsr	TM_GET_TASK_INFO
+	move.b D1, 7(A7)	;first task index
+	move.l A1, 32(A7)	;pointer to the first memory position of the first task
+	move.b D2, 11(A7)	;first task ID
+	bra	.END
 
 	; Function 8: Define minimum cycle time	
 .F8:	move.l	D1, (TM_MIN_CYCLE_TIME)
@@ -440,7 +402,24 @@ TM_INDEX_TO_POINTER:
 	movea.l	D0, A0
 	rts
 *-----------------------------------------------------------
-
+************************************************************
+*                   CUSTOM SUBRUTINES                      *
+************************************************************
+TM_GET_TASK_INFO:
+* Description : Given the pointer to the task in the TCB list,
+*               it outputs the information of this item.
+* Pre         : A0: Pointer to the task in the TCB
+* Post        : D1.B: task index
+*		D2.B: task ID
+*		A1: task memory pointer		
+* Modifies    : A0
+*-----------------------------------------------------------
+	bsr TM_POINTER_TO_INDEX
+	addq.l	#6, A0			; Skip occupied and task entry point
+	move.l	(A0)+, A1		; Task memory pointer
+	move.w	(A0), D2		; Task ID
+	rts
+*-----------------------------------------------------------
 ************************************************************
 *                         VARIABLES                        *
 ************************************************************
@@ -450,6 +429,7 @@ TM_CURRENT_TASK:	ds.l	1				; Pointer to the current TCB
 TM_MIN_CYCLE_TIME:	ds.l	1				; Minimum cycle time (units: 1/100 of second)
 TM_PREVIOUS_TIME:	ds.l	1				; Last time stamp used to measure cycle time
 ************************************************************
+
 
 
 
