@@ -109,21 +109,19 @@ DMM_RELEASE:
 *               are assumed to have the correct values.
 *-----------------------------------------------------------
 	movem.l D0/A0, -(A7)  ;push
-	;move.l #DMM_MEMLIST, -(A7)	
 	
 	;put parameters
-	move.w A0,-(A7)
-	move.l #DMM_MEMLIST, -(A7)
-	bsr LS_PUT
-	;check if FFFF was the return value
-	move.w (A7)+, A0
-	cmp #$FFFF, (A0)
-	beq .ERROR
-
+	move.l 	A0,-(A7)
+	move.l 	#DMM_MEMLIST, -(A7)
+	bsr 	LS_PUT
+	;check if FFFFFFFF was the return value
+	move.l 	(A7)+, A0	; get result
+	add	#4, A7		; restore stack
+	cmp 	#$FFFFFFFF, A0	; not enough memory
+	beq 	.ERROR
+	
 	;pop
-	;move.l (A7)+,#DMM_MEMLIST
-	movem.l (A7)+,A0/D0
-
+	movem.l (A7)+,D0/A0
 	rts	
 	
 .ERROR:	;if we get here, huge error on the list
@@ -145,6 +143,7 @@ DMM_MEMLIST:		ds.w	2+TM_MAX_TASKS*(2+1)
 ; is available to each task.
 DMM_MEMORY:		ds.b	TM_MAX_TASKS*TM_TASK_MEMORY_SIZE
 ************************************************************
+
 
 
 

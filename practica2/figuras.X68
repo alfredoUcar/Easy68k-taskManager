@@ -130,19 +130,19 @@ FG_DRAW_FIG:
 		swap	D0
 		move.w	D0, D4		; X del centro
 		
-		cmp.w	D4, D2
-		bgt	.END		; fuera del limite de la pantalla, x<0
-		cmp.w	D3, D1
-		bgt	.END		; fuera del limite de la pantalla, y<0
-		add.w	D2,D4		; x final
-		add.w	D1,D3		; y final
-		cmp.w	#SCREEN_WIDTH, D4
-		bgt	.END		; fuera del limite de la pantalla, x>width
-		cmp.w	#SCREEN_HEIGHT, D3
-		bgt	.END		; fuera del limite de la pantalla, y>height
-		mulu	#2,D2
+*		cmp.w	D4, D2
+*		bgt	.END		; fuera del limite de la pantalla, x<0
+*		cmp.w	D3, D1
+*		bgt	.END		; fuera del limite de la pantalla, y<0
+*		add.w	D2,D4		; x final
+*		add.w	D1,D3		; y final
+*		cmp.w	#SCREEN_WIDTH, D4
+*		bgt	.END		; fuera del limite de la pantalla, x>width
+*		cmp.w	#SCREEN_HEIGHT, D3
+*		bgt	.END		; fuera del limite de la pantalla, y>height
+*		mulu	#2,D2
 		sub	D2,D4		; x inicial
-		mulu	#2,D1
+*		mulu	#2,D1
 		sub	D1,D3		; y inicial
 		move.w	D4,D6		; copia de x	
 		;se ha comprobado que se puede dibujar en esas coordenadas
@@ -206,6 +206,7 @@ FG_EXP_LIST:	dc.b 0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,1,
 
 
 	
+
 
 
 
