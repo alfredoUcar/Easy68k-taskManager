@@ -50,8 +50,7 @@ TM_INSTALL:
 * Note        : When calling this subroutine, the required constants
 *               are assumed to have the correct values.
 *-----------------------------------------------------------
-	lea	TM_MIN_CYCLE_TIME, A0
-	clr.l	(A0)			; init ciclo a 0
+	clr.l	(TM_MIN_CYCLE_TIME)	; init ciclo a 0
 	bsr	DMM_INIT		
 	bsr	IDP_INIT	
 	move.w	#5, -(A7)		; M = 2+2+1
@@ -60,7 +59,7 @@ TM_INSTALL:
 	bsr 	LS_INIT			; init TCB list
 	add.w	#8, A7			; restaura la pila
 	move.l	#TM_TRAP0_DISPATCHER, ($80)	; instala el TRAP #0 dispatcher
-	andi 	#$DFFF, SR		; pasa a modo usuario
+	;andi 	#$DFFF, SR		; pasa a modo usuario
 	rts
 *-----------------------------------------------------------
 
@@ -160,7 +159,10 @@ TM_TRAP0_DISPATCHER:
 	; Function 2: Start
 .F2:	move.l	#TM_TCB_LIST, -(A7)
 	bsr	LS_FIRST
-	move.l	(A7)+, (TM_CURRENT_TASK) 	; puntero primer TCB
+	move.l	(A7)+, A0
+	move.l	A0,(TM_CURRENT_TASK) 		; puntero primer TCB
+	add	#2,A0				; saltamos la cabecera, A0-> punto de entrada de la tarea
+	move.l	(A0), 62(A7)			; cede el control a la tarea
 	bsr	TM_CURRENT_TASK_INFO
 	move.b	D1, 7(A7)			; guarda la ID en D1.B
 	move.l	A1, 32(A7)			; guarda el puntero a la memoria de la tarea en A0
@@ -172,7 +174,10 @@ TM_TRAP0_DISPATCHER:
 	move.l	#TM_TCB_LIST, -(A7)
 	bsr	LS_NEXT
 	add	#4, A7				; restaura parte de la pila
-	move.l	(A7)+, (TM_CURRENT_TASK)
+	move.l	(A7)+, A0
+	move.l	A0,(TM_CURRENT_TASK) 		; puntero primer TCB
+	add	#2,A0				; saltamos la cabecera, A0-> punto de entrada de la tarea
+	move.l	(A0), 62(A7)			; cede el control a la tarea
 	bsr	TM_CURRENT_TASK_INFO
 	move.b	D1, 7(A7)			; guarda la ID en D1.B
 	move.l	A1, 32(A7)			; guarda el puntero a la memoria de la tarea en A0
