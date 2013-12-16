@@ -208,15 +208,15 @@ TM_TRAP0_DISPATCHER:
 	bra	.END
 
 	; Function 7: Get next task info	
-.F7:	bsr 	TM_INDEX_TO_POINTER	
-	move.l 	A0,-(A7)
+.F7:	bsr	TM_INDEX_TO_POINTER	
+	move.l	A0,-(A7)
 	move.l	#TM_TCB_LIST, -(A7)
-	bsr 	LS_NEXT
+	bsr	LS_NEXT
 	add	#4, A7
 	move.l	(A7),A0
-	move.b	#$FF, D1	; resultado por defecto 'no hay más tareas'
-	cmp 	#$FFFFFFFF, A0	
-	beq 	.END		; termina con el resultado por defecto
+	move.b	#$FF, D1	; resultado por defecto 'no hay mï¿½s tareas'
+	cmp	#$FFFFFFFF, A0	
+	beq	.END		; termina con el resultado por defecto
 	bsr	TM_GET_TASK_INFO
 	move.b D1, 7(A7)	;first task index
 	move.l A1, 32(A7)	;pointer to the first memory position of the first task
