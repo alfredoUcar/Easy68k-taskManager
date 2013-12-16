@@ -239,7 +239,7 @@ LS_NEXT:
 
 		; PUSH registers. 1 LONG + 3 WORD = 10 bytes. Add 10
 		; to all stack references
-		movem.l	A0, -(A7)
+		movem.l	A0-A1, -(A7)
 		movem.w	D1-D3, -(A7)		
 
 		move.l	14(A7), A0	; guardamos el puntero a la lista
@@ -262,9 +262,10 @@ N_LOOP:		add.w	D3, A1		; A1 = elemento siguiente
 N_END:		
 		; restaura los registros
 		movem.w	(A7)+, D1-D3
-		movem.l	(A7)+, A0		
+		movem.l	(A7)+, A0-A1		
 		rts	
 *-------------------------------------------------------------
+
 
 *~Font name~Courier New~
 *~Font size~10~

@@ -170,7 +170,7 @@ TM_TRAP0_DISPATCHER:
 	bra	.END
 	
 	; Function 3: Switch to next task	
-.F3:	move.l	#TM_CURRENT_TASK, -(A7)	
+.F3:	move.l	(TM_CURRENT_TASK), -(A7)	
 	move.l	#TM_TCB_LIST, -(A7)
 	bsr	LS_NEXT
 	add	#4, A7				; restaura parte de la pila
@@ -434,6 +434,7 @@ TM_CURRENT_TASK:	ds.l	1				; Pointer to the current TCB
 TM_MIN_CYCLE_TIME:	ds.l	1				; Minimum cycle time (units: 1/100 of second)
 TM_PREVIOUS_TIME:	ds.l	1				; Last time stamp used to measure cycle time
 ************************************************************
+
 
 
 
