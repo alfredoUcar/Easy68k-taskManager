@@ -59,7 +59,9 @@ TM_INSTALL:
 	bsr 	LS_INIT			; init TCB list
 	add.w	#8, A7			; restaura la pila
 	move.l	#TM_TRAP0_DISPATCHER, ($80)	; instala el TRAP #0 dispatcher
-	;andi 	#$DFFF, SR		; pasa a modo usuario
+	move.l	(SP),A0			; guardamos el valor de retorno de la pila de supervisor(SS)
+	andi 	#$DFFF, SR		; pasa a modo usuario
+	move.l	A0,(SP)			; restaura el valor de retorno en la pila de usuario(US)
 	rts
 *-----------------------------------------------------------
 
@@ -157,7 +159,9 @@ TM_TRAP0_DISPATCHER:
 	bra	.END
 
 	; Function 2: Start
-.F2:	move.l	#TM_TCB_LIST, -(A7)
+.F2:	bsr	TM_GET_TIME
+	move.l	D1, (TM_PREVIOUS_TIME)		; guardamos el tiempo actual(inicio de ciclo)
+	move.l	#TM_TCB_LIST, -(A7)
 	bsr	LS_FIRST
 	move.l	(A7)+, A0
 	move.l	A0,(TM_CURRENT_TASK) 		; puntero primer TCB
@@ -170,11 +174,7 @@ TM_TRAP0_DISPATCHER:
 	bra	.END
 	
 	; Function 3: Switch to next task	
-.F3:	move.l	(TM_CURRENT_TASK), -(A7)	
-	move.l	#TM_TCB_LIST, -(A7)
-	bsr	LS_NEXT
-	add	#4, A7				; restaura parte de la pila
-	move.l	(A7)+, A0
+.F3:	bsr	TM_NEXT_TASK			
 	move.l	A0,(TM_CURRENT_TASK) 		; puntero primer TCB
 	add	#2,A0				; saltamos la cabecera, A0-> punto de entrada de la tarea
 	move.l	(A0), 62(A7)			; cede el control a la tarea
@@ -425,6 +425,71 @@ TM_GET_TASK_INFO:
 	move.w	(A0), D2		; Task ID
 	rts
 *-----------------------------------------------------------
+TM_FINISH_CICLE:
+* Description : Given the pointer to the task in the TCB list,
+*               it outputs the information of this item.
+* Pre         : A0: Pointer to the task in the TCB
+* Post        : D1.B: task index
+*		D2.B: task ID
+*		A1: task memory pointer		
+* Modifies    : A0
+*-----------------------------------------------------------
+	movem.l	D0-D1,-(A7)	; push
+	bsr	TM_GET_TIME
+	move.l	(TM_PREVIOUS_TIME),D0
+	sub.l	D0,D1		; tiempo transcurrido del ciclo actual
+	move.l	D1,D0
+	move.l	(TM_MIN_CYCLE_TIME),D1
+	cmp.l	D0,D1
+	ble	.END		; T de ciclo <= T transcurrido
+	; esperamos el tiempo que falta
+	sub.l	D0, D1		; tiempo que falta para completar el ciclo
+	bsr	TM_DELAY
+	bsr	TM_GET_TIME
+	move.l	D1, (TM_PREVIOUS_TIME)		; guardamos el tiempo actual(inicio de ciclo)	
+.END:	movem.l (A7)+,D0-D1	; pop
+	rts
+*-----------------------------------------------------------
+TM_NEXT_TASK:
+* Description : search next task in TCB list
+* Post        : A0: new TM_CURRENT_TASK
+*		A1: task memory pointer		
+* Modifies    : nothing
+*-----------------------------------------------------------
+	move.l	(TM_CURRENT_TASK), -(A7)	
+	move.l	#TM_TCB_LIST, -(A7)
+	bsr	LS_NEXT
+	add	#4, A7				; restaura parte de la pila
+	move.l	(A7)+, A0
+	cmp.l	#$FFFFFFFF,A0
+	bne	.END				; no ha llegado a la última tarea			
+	;ha llegado al final de la lista
+	;establece la primera tarea como la actual
+	bsr	TM_FINISH_CICLE	; espera hasta que finaliza el ciclo de tiempo	
+	move.l	#TM_TCB_LIST, -(A7)
+	bsr	LS_FIRST
+	move.l	(A7)+, A0	; new TM_CURRENT_TASK
+.END	rts
+
+*---------------------
+TM_GET_TIME:
+*Devuelve el tiempo (en centésimas) pasado desde medianoche
+*Modifica: 	D1.L: resultado
+*		D0.W
+*---------------------
+		move.w	#8, D0
+		trap	#15
+		rts
+**---------------------
+TM_DELAY:
+*Espera una cierta cantidad de tiempo
+*Parámetros. 	D1 : tiempo de espera en centésimas
+*Modifica: 	D1.L
+*		D0.W
+*---------------------
+		move.w	#23, D0
+		trap	#15
+		rts
 ************************************************************
 *                         VARIABLES                        *
 ************************************************************
@@ -434,6 +499,10 @@ TM_CURRENT_TASK:	ds.l	1				; Pointer to the current TCB
 TM_MIN_CYCLE_TIME:	ds.l	1				; Minimum cycle time (units: 1/100 of second)
 TM_PREVIOUS_TIME:	ds.l	1				; Last time stamp used to measure cycle time
 ************************************************************
+
+
+
+
 
 
 
