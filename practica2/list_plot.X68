@@ -40,7 +40,7 @@ LP_INSTALL:
 *-----------------------------------------------------------
 		move.l	#LP_ISR_MOUSE_MOVE, ($64)	; Associate ISR to level 1 interrupt
 		
-		SC_ENABLE_DBUFFER
+		;SC_ENABLE_DBUFFER
 		
 		move.w	#$0107, D1		; Interrupcion 1 cuando se mueve el mouse o se suelta el boton
 		move.b	#60, D0
@@ -318,6 +318,7 @@ LP_MOUSE_CY:	ds.w	1
 LP_MOUSE_BUT:	ds.b	1
 		ds.w	0		; Memory alignment
 ************************************************************	
+
 
 
 

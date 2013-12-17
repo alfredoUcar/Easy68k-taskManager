@@ -237,34 +237,36 @@ LS_NEXT:
 *               supposed to point to a properly initialized list.
 *-----------------------------------------------------------
 
-		; PUSH registers. 1 LONG + 3 WORD = 10 bytes. Add 10
+		; PUSH registers. 2 LONG + 3 WORD = 14 bytes. Add 14
 		; to all stack references
-		movem.l	A0, -(A7)
+		movem.l	A0-A1, -(A7)
 		movem.w	D1-D3, -(A7)		
 
-		move.l	14(A7), A0	; guardamos el puntero a la lista
+		move.l	18(A7), A0	; guardamos el puntero a la lista
 		move.w	(A0)+, D1	; tama�o de lista (N)
 		move.w	(A0)+, D2	; tama�o de elemento (M)
-		move.l	18(A7), A1	; A1 = puntero elemento actual
+		move.l	22(A7), A1	; A1 = puntero elemento actual
 		lsl.w	#1, D2		; D2 = M*2
 		add.w	#2, D2		; D2 = 2(M+1) , bytes/elemento
 		move.w	D2, D3		; copia
 		sub.w	#1, D1		; N-1
 		mulu	D1, D2		; D2 = (N-1)(M+1)2
 		add.l	D2, A0		; A0 = ultimo elemento
-		move.l	#$FFFFFFFF, 18(A7) ; resultado por defecto 'no encontrado'
+		move.l	#$FFFFFFFF, 22(A7) ; resultado por defecto 'no encontrado'
 N_LOOP:		add.w	D3, A1		; A1 = elemento siguiente		
 		cmp	A1,A0
 		blt	N_END	; @ mayor que la del ultimo elemento
 		cmp	#$FFFF,(A1)
 		bne	N_LOOP
-		move.l	A1, 18(A7) ; encontrado, guarda resultado
+		move.l	A1, 22(A7) ; encontrado, guarda resultado
 N_END:		
 		; restaura los registros
 		movem.w	(A7)+, D1-D3
-		movem.l	(A7)+, A0		
+		movem.l	(A7)+, A0-A1		
 		rts	
 *-------------------------------------------------------------
+
+
 
 *~Font name~Courier New~
 *~Font size~10~
