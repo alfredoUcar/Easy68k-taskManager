@@ -208,7 +208,7 @@ TM_TRAP0_DISPATCHER:
 	beq .END		; no hay tareas
 	bsr	TM_GET_TASK_INFO
 	move.b D1, 7(A7)	;first task index
-	move.l A1, 32(A7)	;pointer to the first memory position of the first task
+	move.l A1, 36(A7)	;pointer to the first memory position of the first task
 	move.b D2, 11(A7)	;first task ID
 	bra	.END
 
@@ -218,13 +218,13 @@ TM_TRAP0_DISPATCHER:
 	move.l	#TM_TCB_LIST, -(A7)
 	bsr	LS_NEXT
 	add	#4, A7
-	move.l	(A7),A0
-	move.b	#$FF, D1	; resultado por defecto 'no hay mï¿½s tareas'
-	cmp	#$FFFFFFFF, A0	
-	beq	.END		; termina con el resultado por defecto
+	move.l	(A7)+,A0
+	move.b	#$FF, 7(A7)	; resultado por defecto 'no hay más tareas'
+	cmp 	#$FFFFFFFF, A0	
+	beq 	.END		; termina con el resultado por defecto
 	bsr	TM_GET_TASK_INFO
 	move.b D1, 7(A7)	;first task index
-	move.l A1, 32(A7)	;pointer to the first memory position of the first task
+	move.l A1, 36(A7)	;pointer to the first memory position of the first task
 	move.b D2, 11(A7)	;first task ID
 	bra	.END
 
@@ -499,6 +499,8 @@ TM_CURRENT_TASK:	ds.l	1				; Pointer to the current TCB
 TM_MIN_CYCLE_TIME:	ds.l	1				; Minimum cycle time (units: 1/100 of second)
 TM_PREVIOUS_TIME:	ds.l	1				; Last time stamp used to measure cycle time
 ************************************************************
+
+
 
 
 
