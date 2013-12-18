@@ -63,7 +63,7 @@ IDP_GET_ID:
 	bsr	LS_FIRST
 	move.l	(A7)+, A0	; puntero al elemento encontrado
 	move.b	#$FF, D0	; inicializacion resultado	
-	cmp.l	#$FFFFFF, A0
+	cmp.l	#$FFFFFFFF, A0
 	beq	.END		; no hay libre
 	move.w	#$0000, (A0)+	; marcamos como cogido
 	move.w	(A0), D0	; guardamos resultado
@@ -105,6 +105,7 @@ IDP_RELEASE_ID:
 ************************************************************
 IDP_IDLIST:		ds.w	2+TM_MAX_TASKS*(1+1)	; ID List
 ************************************************************
+
 
 
 
