@@ -36,26 +36,23 @@ TK_DRAW_ENEM:
 		;push
 		movem.l	D0-D5/A0,-(A7)
 		;paso de parametros
-		clr	D1
-		move.b	TK_PIXEL(A1),D1
+		clr	D7
+		move.b	TK_PIXEL(A1),D7		; guarda el tamaño de pixel en un word
+		
+		move	D7,D1
 		mulu	#TK_ENEM_ROWS,D1
-		divu	#2,D1		
-		;move.w	#(TK_PIXEL*TK_ENEM_ROWS/2), D1	; height/2
-		clr	D2
-		move.b	TK_PIXEL(A1),D2
+		divu	#2,D1		; height/2		
+
+		move	D7,D2
 		mulu	#TK_ENEM_COLUMNS,D2
-		divu	#2,D2
-		;move.w	#(TK_PIXEL*TK_ENEM_COLUMNS/2), D2	; width/2
+		divu	#2,D2		; width/2
+
 		move.l	TK_VAR_COLOR_1(A1),D3
-		;move.l	#TK_ENEM_COLOR1,D3
 		move.l	TK_VAR_COLOR_2(A1),D4
-		;move.l	#TK_ENEM_COLOR2,D4		
 		move.w	#TK_ENEM_COLUMNS-1, D5
 		swap	D5
 		move.w	#TK_ENEM_ROWS-1, D5
-		lea	TK_ENEM_LIST, A0	; lista de puntos
-		clr	D7
-		move.b	TK_PIXEL(A1),D7		
+		lea	TK_ENEM_LIST, A0	; lista de puntos			
 		;dibuja la figura
 		bsr	TK_DRAW_FIG				
 
@@ -76,10 +73,19 @@ TK_DRAW_NAVE:
 		;push
 		movem.l	D0-D5/A0,-(A7)
 		;paso de parametros
-		move.w	#(TK_PIXEL*TK_NAVE_ROWS/2), D1	; height/2
-		move.w	#(TK_PIXEL*TK_NAVE_COLUMNS/2), D2	; width/2
-		move.l	#TK_NAVE_COLOR,D3
-		move.l	#TK_NAVE_COLOR,D4		
+		clr	D7
+		move.b	TK_PIXEL(A1),D7		; guarda el tamaño de pixel en un word
+		
+		move	D7,D1
+		mulu	#TK_NAVE_ROWS,D1
+		divu	#2,D1		; height/2	
+
+		move	D7,D2
+		mulu	#TK_NAVE_COLUMNS,D2
+		divu	#2,D2		; width/2
+
+		move.l	TK_VAR_COLOR_1(A1),D3
+		move.l	TK_VAR_COLOR_2(A1),D4
 		move.w	#TK_NAVE_COLUMNS-1, D5
 		swap	D5
 		move.w	#TK_NAVE_ROWS-1, D5
@@ -102,10 +108,19 @@ TK_DRAW_EXP:
 		;push
 		movem.l	D0-D5/A0,-(A7)
 		;paso de parametros
-		move.w	#(TK_PIXEL*TK_EXP_ROWS/2), D1	; height/2
-		move.w	#(TK_PIXEL*TK_EXP_COLUMNS/2), D2	; width/2
-		move.l	#TK_EXP_COLOR1,D3
-		move.l	#TK_EXP_COLOR2,D4		
+		clr	D7
+		move.b	TK_PIXEL(A1),D7		; guarda el tamaño de pixel en un word
+		
+		move	D7,D1
+		mulu	#TK_EXP_ROWS,D1
+		divu	#2,D1		; height/2
+
+		move	D7,D2
+		mulu	#TK_EXP_COLUMNS,D2
+		divu	#2,D2		; width/2
+		
+		move.l	TK_VAR_COLOR_1(A1),D3
+		move.l	TK_VAR_COLOR_2(A1),D4
 		move.w	#TK_EXP_COLUMNS-1, D5
 		swap	D5
 		move.w	#TK_EXP_ROWS-1, D5
@@ -137,6 +152,7 @@ TK_DRAW_FIG:
 		movem.l	D0-D7/A0,-(A7)
 		
 		movem.l D0-D1,-(A7)
+		TK_SET_PEN	D3
 		TK_SET_FILL	D4
 		movem.l (A7)+,D0-D1
 		

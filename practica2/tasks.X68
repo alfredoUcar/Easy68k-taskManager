@@ -102,7 +102,7 @@ T1_START:
 ; draw enemy(decoration)	
 				move.b	T1_PIXEL(A0),TK_PIXEL(A1) 	; set global pixel
 				; set global color
-				move.l	T1_ENEM_COLOR(A0),TK_VAR_COLOR_1(A1) 	; pixel pen
+				move.l	#0,TK_VAR_COLOR_1(A1) 	; pixel pen
 				move.l	T1_ENEM_COLOR(A0),TK_VAR_COLOR_2(A1)	; pixel fill
 				move	#(TK_SCREEN_WIDTH/2-T1_PIXEL_SIZE),D0		; set x
 				swap	D0
