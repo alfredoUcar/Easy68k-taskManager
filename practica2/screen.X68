@@ -8,7 +8,7 @@
 *             \2: Height (pixels)
 * Modifies  : D0, D1
 *-----------------------------------------------------------
-SC_SET_RES 	MACRO
+TK_SET_RES 	MACRO
 		move.b	#33, D0
 		move.l	#\1*$10000+\2, D1
 		trap	#15
@@ -18,7 +18,7 @@ SC_SET_RES 	MACRO
 * Macro to set windowed mode
 * Modifies  : D0, D1
 *-----------------------------------------------------------
-SC_SET_WINDOWED	MACRO
+TK_SET_WINDOWED	MACRO
 		move.b	#33, D0
 		move.l	#1, D1
 		trap	#15
@@ -28,7 +28,7 @@ SC_SET_WINDOWED	MACRO
 * Macro to set fullscreen mode
 * Modifies  : D0, D1
 *-----------------------------------------------------------
-SC_SET_FULLSCREEN MACRO
+TK_SET_FULLSCREEN MACRO
 		move.b	#33, D0
 		move.l	#2, D1
 		trap	#15
@@ -40,7 +40,7 @@ SC_SET_FULLSCREEN MACRO
 *             \2: Y
 * Modifies  : D0, D1
 *-----------------------------------------------------------
-SC_LOCATE	MACRO		
+TK_LOCATE	MACRO		
 		move.b	\1, D1	; Put X coordinate
 		lsl.w	#8, D1
 		move.b	\2, D1	; Put Y coordinate
@@ -53,7 +53,7 @@ SC_LOCATE	MACRO
 * Parameters: \1: Color in format $00BBGGRR
 * Modifies  : D0, D1
 *-----------------------------------------------------------		
-SC_SET_PEN	MACRO
+TK_SET_PEN	MACRO
 		move.l	\1, D1
 		move.b	#80, D0
 		trap	#15
@@ -65,7 +65,7 @@ SC_SET_PEN	MACRO
 * Parameters: \1: Color in format $00BBGGRR
 * Modifies  : D0, D1
 *-----------------------------------------------------------		
-SC_SET_FILL	MACRO
+TK_SET_FILL	MACRO
 		move.l	\1, D1
 		move.b	#81, D0
 		trap	#15
@@ -76,7 +76,7 @@ SC_SET_FILL	MACRO
 * Macro to clear the screen
 * Modifies  : D0, D1
 *-----------------------------------------------------------
-SC_CLEAR	MACRO
+TK_CLEAR	MACRO
 		move.b	#11, D0
 		move.w	#$FF00, D1
 		trap	#15
@@ -87,7 +87,7 @@ SC_CLEAR	MACRO
 * Parameters: \1: String address
 * Modifies  : D0, A1
 *-----------------------------------------------------------
-SC_PRINT_STR	MACRO
+TK_PRINT_STR	MACRO
 		lea	\1, A1
 		move.b	#14, D0
 		trap	#15
@@ -98,7 +98,7 @@ SC_PRINT_STR	MACRO
 * Parameters: 
 * Modifies  : D0, D1
 *-----------------------------------------------------------
-SC_ENABLE_DBUFFER MACRO
+TK_ENABLE_DBUFFER MACRO
 		move.b	#17, D1
 		move.b	#92, D0
 		trap	#15
@@ -109,7 +109,7 @@ SC_ENABLE_DBUFFER MACRO
 * Parameters: 
 * Modifies  : D0, D1
 *-----------------------------------------------------------
-SC_DISABLE_DBUFFER MACRO
+TK_DISABLE_DBUFFER MACRO
 		move.b	#16, D1
 		move.b	#92, D0
 		trap	#15
@@ -120,7 +120,7 @@ SC_DISABLE_DBUFFER MACRO
 * Parameters: 
 * Modifies  : D0, D1
 *-----------------------------------------------------------
-SC_REPAINT_SCREEN MACRO
+TK_REPAINT_SCREEN MACRO
 		move.b	#94, D0
 		trap	#15
 		ENDM		
@@ -138,7 +138,7 @@ SC_REPAINT_SCREEN MACRO
 * Modifies: D0, D1, D2, D3, D4
 *----------------------------------------------------------------------
 
-SC_DRAW_RECTANGLE MACRO
+TK_DRAW_RECTANGLE MACRO
 		move.w	\1, D1
 		move.w	\2, D2
 		move.w	\3, D3
@@ -155,7 +155,7 @@ SC_DRAW_RECTANGLE MACRO
 * Modifies: D0, D1, D2, D3, D4
 *----------------------------------------------------------------------
 
-SC_DRAW_SQUARE MACRO
+TK_DRAW_SQUARE MACRO
 		move.w	\1, D1
 		move.w	\2, D2
 		move.w	\1, D3
@@ -174,7 +174,7 @@ SC_DRAW_SQUARE MACRO
 * Parameters: \4: screen width	[constant]
 * Modifies: \1, \2 (set up to the new position) and D0
 *----------------------------------------------------------------------	
-SC_NEXT_POSITION MACRO
+TK_NEXT_POSITION MACRO
 		add.w	#\3, \1 ; incrementa la X
 		move.w	#\4, D0 ; d0 = screen width
 		sub.w	#\3, D0 ; d0 = (screen width - element size)
@@ -188,7 +188,7 @@ END\@
 *----------------------------------------------
 * Salto de linea
 *----------------------------------------------
-SC_NEW_LINE	MACRO
+TK_NEW_LINE	MACRO
 		movem.w	D0-D1, -(A7)
 		clr	D1
 		clr	D0
@@ -201,7 +201,7 @@ SC_NEW_LINE	MACRO
 * Parameters: \1: color
 * Parameters: \2: estilo, tamaño y fuente
 *------------------------------------------
-SC_SET_FONT	MACRO
+TK_SET_FONT	MACRO
 		movem.w	D0-D2, -(A7)
 		move.l	\1, D1
 		move.l	\2, D2
@@ -210,6 +210,7 @@ SC_SET_FONT	MACRO
 		movem.w	(A7)+, D0-D2
 		ENDM
 		
+
 
 
 
