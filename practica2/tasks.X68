@@ -14,9 +14,16 @@
 ************************************************************
 TK_VAR_FIRST_TIME		EQU	0
 TK_VAR_ID			EQU	1
+************************************************************
 
 ************************************************************
 *                    INITIALIZATION ROUTINE                *
+************************************************************
+
+************************************************************
+*                   SOURCE FILE INCLUDES                   *
+************************************************************
+			INCLUDE	"figura.x68"	; List library
 ************************************************************
 
 * ----------------------------------------------------------
@@ -63,7 +70,8 @@ T3_START:
 ; Vemos si es la primera vez que se ha iniciado esta tarea
 			cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 			beq	T3_INIT
-;Si no es la primera vez que se inicializa esta tarea				
+; Si no es la primera vez que se inicializa esta tarea
+			
 
 
 * ----------------------------------------------------------
@@ -74,7 +82,12 @@ T3_INIT:
 * ----------------------------------------------------------
 ; Store task ID. When switching to a task, the ID is in D1, but
 ; storing in shared memory makes things easier.
-			move.b D1, TK_VAR_ID(A0)
+			move.b	D1, TK_VAR_ID(A0)
+; la siguiente vez que volvamos a esta task, no será la primera
+			move.b	#$FF, TK_VAR_FIRST_TIME(A0)
+; switch
+			move.b	#3,D0
+			trap	#0
 * ----------------------------------------------------------
 
 
