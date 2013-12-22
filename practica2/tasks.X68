@@ -19,6 +19,9 @@ TK_TYPE_ENEM			EQU	2
 TK_VAR_FIRST_TIME		EQU	0
 TK_VAR_ID			EQU	1
 TK_VAR_TYPE			EQU	2
+TK_PIXEL			EQU	3
+TK_VAR_COLOR_1			EQU	4
+TK_VAR_COLOR_2			EQU	8
 ************************************************************
 *                   SOURCE FILE INCLUDES                   *
 ************************************************************
@@ -36,7 +39,7 @@ TK_INIT:
 * manager.
 * ----------------------------------------------------------
 ; Define minimum cycle time
-			move.l	#5, D1
+			move.l	#10, D1
 			move.b	#8, D0
 			trap	#0
 
@@ -62,11 +65,27 @@ TK_INIT:
 T1_OPTION		EQU	4
 T1_UP_KEY		EQU	5
 T1_DOWN_KEY		EQU	6
+T1_PIXEL		EQU	7
+T1_ENEM_COLOR		EQU	8
+;draw:
+T1_PIXEL_SIZE		EQU	15
+;colors
+T1_COLOR_1			EQU	$00FFFFFF
+T1_COLOR_2			EQU	$00000000
+T1_COLOR_3			EQU	$00FF6600		
 ;font:
 T1_FONT			EQU	$04	; lucida console
 T1_FONT_SIZE		EQU	$12 	; 18
 T1_FONT_STYLE		EQU	$0001	; bold
 T1_FONT_PROP		EQU	(T1_FONT*$1000000)+(T1_FONT_SIZE*$10000)+T1_FONT_STYLE		; $040B0001
+;strings
+T1_STR_1			dc.b	'    EASY    ',0	; option 1
+T1_STR_2			dc.b	'   MEDIUM   ',0	; option 2
+T1_STR_3			dc.b	'    HARD    ',0	; option 3
+T1_STR_4			dc.b	10,13,0
+T1_STR_PRESS			dc.b	'Press "enter" to start the game',0
+T1_STR_COPYRIGHT		dc.b	'©antoil',10,13,'Made by Pablo Riutort & Alfredo Ucendo',0
+
 ; ==========================================================
 ; Task 1 functions
 ; ==========================================================
@@ -81,10 +100,19 @@ T1_START:
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T1_INIT
 ; draw enemy(decoration)	
-				move	#(TK_SCREEN_WIDTH/2-TK_PIXEL),D0	; set x
+				move.b	T1_PIXEL(A0),TK_PIXEL(A1) 	; set global pixel
+				; set global color
+				move.l	T1_ENEM_COLOR(A0),TK_VAR_COLOR_1(A1) 	; pixel pen
+				move.l	T1_ENEM_COLOR(A0),TK_VAR_COLOR_2(A1)	; pixel fill
+				move	#(TK_SCREEN_WIDTH/2-T1_PIXEL_SIZE),D0		; set x
 				swap	D0
-				move	#(TK_SCREEN_HEIGHT/3-TK_PIXEL*3),D0 	; set y				
+				move	#(TK_SCREEN_HEIGHT/3-T1_PIXEL_SIZE*2),D0 	; set y				
 				bsr	TK_DRAW_ENEM
+				move.l	T1_ENEM_COLOR(A0),D0
+				bsr	T1_UPDATE_COLOR
+				move.l	D0,T1_ENEM_COLOR(A0)
+				move	#$F5,D4
+				add.b	#15,D4
 ; Displays options
 				;set font properties
 				move.b	#21,D0
@@ -97,30 +125,30 @@ T1_START:
 				cmp.b	#1,T1_OPTION(A0)
 				beq	T1_OP1_SELECTED
 				; set background color for option 1 as not selected
-				TK_SET_FILL	(T1_COLOR_1)
+				TK_SET_FILL	#T1_COLOR_1
 				bra	T1_OP1_SHOW
 T1_OP1_SELECTED:		; set background color for option 1 as selected
-				TK_SET_FILL	(T1_COLOR_3)	
+				TK_SET_FILL	#T1_COLOR_3	
 T1_OP1_SHOW:			TK_PRINT_STR	T1_STR_1
 ; display option 2		
 				TK_LOCATE 	#((TK_SCREEN_WIDTH/T1_FONT_SIZE)/2-3),#(((TK_SCREEN_HEIGHT/T1_FONT_SIZE)/3)+1)				
 				cmp.b	#2,T1_OPTION(A0)
 				beq	T1_OP2_SELECTED
 				; set background color for option 1 as not selected
-				TK_SET_FILL	(T1_COLOR_1)		
+				TK_SET_FILL	#T1_COLOR_1		
 				bra	T1_OP2_SHOW
 T1_OP2_SELECTED:		; set background color for option 1 as selected
-				TK_SET_FILL	(T1_COLOR_3)
+				TK_SET_FILL	#T1_COLOR_3
 T1_OP2_SHOW:			TK_PRINT_STR	T1_STR_2
 ; display option 3		
 				TK_LOCATE 	#((TK_SCREEN_WIDTH/T1_FONT_SIZE)/2-3),#((TK_SCREEN_HEIGHT/T1_FONT_SIZE)/3+2)				
 				cmp.b	#3,T1_OPTION(A0)
 				beq	T1_OP3_SELECTED
 				; set background color for option 1 as not selected
-				TK_SET_FILL	(T1_COLOR_1)	
+				TK_SET_FILL	#T1_COLOR_1	
 				bra	T1_OP3_SHOW
 T1_OP3_SELECTED:		; set background color for option 1 as selected
-				TK_SET_FILL	(T1_COLOR_3)
+				TK_SET_FILL	#T1_COLOR_3
 T1_OP3_SHOW:			TK_PRINT_STR	T1_STR_3
 
 ; Check for up/down keys	
@@ -165,8 +193,96 @@ T1_GOTO_LAST:			move.b	#3,T1_OPTION(A0)
 
 ; End by switching to next task
 T1_NEXT:			move.b	#3, D0
-				trap	#0																
+				trap	#0
 
+*----------------------------------------------------------
+T1_UPDATE_COLOR:
+* Update the color according to this sequence:
+*				R	G	B
+*			1)	FF	00	00
+*			2)	FF	FF	00
+*			3)	00	FF	00
+*			4)	00	FF	FF
+*			5)	00	00	FF
+*			6)	FF	00	FF --> 1) ...	
+* There's always a value 00 and FF while the other one vary between 00~FF	
+* Pre:	D0.L color to be updated
+* Post:	D0.L color updated
+* Modifies: nothinh
+*----------------------------------------------------------
+				movem.w	D1-D3,-(A7); push
+				
+				;get RGB values
+				move.b	D0,D1	; red
+				lsr.l	#8,D0
+				move.b	D0,D2	; green
+				lsr.l	#8,D0
+				move.b	D0,D3	; blue
+				
+				cmp.b	#$FF,D1
+				bne	.T1_CHECK_R	; R<FF G=?? B=??
+				;R=FF G=?? B=??
+				cmp.b	#0,D3
+				bne	.T1_DEC_B	; R=FF G=00 B>00
+				;R=FF G=?? B=00
+				cmp.b	#$FF,D2
+				beq	.T1_DEC_R	; R=FF G=FF B=00
+				;R=FF G<FF B=00
+				bra	.T1_INC_G
+				
+.T1_CHECK_R:			; R<FF G=?? B=??
+				cmp.b	#0,D1
+				bne	.T1_CHECK_G		; 00<R<FF G=?? B=??
+				; R=00 G=?? B=??
+				cmp.b	#$FF,D2
+				bne	.T1_CHECK_B	; R=00 G<FF B=??
+				; R=00 G=FF B=??
+				cmp.b	#$FF,D3
+				beq	.T1_DEC_G	; R=00 G=FF B=FF
+				; R=00 G=FF B<FF
+				bra	.T1_INC_B
+				
+.T1_CHECK_G:			; 00<R<FF G=?? B=??
+				cmp.b	#0,D2
+				bne	.T1_DEC_R	; 00<R<FF G=FF B=00
+				; 00<R<FF G=00 B=FF
+				bra	.T1_INC_R
+				
+.T1_CHECK_B:			; R=00 G<FF B=??
+				cmp.b	#0,D2
+				bne	.T1_DEC_G	; R=00 G<FF B=FF
+				; R=00 G=00 B=FF
+				bra	.T1_INC_R				
+				
+.T1_INC_R:			add.b	#1,D1	; increase Red
+				bra	.T1_END
+				
+.T1_DEC_R:			sub.b	#1,D1	; decrease Red
+				bra	.T1_END
+				
+.T1_INC_G:			add.b	#1,D2	; increase Green
+				bra	.T1_END
+				
+.T1_DEC_G:			sub.b	#1,D2	; decrease Green
+				bra	.T1_END
+				
+.T1_INC_B:			add.b	#1,D3	; increase Blue
+				bra	.T1_END
+				
+.T1_DEC_B:			sub.b	#1,D3	; decrease Blue
+				bra	.T1_END
+				
+.T1_END:			;set new RGB values
+				move.b	D3,D0	; blue
+				lsl.l	#8,D0
+				move.b	D2,D0	; green
+				lsl.l	#8,D0
+				move.b	D1,D0	; red
+				
+				movem.w	(A7)+,D1-D3 ; pop
+				rts
+																
+			
 * ----------------------------------------------------------
 T1_INIT:
 * Task 1 initialization
@@ -184,23 +300,13 @@ T1_INIT:
 ; set up/down keys as not pressed
 				move.b	#0, T1_UP_KEY(A0)
 				move.b	#0, T1_DOWN_KEY(A0)
+; init properties for decorative enemy
+				move.l	#$000000FF,T1_ENEM_COLOR(A0) ; red
+				move.b	#T1_PIXEL_SIZE, T1_PIXEL(A0) ; set pixel size to 15
 ; Switch to the next task				
 				move.b	#3, D0
 				trap	#0				
-* ----------------------------------------------------------
-								
-; ==========================================================
-; Task 1 strings
-; ==========================================================
-T1_STR_1			dc.b	'    EASY    ',0	; option 1
-T1_STR_2			dc.b	'   MEDIUM   ',0	; option 2
-T1_STR_3			dc.b	'    HARD    ',0	; option 3
-T1_STR_4			dc.b	10,13,0
-T1_STR_PRESS			dc.b	'Press "enter" to start the game',0
-T1_STR_COPYRIGHT		dc.b	'©antoil',10,13,'Made by Pablo Riutort & Alfredo Ucendo',0
-T1_COLOR_1			dc.l	$00FFFFFF
-T1_COLOR_2			dc.l	$00000000
-T1_COLOR_3			dc.l	$00FF6600
+* ----------------------------------------------------------							
 
 ************************************************************
 *                            TASK 2                        *

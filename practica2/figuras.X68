@@ -1,9 +1,9 @@
 *-----------------------------------------------
 *		FIGURAS
-*-----------------------------------------------
-TK_PIXEL	EQU	3
-TK_SCREEN__WIDTH	EQU	640
-TK_SCREEN_HEIGHT	EQU	480
+**-----------------------------------------------
+*TK_PIXEL	EQU	3
+*TK_SCREEN__WIDTH	EQU	640
+*TK_SCREEN_HEIGHT	EQU	480
 *-----------------------------------------------
 *		ENEMIGO
 *-----------------------------------------------
@@ -36,14 +36,26 @@ TK_DRAW_ENEM:
 		;push
 		movem.l	D0-D5/A0,-(A7)
 		;paso de parametros
-		move.w	#(TK_PIXEL*TK_ENEM_ROWS/2), D1	; height/2
-		move.w	#(TK_PIXEL*TK_ENEM_COLUMNS/2), D2	; width/2
-		move.l	#TK_ENEM_COLOR1,D3
-		move.l	#TK_ENEM_COLOR2,D4		
+		clr	D1
+		move.b	TK_PIXEL(A1),D1
+		mulu	#TK_ENEM_ROWS,D1
+		divu	#2,D1		
+		;move.w	#(TK_PIXEL*TK_ENEM_ROWS/2), D1	; height/2
+		clr	D2
+		move.b	TK_PIXEL(A1),D2
+		mulu	#TK_ENEM_COLUMNS,D2
+		divu	#2,D2
+		;move.w	#(TK_PIXEL*TK_ENEM_COLUMNS/2), D2	; width/2
+		move.l	TK_VAR_COLOR_1(A1),D3
+		;move.l	#TK_ENEM_COLOR1,D3
+		move.l	TK_VAR_COLOR_2(A1),D4
+		;move.l	#TK_ENEM_COLOR2,D4		
 		move.w	#TK_ENEM_COLUMNS-1, D5
 		swap	D5
 		move.w	#TK_ENEM_ROWS-1, D5
 		lea	TK_ENEM_LIST, A0	; lista de puntos
+		clr	D7
+		move.b	TK_PIXEL(A1),D7		
 		;dibuja la figura
 		bsr	TK_DRAW_FIG				
 
@@ -113,16 +125,18 @@ TK_DRAW_FIG:
 *		D3.L: color 1
 *		D4.L: color 2
 *		D5.L: (COL-1,ROW-1)
+*		D7.w: pixel size
 *		A0:	puntero a la lista de puntos
+*		A1: puntero a la memoria compartida
 * Post        : 
 * Modified    : Nothing: all registers are restored.
 * Note        : When calling this subroutine, the required constants
 *               are assumed to have the correct values.
 *-----------------------------------------------------------
 		;push
-		movem.l	D0-D6/A0,-(A7)
+		movem.l	D0-D7/A0,-(A7)
+		
 		movem.l D0-D1,-(A7)
-TK_
 		TK_SET_FILL	D4
 		movem.l (A7)+,D0-D1
 		
@@ -144,18 +158,18 @@ TK_
 		movem.l	D0-D6,-(A7)
 		move.w	D4, D0
 		move.w	D3, D6
-		TK_DRAW_SQUARE D0,D6,TK_PIXEL
+		TK_DRAW_SQUARE D0,D6,D7
 		movem.l (A7)+, D0-D6
-.FOR_NEXT:	add.w	#TK_PIXEL, D4	; siguiente 'pixel' de la fila
+.FOR_NEXT:	add	D7, D4	; siguiente 'pixel' de la fila
 		add	#1,A0		; siguiente punto de la lista
 		dbra	D2,.FOR		; para cada columna..		
 		move.w	D5, D2		; reinicia el contador de columnas
-		add.w	#TK_PIXEL, D3	; siguiente fila
+		add.b	TK_PIXEL(A1), D3	; siguiente fila
 		move.w	D6, D4		; reinica la x
 		dbra	D1,.FOR		; para cada fila..
 
 .END:		;pop
-		movem.l (A7)+, D0-D6/A0
+		movem.l (A7)+, D0-D7/A0
 		rts
 
 

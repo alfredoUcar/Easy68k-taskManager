@@ -160,8 +160,8 @@ TK_DRAW_SQUARE MACRO
 		move.w	\2, D2
 		move.w	\1, D3
 		move.w	\2, D4
-		add.w	#\3, D3
-		add.w	#\3, D4
+		add.w	\3, D3
+		add.w	\3, D4
 		move.b	#87, D0
 		trap	#15
 		ENDM
@@ -210,6 +210,7 @@ TK_SET_FONT	MACRO
 		movem.w	(A7)+, D0-D2
 		ENDM
 		
+
 
 
 
