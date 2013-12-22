@@ -24,13 +24,20 @@ FG_EXP_ROWS	EQU	7
 FG_EXP_COLUMNS	EQU	10
 FG_EXP_COLOR1	EQU	$000033FF
 FG_EXP_COLOR2	EQU	$000066FF
-*-----------------------------------------------------------
+*-----------------------------------------------
+*		DISPARO
+*-----------------------------------------------
+FG_SHOOT_ROWS		EQU	3
+FG_SHOOT_COLUMNS	EQU	1
+FG_SHOOT_COLOR		EQU	$CCFF33
+*-----------------------------------------------
+************************************************
 FG_DRAW_ENEM:
 * Description : dibuja un enemigo en la posición indicada
 * Pre         : D0.L: coordenadas del centro(W1:X,W2:Y)
 * Post        : 
 * Modified    : Nothing: all registers are restored.
-* Note        : When calling this subroutine, the required constants
+* Note        : When calling this macro, the required constants
 *               are assumed to have the correct values.
 *-----------------------------------------------------------
 		;push
@@ -58,7 +65,7 @@ FG_DRAW_NAVE:
 * Pre         : D0.L: coordenadas del centro(W1:X,W2:Y)
 * Post        : 
 * Modified    : Nothing: all registers are restored.
-* Note        : When calling this subroutine, the required constants
+* Note        : When calling this macro, the required constants
 *               are assumed to have the correct values.
 *-----------------------------------------------------------
 		;push
@@ -84,7 +91,7 @@ FG_DRAW_EXP:
 * Pre         : D0.L: coordenadas del centro(W1:X,W2:Y)
 * Post        : 
 * Modified    : Nothing: all registers are restored.
-* Note        : When calling this subroutine, the required constants
+* Note        : When calling this macro, the required constants
 *               are assumed to have the correct values.
 *-----------------------------------------------------------
 		;push
@@ -116,7 +123,7 @@ FG_DRAW_FIG:
 *		A0:	puntero a la lista de puntos
 * Post        : 
 * Modified    : Nothing: all registers are restored.
-* Note        : When calling this subroutine, the required constants
+* Note        : When calling this macro, the required constants
 *               are assumed to have the correct values.
 *-----------------------------------------------------------
 		;push
@@ -170,7 +177,6 @@ FG_DRAW_FIG:
 		movem.l (A7)+, D0-D6/A0
 		rts
 
-
 ************************************************************
 *                         VARIABLES                        *
 ************************************************************
@@ -206,6 +212,8 @@ FG_EXP_LIST:	dc.b 0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,1,
 
 
 	
+
+
 
 
 

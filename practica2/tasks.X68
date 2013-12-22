@@ -14,6 +14,8 @@
 ************************************************************
 TK_VAR_FIRST_TIME		EQU	0
 TK_VAR_ID			EQU	1
+TK_SHOOY_X			EQU	2
+TK_SHOOT_Y			EQU	3
 ************************************************************
 
 ************************************************************
@@ -71,7 +73,7 @@ T3_START:
 			cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 			beq	T3_INIT
 ; Si no es la primera vez que se inicializa esta tarea
-			
+			FG_DRAW_NAVE
 
 
 * ----------------------------------------------------------
