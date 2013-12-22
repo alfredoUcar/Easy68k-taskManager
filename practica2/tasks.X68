@@ -13,6 +13,10 @@
 *		     COMMON CONSTANTS			   *
 ************************************************************
 TK_VAR_FIRST_TIME		EQU	0
+<<<<<<< HEAD
+=======
+TK_VAR_ID			EQU	1
+>>>>>>> tasks
 ************************************************************
 *                    INITIALIZATION ROUTINE                *
 ************************************************************
@@ -58,15 +62,24 @@ T3_START:
 * Task 3 entry point.
 * Draws a ship on the bottom of the screen
 * ----------------------------------------------------------
-*(Codigo)				
+; Vemos si es la primera vez que se ha iniciado esta tarea
+			cmp.b	#0, TK_VAR_FIRST_TIME(A0)
+			beq	T3_INIT
+;Si no es la primera vez que se inicializa esta tarea				
 
 
 * ----------------------------------------------------------
 T3_INIT:
 * Task 1 initialization
+<<<<<<< HEAD
 * 
+=======
+* Pone la nave en las coordenadas indicadas
+>>>>>>> tasks
 * ----------------------------------------------------------
-*(Codigo)				
+; Store task ID. When switching to a task, the ID is in D1, but
+; storing in shared memory makes things easier.
+			move.b D1, TK_VAR_ID(A0)
 * ----------------------------------------------------------
 
 
