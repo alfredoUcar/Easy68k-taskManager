@@ -60,14 +60,13 @@ TK_INIT:
 ; Task 3 constants
 ; ==========================================================
 SHIP_SIZE	EQU	20
-T3_VAR_X	EQU	4
-T3_VAR_Y	EQU	6
+T3_VAR_Y	EQU	4
+T3_VAR_SY	EQU	6
 ; ==========================================================
 ; Task 3 functions
 ; ==========================================================
-T3_EDGE:
-*Límite de la pantalla para la nave
-*Dibuja la nave en la última coordenada válida				
+;Dibuja la nave en la última posición válida
+T3_EDGE:			FG_DRAW_NAVE
 * ----------------------------------------------------------
 T3_START:
 * Task 3 entry point.
@@ -77,23 +76,16 @@ T3_START:
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T3_INIT
 ; Si no es la primera vez que se inicializa esta tarea
-; First check X boundary
-				cmp	#TK_SCREEN_WIDTH-SHIP_SIZE, T3_VAR_X(A0)
+; Miramos si colisiona con el límite de la pantalla				
+				cmp	#TK_SCREEN_HEIGHT-SHIP_SIZE, T3_VAR_Y(A0)
 				bgt	T3_EDGE
-				cmp	#SHIP_SIZE, T1_VAR_X(A0)
+				cmp	#SHIP_SIZE, T3_VAR_Y(A0)
 				blt	T3_EDGE
-; Luego actualiza la posición de la nave, dada por teclado
-*T3_UPDATE:			move.w	T1_VAR_SX(A0), D1
-*				add.w	D1, T1_VAR_X(A0)	; X=X+SX
-; Finally, draw the ship	
-					
-				move.w	T1_VAR_X(A0), D1
-				sub.w	#T1_RADIUS, D1		; D1=X-Radius
-				move.w	T1_VAR_X(A0), D2
-				add.w	#T1_RADIUS, D2		; D2=Y-Radius
-				
-				FG_DRAW_NAVE	
-
+; actualizamos la posición de la nave
+				move.w	T3_VAR_SY(A0), D1
+				add.w	D1, T3_VAR_Y(A0)	; Y=Y+SY
+; dibujamos la nave		
+				FG_DRAW_NAVE
 
 * ----------------------------------------------------------
 T3_INIT:
@@ -115,6 +107,76 @@ T3_INIT:
 ; switch
 			move.b	#3,D0
 			trap	#0
+* ----------------------------------------------------------
+
+; ==========================================================
+; Task 5 constants
+; ==========================================================
+T5_VAR_SPACE			EQU	4
+T5_VAR_Z			EQU	6
+T5_VAR_X			EQU	8
+T5_VAR_C			EQU	10
+T5_VAR_LEFT			EQU	12
+T5_VAR_RIGHT			EQU	14
+
+; ==========================================================
+; Task 5 functions
+; ==========================================================
+
+* ----------------------------------------------------------
+T5_START:
+* Task 5 entry point
+* Checks for [SPACE]. If so, creates a new shoot task
+* ----------------------------------------------------------
+				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
+				beq	T5_INIT
+; Check SPACE
+				move.b	#19, D0
+				move.l	#' '<<24+' '<<16+' '<<8+' ',D1
+				trap	#15
+				
+				and.b	#$01, D1		; Just change FF to 01 to
+								; avoid sign problems
+				
+				move.b	D1, D2			; Remember space state
+				sub.b	T5_VAR_SPACE(A0), D1	; Possible results:
+								; If D1=0, prev=0 -> 0
+								; If D1=0, prev=1 -> -1
+								; If D1=1, prev=0 -> 1
+								; If D1=1, prev=1 -> 0
+				cmp.b	#1, D1
+				bne	T5_SPACE_END
+				
+; Se ha pulsado la tecla espacio, creamos una tarea de disparo (T4)
+				move.b	D2, T3_VAR_SPACE(A0)
+
+				lea	T4_START, A0
+				move.b	#0, D0
+				trap	#0
+
+; Pasamos a la siguiente Task
+				move.b	#3, D0
+				trap	#0				
+
+T3_SPACE_END:			move.b	D2, T5_VAR_SPACE(A0)	; Guardamos el estado de la tecla
+; Pasamos a la siguiente task
+				move.b	#3, D0
+				trap	#0				
+
+* ----------------------------------------------------------
+T5_INIT:
+* Task 5 initialization
+* ----------------------------------------------------------
+; Store task ID. When switching to a task, the ID is in D1, but
+; storing in shared memory makes things easier.
+				move.b	D1, TK_VAR_ID(A0)				
+; Remember next time will not be the first one
+				move.b	#$ff, TK_VAR_FIRST_TIME(A0)				
+; Assuming that prior to execution SPACE was not pressed				
+				clr.b	T5_VAR_SPACE(A0)
+; End by switching to next task
+				move.b	#3, D0
+				trap	#0				
 * ----------------------------------------------------------
 
 

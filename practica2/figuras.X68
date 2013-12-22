@@ -62,7 +62,7 @@ FG_DRAW_ENEM:
 *-----------------------------------------------------------
 FG_DRAW_NAVE:
 * Description : dibuja una nave en la posición indicada
-* Pre         : D0.L: coordenadas del centro(W1:X,W2:Y)
+* Pre         : D0.L: coordenadas del centro(W1:X,W2:Y) //Creo que la coordenada X debería ser una constante
 * Post        : 
 * Modified    : Nothing: all registers are restored.
 * Note        : When calling this macro, the required constants
@@ -212,6 +212,7 @@ FG_EXP_LIST:	dc.b 0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,1,
 
 
 	
+
 
 
 
