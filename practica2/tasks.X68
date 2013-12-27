@@ -11,10 +11,24 @@
 ************************************************************
 TK_SCREEN_WIDTH			EQU	640
 TK_SCREEN_HEIGHT		EQU	480
+TK_INFO_SCREEN_WIDTH            EQU     140
 ; Task types
 TK_TYPE_MENU			EQU	0
 TK_TYPE_SCREEN			EQU	1
 TK_TYPE_ENEM			EQU	2
+; Game configuration for each level
+;LEVEL 1
+TK_EASY_SPEED                   EQU     3
+TK_EASY_ENEM                    EQU     25
+TK_EASY_POWER                   EQU     20
+;LEVEL 2
+TK_MEDIUM_SPEED                 EQU     2
+TK_MEDIUM_ENEM                  EQU     50
+TK_MEDIUM_POWER                 EQU     15  
+;LEVEL 3
+TK_HARD_SPEED                   EQU     1
+TK_HARD_ENEM                    EQU     100
+TK_HARD_POWER                   EQU     10                 
 ; Variable offsets used for all tasks
 TK_VAR_FIRST_TIME		EQU	0
 TK_VAR_ID			EQU	1
@@ -22,6 +36,10 @@ TK_VAR_TYPE			EQU	2
 TK_PIXEL			EQU	3
 TK_VAR_COLOR_1			EQU	4
 TK_VAR_COLOR_2			EQU	8
+TK_VAR_SPEED                        EQU     12
+TK_VAR_ENEM                         EQU     14
+TK_VAR_POWER                        EQU     16  
+
 ************************************************************
 *                   SOURCE FILE INCLUDES                   *
 ************************************************************
@@ -209,19 +227,63 @@ T1_CHECK_UP:			;check for UP state
 				swap	D1
 				swap	D2
 				cmp.b 	#0,D2
-				beq	T1_NEXT
+				beq	T1_CHECK_INTRO
 				cmp.b	#$FF,D1		
-				beq	T1_NEXT
+				beq	T1_CHECK_INTRO
 				;before=FF,now=00 then move up
 				cmp.b	#1,T1_OPTION(A0)			
          			beq	T1_GOTO_LAST		; ...first, go back to last option
          			sub.b	#1,T1_OPTION(A0)	; move up
-         			bra	T1_NEXT	
-T1_GOTO_LAST:			move.b	#3,T1_OPTION(A0)	
+         			bra	T1_CHECK_INTRO	
+T1_GOTO_LAST:			move.b	#3,T1_OPTION(A0)
+
+T1_CHECK_INTRO:                 ;check for intro key
+                                move.b	#19, D0
+				move.l	#$D<<24+$D<<16+$D<<8+$D,D1
+				trap	#15
+				
+				BTST.L #24,D1     ; test for 'intro'
+                                IF <NE> THEN      ; if 'intro'
+                                ;start the game
+                                cmp.b	#1,T1_OPTION(A0)
+				beq	T1_START_EASY
+				
+				cmp.b	#2,T1_OPTION(A0)
+				bne     T1_START_HARD
+				
+				;start on medium mode
+				move.w  #TK_MEDIUM_SPEED,TK_VAR_SPEED(A1)
+				move.w  #TK_MEDIUM_ENEM,TK_VAR_ENEM(A1)
+				move.w  #TK_MEDIUM_POWER,TK_VAR_POWER(A1)
+				bra     T1_START_GAME
+				
+T1_START_EASY:			;start on easy mode
+				move.w  #TK_EASY_SPEED,TK_VAR_SPEED(A1)
+				move.w  #TK_EASY_ENEM,TK_VAR_ENEM(A1)
+				move.w  #TK_EASY_POWER,TK_VAR_POWER(A1)
+				bra     T1_START_GAME
+				
+T1_START_HARD:			;start on hard mode
+				move.w  #TK_HARD_SPEED,TK_VAR_SPEED(A1)
+				move.w  #TK_HARD_ENEM,TK_VAR_ENEM(A1)
+				move.w  #TK_HARD_POWER,TK_VAR_POWER(A1)
+
+T1_START_GAME:                  ; add task 3: game control task
+*			        lea	T3_START, A0
+*			        move.b	#0, D0
+*			        trap	#0			
+*			        rts
+			        ; remove menu task
+                                move.b  TK_VAR_ID(A0),D1
+                                move.b  #1,D0
+                                trap    #0
+                                ENDI
+
 
 ; End by switching to next task
 T1_NEXT:			move.b	#3, D0
 				trap	#0
+				
 
 *----------------------------------------------------------
 T1_UPDATE_COLOR:
