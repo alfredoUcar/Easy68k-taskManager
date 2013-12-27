@@ -70,14 +70,24 @@ T1_ENEM_COLOR		EQU	8
 ;draw:
 T1_PIXEL_SIZE		EQU	15
 ;colors
-T1_COLOR_1			EQU	$00FFFFFF
-T1_COLOR_2			EQU	$00000000
-T1_COLOR_3			EQU	$00FF6600		
-;font:
-T1_FONT			EQU	$04	; lucida console
-T1_FONT_SIZE		EQU	$12 	; 18
-T1_FONT_STYLE		EQU	$0001	; bold
-T1_FONT_PROP		EQU	(T1_FONT*$1000000)+(T1_FONT_SIZE*$10000)+T1_FONT_STYLE		; $040B0001
+T1_COLOR_1		EQU	$00FFFFFF
+T1_COLOR_2		EQU	$00000000
+T1_COLOR_3		EQU	$00FF6600		
+;font 1: menu options
+T1_FONT_1		EQU	$04	; lucida console
+T1_FONT_1_SIZE		EQU	$12 	; 18
+T1_FONT_1_STYLE		EQU	$0001	; bold
+T1_FONT_1_PROP		EQU	(T1_FONT_1*$1000000)+(T1_FONT_1_SIZE*$10000)+T1_FONT_1_STYLE		; $040B0001
+;font 2: footer message
+T1_FONT_2		EQU	$07	; terminal
+T1_FONT_2_SIZE		EQU	$09 	
+T1_FONT_2_STYLE		EQU	$0001	; bold
+T1_FONT_2_PROP		EQU	(T1_FONT_2*$1000000)+(T1_FONT_2_SIZE*$10000)+T1_FONT_2_STYLE		; $040B0001
+;font 3: copyright
+T1_FONT_3		EQU	$06	; consolas
+T1_FONT_3_SIZE		EQU	$08 	
+T1_FONT_3_STYLE		EQU	$0001	; bold
+T1_FONT_3_PROP		EQU	(T1_FONT_3*$1000000)+(T1_FONT_3_SIZE*$10000)+T1_FONT_3_STYLE		; $040B0001
 ;strings
 T1_STR_1			dc.b	'    EASY    ',0	; option 1
 T1_STR_2			dc.b	'   MEDIUM   ',0	; option 2
@@ -116,12 +126,12 @@ T1_START:
 ; Displays options
 				;set font properties
 				move.b	#21,D0
-				move.l	(T1_COLOR_2),D1
-				move.l	#T1_FONT_PROP,D2				
+				move.l	#T1_COLOR_2,D1
+				move.l	#T1_FONT_1_PROP,D2				
 				trap	#15
 				
 ; display option 1
-				TK_LOCATE 	#((TK_SCREEN_WIDTH/T1_FONT_SIZE)/2-3),#((TK_SCREEN_HEIGHT/T1_FONT_SIZE)/3)
+				TK_LOCATE 	#((TK_SCREEN_WIDTH/T1_FONT_1_SIZE)/2-3),#((TK_SCREEN_HEIGHT/T1_FONT_1_SIZE)/3)
 				cmp.b	#1,T1_OPTION(A0)
 				beq	T1_OP1_SELECTED
 				; set background color for option 1 as not selected
@@ -131,7 +141,7 @@ T1_OP1_SELECTED:		; set background color for option 1 as selected
 				TK_SET_FILL	#T1_COLOR_3	
 T1_OP1_SHOW:			TK_PRINT_STR	T1_STR_1
 ; display option 2		
-				TK_LOCATE 	#((TK_SCREEN_WIDTH/T1_FONT_SIZE)/2-3),#(((TK_SCREEN_HEIGHT/T1_FONT_SIZE)/3)+1)				
+				TK_LOCATE 	#((TK_SCREEN_WIDTH/T1_FONT_1_SIZE)/2-3),#(((TK_SCREEN_HEIGHT/T1_FONT_1_SIZE)/3)+1)				
 				cmp.b	#2,T1_OPTION(A0)
 				beq	T1_OP2_SELECTED
 				; set background color for option 1 as not selected
@@ -141,7 +151,7 @@ T1_OP2_SELECTED:		; set background color for option 1 as selected
 				TK_SET_FILL	#T1_COLOR_3
 T1_OP2_SHOW:			TK_PRINT_STR	T1_STR_2
 ; display option 3		
-				TK_LOCATE 	#((TK_SCREEN_WIDTH/T1_FONT_SIZE)/2-3),#((TK_SCREEN_HEIGHT/T1_FONT_SIZE)/3+2)				
+				TK_LOCATE 	#((TK_SCREEN_WIDTH/T1_FONT_1_SIZE)/2-3),#((TK_SCREEN_HEIGHT/T1_FONT_1_SIZE)/3+2)				
 				cmp.b	#3,T1_OPTION(A0)
 				beq	T1_OP3_SELECTED
 				; set background color for option 1 as not selected
@@ -150,6 +160,24 @@ T1_OP2_SHOW:			TK_PRINT_STR	T1_STR_2
 T1_OP3_SELECTED:		; set background color for option 1 as selected
 				TK_SET_FILL	#T1_COLOR_3
 T1_OP3_SHOW:			TK_PRINT_STR	T1_STR_3
+; Displays informative message
+                                ;set font properties
+				move.b	#21,D0
+				move.l	#T1_COLOR_1,D1
+				move.l	#T1_FONT_2_PROP,D2				
+				trap	#15
+				TK_LOCATE 	#10,#22
+                                TK_SET_FILL	#T1_COLOR_2
+        			TK_PRINT_STR	T1_STR_PRESS
+; Displays copyright message
+                                ;set font properties
+				move.b	#21,D0
+				move.l	#T1_COLOR_1,D1
+				move.l	#T1_FONT_3_PROP,D2				
+				trap	#15
+				TK_LOCATE 	#1,#(128-3)
+                                TK_SET_FILL	#T1_COLOR_2
+        			TK_PRINT_STR	T1_STR_COPYRIGHT
 
 ; Check for up/down keys	
 				move.b	#19, D0
@@ -366,6 +394,7 @@ T2_CLEAR_HIDDEN:		TK_SET_PEN	#$00000000
 				move.b	#3, D0
 				trap	#0				
 * ----------------------------------------------------------
+
 
 
 
