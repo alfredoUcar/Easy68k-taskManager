@@ -180,7 +180,7 @@ TK_DRAW_FIG:
 		add	#1,A0		; siguiente punto de la lista
 		dbra	D2,.FOR		; para cada columna..		
 		move.w	D5, D2		; reinicia el contador de columnas
-		add.b	TK_PIXEL(A1), D3	; siguiente fila
+		add	D7, D3	; siguiente fila
 		move.w	D6, D4		; reinica la x
 		dbra	D1,.FOR		; para cada fila..
 
@@ -224,6 +224,7 @@ TK_EXP_LIST:	dc.b 0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,1,
 
 
 	
+
 
 
 

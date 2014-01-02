@@ -128,6 +128,23 @@ TK_REPAINT_SCREEN MACRO
 *********************************************************
 *		CUSTOM MACROS				*
 *********************************************************
+*---------------------------------------------------------
+* Macro to draw a line
+* Parameters: \1: X1
+* Parameters: \2: Y1
+* Parameters: \3: X2
+* Parameters: \4: Y2
+* Modifies: D0, D1, D2, D3, D4
+*----------------------------------------------------------------------
+
+TK_DRAW_LINE    MACRO
+		move.w	\1, D1
+		move.w	\2, D2
+		move.w	\3, D3
+		move.w	\4, D4
+		move.b	#84, D0
+		trap	#15
+		ENDM
 
 *---------------------------------------------------------
 * Macro to draw a rectangle
@@ -210,6 +227,8 @@ TK_SET_FONT	MACRO
 		movem.w	(A7)+, D0-D2
 		ENDM
 		
+
+
 
 
 
