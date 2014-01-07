@@ -576,7 +576,7 @@ T3_INIT:
 				trap	#0				
 * ----------------------------------------------------------
 ************************************************************
-*                            TASK 3                        *
+*                            TASK 4                        *
 ************************************************************
 ; ==========================================================
 ; Task 4 constants
@@ -620,8 +620,9 @@ T4_INIT:
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
 				
 				move        #3,D2               ; number of enemies to add
-				
-T4_ADD_ENEM:			lea         T3_START, A0
+
+; @FIXME: ENTRY POINT OF ALL TASKS!!
+T4_ADD_ENEM:			lea         T5_START, A0
 			        move.b	    #0, D0
         			trap	    #0
         			dbra        D2,T4_ADD_ENEM 
@@ -638,13 +639,16 @@ T4_ADD_ENEM:			lea         T3_START, A0
 ; Task 5 constants
 ; ==========================================================
 SHIP_SIZE	EQU	20
-T5_VAR_Y	EQU	4
-T5_VAR_SY	EQU	6
+T5_VAR_X	EQU	4
+T5_VAR_SX	EQU	6
+;draw:
+T5_PIXEL_SIZE		EQU	4
+T5_COLOR_1              EQU     $00AAAA00
+T5_COLOR_2              EQU     $00AAAA00
 ; ==========================================================
 ; Task 5 functions
 ; ==========================================================
-;Dibuja la nave en la última posición válida
-T5_EDGE:			FG_DRAW_NAVE
+
 * ----------------------------------------------------------
 T5_START:
 * Task 3 entry point.
@@ -653,17 +657,17 @@ T5_START:
 ; Vemos si es la primera vez que se ha iniciado esta tarea
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T5_INIT
-; Si no es la primera vez que se inicializa esta tarea
-; Miramos si colisiona con el límite de la pantalla				
-				cmp	#TK_SCREEN_HEIGHT-SHIP_SIZE, T5_VAR_Y(A0)
-				bgt	T5_EDGE
-				cmp	#SHIP_SIZE, T5_VAR_Y(A0)
-				blt	T5_EDGE
-; actualizamos la posición de la nave
-				move.w	T5_VAR_SY(A0), D1
-				add.w	D1, T5_VAR_Y(A0)	; Y=Y+SY
-; dibujamos la nave		
-				FG_DRAW_NAVE
+; if not first time
+; draw ship
+				move.b #T5_PIXEL_SIZE,TK_PIXEL(A1)
+;set colors and draw
+				move.l	#T5_COLOR_1,TK_VAR_COLOR_1(A1)
+				move.l	#T5_COLOR_2,TK_VAR_COLOR_2(A1)
+				move	T5_VAR_X(A0),D0	;set X
+				bsr	TK_DRAW_NAVE
+; uptade ship position
+*				move.w	T5_VAR_Y(A0), D1
+*				add.w	D1, T5_VAR_Y(A0)	; Y=Y+SY	
 				
 ;capturamos del teclado
 				move.b	#19, D0
@@ -680,14 +684,22 @@ T5_INIT:
 ; Store task ID. When switching to a task, the ID is in D1, but
 ; storing in shared memory makes things easier.
 			move.b	D1, TK_VAR_ID(A0)
+; store the task type
+			move.b #TK_TYPE_SCREEN, TK_VAR_TYPE(A0)
 ; la siguiente vez que volvamos a esta task, no será la primera
 			move.b	#$FF, TK_VAR_FIRST_TIME(A0)
-;pintamos la nave en el centro (parte baja) de la pantalla
-			move.w	TK_SCREEN_HEIGHT, D0
-			move.w	TK_SCREEN_WEIGHT, D0
-*			move.w	TK_SCREEN_HEIGHT, (A0)+
-*			move.w	TK_SCREEN_WEIGHT, (A0)+
-			FG_DRAW_NAVE
+; set initial position of the ship
+			move    #((TK_ENEM_ROWS*T5_PIXEL_SIZE)/2),T5_VAR_X(A0)      ; set y
+			move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0      ; game window width
+                       	move    #(TK_ENEM_COLUMNS*T5_PIXEL_SIZE+20),D1        ; width needed by enemy
+                       	move    #TK_INFO_SCREEN_WIDTH,D1
+                        sub     #1,D0
+                        mulu    D2,D0
+                        divu    #2,D2
+                        add     D2,D0
+                        add     D1,D0
+                        move    D0,T5_VAR_X(A0)
+
 ; switch
 			move.b	#3,D0
 			trap	#0
