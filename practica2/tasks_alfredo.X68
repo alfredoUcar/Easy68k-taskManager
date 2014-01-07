@@ -622,7 +622,7 @@ T4_INIT:
 				move        #3,D2               ; number of enemies to add
 
 ; @FIXME: ENTRY POINT OF ALL TASKS!!
-T4_ADD_ENEM:			lea         T5_START, A0
+T4_ADD_ENEM:			lea         T3_START, A0
 			        move.b	    #0, D0
         			trap	    #0
         			dbra        D2,T4_ADD_ENEM 
