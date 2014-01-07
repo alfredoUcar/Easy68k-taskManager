@@ -629,6 +629,70 @@ T4_ADD_ENEM:			lea         T3_START, A0
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+				
+************************************************************
+*                            TASK 5                        *
+************************************************************
+
+; ==========================================================
+; Task 5 constants
+; ==========================================================
+SHIP_SIZE	EQU	20
+T5_VAR_Y	EQU	4
+T5_VAR_SY	EQU	6
+; ==========================================================
+; Task 5 functions
+; ==========================================================
+;Dibuja la nave en la última posición válida
+T5_EDGE:			FG_DRAW_NAVE
+* ----------------------------------------------------------
+T5_START:
+* Task 3 entry point.
+* Draws a ship on the bottom of the screen
+* ----------------------------------------------------------
+; Vemos si es la primera vez que se ha iniciado esta tarea
+				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
+				beq	T5_INIT
+; Si no es la primera vez que se inicializa esta tarea
+; Miramos si colisiona con el límite de la pantalla				
+				cmp	#TK_SCREEN_HEIGHT-SHIP_SIZE, T5_VAR_Y(A0)
+				bgt	T5_EDGE
+				cmp	#SHIP_SIZE, T5_VAR_Y(A0)
+				blt	T5_EDGE
+; actualizamos la posición de la nave
+				move.w	T5_VAR_SY(A0), D1
+				add.w	D1, T5_VAR_Y(A0)	; Y=Y+SY
+; dibujamos la nave		
+				FG_DRAW_NAVE
+				
+;capturamos del teclado
+				move.b	#19, D0
+				move.l	#$26<<24+$26<<16+$28<<8+$28,D1
+				trap	#15
+
+
+* ----------------------------------------------------------
+T5_INIT:
+* Task 1 initialization
+* 
+* Pone la nave en las coordenadas indicadas
+* ----------------------------------------------------------
+; Store task ID. When switching to a task, the ID is in D1, but
+; storing in shared memory makes things easier.
+			move.b	D1, TK_VAR_ID(A0)
+; la siguiente vez que volvamos a esta task, no será la primera
+			move.b	#$FF, TK_VAR_FIRST_TIME(A0)
+;pintamos la nave en el centro (parte baja) de la pantalla
+			move.w	TK_SCREEN_HEIGHT, D0
+			move.w	TK_SCREEN_WEIGHT, D0
+*			move.w	TK_SCREEN_HEIGHT, (A0)+
+*			move.w	TK_SCREEN_WEIGHT, (A0)+
+			FG_DRAW_NAVE
+; switch
+			move.b	#3,D0
+			trap	#0
+
+
 
 
 
