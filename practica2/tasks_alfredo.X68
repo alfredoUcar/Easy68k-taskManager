@@ -769,8 +769,6 @@ T6_VAR_Y	EQU	4
 T5_VAR_SY	EQU	6
 ;draw:
 T6_PIXEL_SIZE		EQU	4
-T6_COLOR_1              EQU     $00AAAA00
-T6_COLOR_2              EQU     $00AAAA00
 ; ==========================================================
 ; Task 6 functions
 ; ==========================================================
@@ -787,9 +785,7 @@ T6_START:
 ; draw ship
 				move.b #T6_PIXEL_SIZE,TK_PIXEL(A1)
 ;set colors and draw
-				move.l	#T6_COLOR_1,TK_VAR_COLOR_1(A1)
-				move.l	#T6_COLOR_2,TK_VAR_COLOR_2(A1)
-				move	T6_VAR_X(A0),D0	;set X
+				move	T5_VAR_X(A0),D0	;set X = ship's X
 				bsr	TK_DRAW_DISPARO
 ; uptade beam position
 *				move.w	T6_VAR_Y(A0), D1
