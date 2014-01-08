@@ -18,20 +18,7 @@ TK_TYPE_SCREEN			EQU	1
 TK_TYPE_ENEM			EQU	2
 TK_TYPE_PLAYER                  EQU     3
 TK_TYPE_SHOT                    EQU     4
-TK_TYPE_CONTROL                 EQU     5
-; Game configuration for each level
-;LEVEL 1
-TK_EASY_SPEED                   EQU     3
-TK_EASY_ENEM                    EQU     25
-TK_EASY_POWER                   EQU     20
-;LEVEL 2
-TK_MEDIUM_SPEED                 EQU     2
-TK_MEDIUM_ENEM                  EQU     50
-TK_MEDIUM_POWER                 EQU     15  
-;LEVEL 3
-TK_HARD_SPEED                   EQU     1
-TK_HARD_ENEM                    EQU     100
-TK_HARD_POWER                   EQU     10                 
+TK_TYPE_CONTROL                 EQU     5                 
 ; Variable offsets used for all tasks
 TK_VAR_FIRST_TIME		EQU	0
 TK_VAR_ID			EQU	1
@@ -92,6 +79,19 @@ T1_PIXEL		EQU	7
 T1_ENEM_COLOR		EQU	8
 ;draw:
 T1_PIXEL_SIZE		EQU	15
+; Game configuration for each level
+;LEVEL 1
+T1_EASY_SPEED                   EQU     3
+T1_EASY_ENEM                    EQU     25
+T1_EASY_POWER                   EQU     20
+;LEVEL 2
+T1_MEDIUM_SPEED                 EQU     2
+T1_MEDIUM_ENEM                  EQU     50
+T1_MEDIUM_POWER                 EQU     15  
+;LEVEL 3
+T1_HARD_SPEED                   EQU     1
+T1_HARD_ENEM                    EQU     100
+T1_HARD_POWER                   EQU     10
 ;colors
 T1_COLOR_1		EQU	$00FFFFFF
 T1_COLOR_2		EQU	$00000000
@@ -257,21 +257,21 @@ T1_CHECK_INTRO:                 ;check for intro key
 				bne     T1_START_HARD
 				
 				;start on medium mode
-				move.w  #TK_MEDIUM_SPEED,TK_VAR_SPEED(A1)
-				move.w  #TK_MEDIUM_ENEM,TK_VAR_ENEM(A1)
-				move.w  #TK_MEDIUM_POWER,TK_VAR_POWER(A1)
+				move.w  #T1_MEDIUM_SPEED,TK_VAR_SPEED(A1)
+				move.w  #T1_MEDIUM_ENEM,TK_VAR_ENEM(A1)
+				move.w  #T1_MEDIUM_POWER,TK_VAR_POWER(A1)
 				bra     T1_START_GAME
 				
 T1_START_EASY:			;start on easy mode
-				move.w  #TK_EASY_SPEED,TK_VAR_SPEED(A1)
-				move.w  #TK_EASY_ENEM,TK_VAR_ENEM(A1)
-				move.w  #TK_EASY_POWER,TK_VAR_POWER(A1)
+				move.w  #T1_EASY_SPEED,TK_VAR_SPEED(A1)
+				move.w  #T1_EASY_ENEM,TK_VAR_ENEM(A1)
+				move.w  #T1_EASY_POWER,TK_VAR_POWER(A1)
 				bra     T1_START_GAME
 				
 T1_START_HARD:			;start on hard mode
-				move.w  #TK_HARD_SPEED,TK_VAR_SPEED(A1)
-				move.w  #TK_HARD_ENEM,TK_VAR_ENEM(A1)
-				move.w  #TK_HARD_POWER,TK_VAR_POWER(A1)
+				move.w  #T1_HARD_SPEED,TK_VAR_SPEED(A1)
+				move.w  #T1_HARD_ENEM,TK_VAR_ENEM(A1)
+				move.w  #T1_HARD_POWER,TK_VAR_POWER(A1)
 
 T1_START_GAME:                  
 			        lea	T4_START, A0
@@ -529,8 +529,8 @@ T3_RANDOM:
 		move    D4,D0
                 clr     D3
 		move.b  TK_VAR_ID(A0),D3
-		add     #1,D3                   ; avoid case ID=0 for next operations
-		;mulu    TK_VAR_POWER(A1),D3     ; (my ID)*(current power)
+		add     #1,D3                   ; [1..31] avoid case ID=0 for next operations
+		*mulu    TK_VAR_POWER(A1),D3     ; (my ID)*(current power)
 		and.l   #$0000FFFF,D1
 		and.l   #$0000FFFF,D3
 		divu    D3,D1
@@ -552,10 +552,13 @@ T3_INIT:
 ; storing in shared memory makes things easier.
 				move.b	D1, TK_VAR_ID(A0)
 ; Store the task type
-				move.b	#TK_TYPE_SCREEN, TK_VAR_TYPE(A0)				
+				move.b	#TK_TYPE_ENEM, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)				
 ; Set initial position and size
+T4_SET_POS:                     move.b  #4,D0                                           ; get current task info (restore)
+                                trap    #0                                              ; values may be changed during loop
+                                
                                 move    #((TK_ENEM_ROWS*T3_PIXEL_SIZE)/2),T3_Y(A0)      ; set y
                                 move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0      ; game window width
                                 move    #(TK_ENEM_COLUMNS*T3_PIXEL_SIZE+20),D1          ; width needed by enemy
@@ -571,6 +574,33 @@ T3_INIT:
                                 add     D2,D0
                                 add     D1,D0
                                 move    D0,T3_X(A0)                                     ; set x
+; check if there's another enemy for that position
+                                move.b  #6,D0                                           ; get first task info
+                                trap    #0
+                                
+T3_CHECK_REPEAT:                cmp.b   D1,D2
+                                beq     T3_CHECK_NEXT                                   ; it's current task, next
+                                cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's enemy?
+                                bne     T3_CHECK_NEXT                                   ;no
+                                ; it's enemy... check position
+                                
+                                move    T3_X(A0),D3
+                                cmp     T3_X(A1),D3
+                                beq     T4_SET_POS
+*                                bgt     T3_ABS
+*                                move    T3_X(A1),D3
+*                                sub     T3_X(A0),D3
+*                                bra     T3_MARGIN
+*T3_ABS:                         move    T3_X(A0),D3
+*                                sub     T3_X(A1),D3                                     ;D3 = |X1-X2| 
+*T3_MARGIN:                      cmp     #(TK_ENEM_COLUMNS*T3_PIXEL_SIZE+20)/2,D3
+*                                ble     T4_SET_POS                                      ; not available, search another position                                                                       
+                                
+T3_CHECK_NEXT:                  move.b  #7,D0                                           ; get next task info
+                                trap    #0
+                                cmp.b   #$FF,D1
+                                bne     T3_CHECK_REPEAT                                 ; not last task
+                                
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0				
@@ -615,7 +645,7 @@ T4_INIT:
 ; storing in shared memory makes things easier.
 				move.b	D1, TK_VAR_ID(A0)
 ; Store the task type
-				move.b	#TK_TYPE_SCREEN, TK_VAR_TYPE(A0)				
+				move.b	#TK_TYPE_CONTROL, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
 				
@@ -629,6 +659,9 @@ T4_ADD_ENEM:			lea         T3_START, A0
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
+
+
 
 
 
