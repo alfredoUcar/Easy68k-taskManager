@@ -18,7 +18,13 @@ TK_NAVE_ROWS	EQU	3
 TK_NAVE_COLUMNS	EQU	9
 TK_NAVE_COLOR	EQU	$00FFFFFF
 *-----------------------------------------------
-*		EXPLOSI�N
+*		DISPARO
+*-----------------------------------------------
+TK_DISP_ROWS	EQU	3
+TK_DISP_COLUMNS	EQU	9
+TK_DISP_COLOR	EQU	$00FF00FF
+*-----------------------------------------------
+*		EXPLOSION
 *-----------------------------------------------
 TK_EXP_ROWS	EQU	7
 TK_EXP_COLUMNS	EQU	10
@@ -161,19 +167,19 @@ TK_DRAW_DISPARO:
 		move.b	TK_PIXEL(A1),D7		; guarda el tama�o de pixel en un word
 		
 		move	D7,D1
-		mulu	#TK_NAVE_ROWS,D1
+		mulu	#TK_DISP_ROWS,D1
 		divu	#2,D1		; height/2	
 
 		move	D7,D2
-		mulu	#TK_NAVE_COLUMNS,D2
+		mulu	#TK_DISP_COLUMNS,D2
 		divu	#2,D2		; width/2
 
-		move.l	TK_NAVE_COLOR,D3
-		move.l	TK_NAVE_COLOR,D4
-		move.w	#TK_NAVE_COLUMNS-1, D5
+		move.l	TK_DISP_COLOR,D3
+		move.l	TK_DISP_COLOR,D4
+		move.w	#TK_DISP_COLUMNS-1, D5
 		swap	D5
-		move.w	#TK_NAVE_ROWS-1, D5
-		lea	TK_NAVE_LIST, A0	; lista de puntos
+		move.w	#TK_DISP_ROWS-1, D5
+		lea	TK_DISP_LIST, A0	; lista de puntos
 		;dibuja la figura
 		bsr	TK_DRAW_FIG				
 
