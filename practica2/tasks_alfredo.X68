@@ -676,50 +676,15 @@ T5_START:
 				move.l	#$26<<24+$26<<16+$28<<8+$28,D1
 				trap	#15
 								
-				; get last state
-				move.b	T1_UP_KEY(A0),D2
-				swap	D2
-				move.b	T1_DOWN_KEY(A0),D2
-				; save new state
-				move.b	D1,T1_DOWN_KEY(A0)
-				swap	D1
-				move.b	D1,T1_UP_KEY(A0)
-				swap	D1
-				
-				;check for DOWN state
-				cmp.b 	#$FF,D2
-				bne	T1_CHECK_UP
-				cmp.b	#$FF,D1		
-				beq	T1_CHECK_UP
-				;before=FF,now=00 then move down
-				cmp.b	#3,T1_OPTION(A0)			
-         			beq	T1_GOTO_FIRST		; ...last, go back to first option
-         			add.b	#1,T1_OPTION(A0)	;move down
-         			bra	T1_CHECK_UP
-T1_GOTO_FIRST:			move.b	#1,T1_OPTION(A0)
-T1_CHECK_UP:			;check for UP state
-				swap	D1
-				swap	D2
-				cmp.b 	#0,D2
-				beq	T1_CHECK_INTRO
-				cmp.b	#$FF,D1		
-				beq	T1_CHECK_INTRO
-				;before=FF,now=00 then move up
-				cmp.b	#1,T1_OPTION(A0)			
-         			beq	T1_GOTO_LAST		; ...first, go back to last option
-         			sub.b	#1,T1_OPTION(A0)	; move up
-         			bra	T1_CHECK_INTRO	
-T1_GOTO_LAST:			move.b	#3,T1_OPTION(A0)
-
-T1_CHECK_INTRO:                 ;check for intro key
+T5_CHECK_INTRO:                 ;check for intro key
                                 move.b	#19, D0
 				move.l	#$D<<24+$D<<16+$D<<8+$D,D1
 				trap	#15
 				
-				BTST.L #24,D1     ; test for 'intro'
-                                IF <NE> THEN      ; if 'intro'
-                                ;start the game
-                                T6_START
+*				BTST.L #24,D1     ; test for 'intro'
+*                                IF <NE> THEN      ; if 'intro'
+*                                ;start the game
+*                                bsr	T6_START
 				
 T5_LIMLEFT:		move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0
 			bsr	TK_DRAW_NAVE
@@ -766,7 +731,7 @@ T5_INIT:
 ; Task 6 constants
 ; ==========================================================
 T6_VAR_Y	EQU	4
-T5_VAR_SY	EQU	6
+TY_VAR_SY	EQU	6
 ;draw:
 T6_PIXEL_SIZE		EQU	4
 ; ==========================================================
@@ -814,11 +779,12 @@ T6_INIT:
                         divu    #2,D2
                         add     D2,D0
                         add     D1,D0
-                        move    D0,T6_VAR_X(A0)
+                        move    D0,T6_VAR_Y(A0)
 
 ; switch
 			move.b	#3,D0
 			trap	#0
+
 
 
 
