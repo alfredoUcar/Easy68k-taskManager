@@ -670,33 +670,56 @@ T5_START:
 				
 				
 
-;capturamos del teclado				
-				; Check for up/down keys	
-				move.b	#19, D0
-				move.l	#$26<<24+$26<<16+$28<<8+$28,D1
-				trap	#15
-				
-				BTST.L #24,D1     ; test for 'A'
-                                IF <NE> THEN      ; if 'intro'
-                                                  ;start the game
-                                add     #T5_SPEED,T5_VAR_X(A0)
+;capturamos del teclado		
+                                ;teclas de movimiento		
+                                MOVE.B #19,D0     
+
+                                MOVE.L #$25<<24+$27<<16,D1 ; check for keypress (left, right)
+
+                                TRAP   #15
+                                BTST.L #24,D1     ; test for left arrow
+                                IF <NE> THEN      ; if 'left'
+                                  sub     #T5_SPEED*2, T5_VAR_X(A0)
                                 ENDI
-                                BTST.L #16,D1     ; test for 'D'
-                                IF <NE> THEN      ; if 'intro'
-                                                  ;start the game
-                                sub     #T5_SPEED,T5_VAR_X(A0)
+                                BTST.L #16,D1     ; test for right arrow
+                                IF <NE> THEN      ; if 'right'
+                                  add     #T5_SPEED*2,T5_VAR_X(A0)
                                 ENDI
+                                
+                                ;teclas de disparo
+                                MOVE.B #19,D0     
+
+                                MOVE.L #$20<<24+$27<<16+$20<<8+'F',D1 ; check for keypress (space,z,x,c)
+
+                                TRAP   #15
+                                BTST.L #24,D1     ; test for space
+                                IF <NE> THEN      ; if 'space'
+*                                  bsr T6_START
+                                ENDI
+                                BTST.L #16,D1     ; test for z
+                                IF <NE> THEN      ; if 'z'
+*                                  disparo 'z'
+                                ENDI
+                                BTST.L #8,D1     ; test for x
+                                IF <NE> THEN      ; if 'x'
+*                                  disparo 'x'
+                                ENDI
+                                BTST.L #8,D1     ; test for c
+                                IF <NE> THEN      ; if 'x'
+*                                  disparo 'c'
+                                ENDI
+
 								
                                 ;check for intro key
-                                move.b	#19, D0
-				move.l	#$D<<24+$D<<16+$D<<8+$D,D1
-				trap	#15
-				
-				BTST.L #24,D1     ; test for 'intro'
-                                IF <NE> THEN      ; if 'intro'
-                                                  ;start the game
-                                bsr     T6_START
-                                ENDI
+*                                move.b	#19, D0
+*				move.l	#$D<<24+$D<<16+$D<<8+$D,D1
+*				trap	#15
+*				
+*				BTST.L #24,D1     ; test for 'intro'
+*                                IF <NE> THEN      ; if 'intro'
+*                                                  ;start the game
+*                                
+*                                ENDI
 *				
 *T5_LIMLEFT:		move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0
 *			bsr	TK_DRAW_NAVE

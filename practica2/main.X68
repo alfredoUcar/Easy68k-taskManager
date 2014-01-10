@@ -29,7 +29,7 @@ START:
 			bsr	TK_INIT
 			
 			; Launch the task manager
-			move.b	#2, D0
+			move.b	#2, D0 
 			trap	#0
 						
 			; If everything is OK, this point will never be reached.
