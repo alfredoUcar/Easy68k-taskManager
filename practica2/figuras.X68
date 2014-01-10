@@ -146,47 +146,6 @@ TK_DRAW_EXP:
 		rts
 
 *-----------------------------------------------------------
-TK_DRAW_DISPARO:
-* Description : dibuja una disparo simple en la posici�n indicada
-* Pre         : D0.L: coordenada X
-* Post        : 
-* Modified    : Nothing: all registers are restored.
-* Note        : When calling this macro, the required constants
-*               are assumed to have the correct values.
-*-----------------------------------------------------------
-		;push
-		movem.l	D0-D5/A0,-(A7)
-		;paso de parametros
-		
-		;ponemos la coordenada Y como constante
-		swap	D0
-		move	#(TK_SCREEN_HEIGHT-T5_PIXEL_SIZE-3),D0
-		;D0 = coordenadas del centro(W1:X,W2:Y)
-		
-		clr	D7
-		move.b	TK_PIXEL(A1),D7		; guarda el tama�o de pixel en un word
-		
-		move	D7,D1
-		mulu	#TK_DISP_ROWS,D1
-		divu	#2,D1		; height/2	
-
-		move	D7,D2
-		mulu	#TK_DISP_COLUMNS,D2
-		divu	#2,D2		; width/2
-
-		move.l	TK_DISP_COLOR,D3
-		move.l	TK_DISP_COLOR,D4
-		move.w	#TK_DISP_COLUMNS-1, D5
-		swap	D5
-		move.w	#TK_DISP_ROWS-1, D5
-*		lea	TK_DISP_LIST, A0	; lista de puntos
-		;dibuja la figura
-		bsr	TK_DRAW_FIG				
-
-.END:		;pop
-		movem.l (A7)+, D0-D5/A0
-		rts		
-*-----------------------------------------------------------
 TK_DRAW_FIG:
 * Description : dibuja una figura en la posici�n indicada
 * Pre         : D0.L: coordenadas del centro(W1:X,W2:Y)
@@ -246,14 +205,6 @@ TK_DRAW_FIG:
 ************************************************************
 *                         VARIABLES                        *
 ************************************************************
-***** DISPARO *******
-*0,0,0,0,1,0,0,0,0,
-*0,0,0,0,1,0,0,0,0,
-*0,0,0,0,1,0,0,0,0,
-*0,0,0,0,1,0,0,0,0,
-*0,0,0,0,1,0,0,0,0,
-*******************
-*TK_DISP_LIST:	dc.b 0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,
 ***** ENEMIGO *******
 *0,0,1,0,0,0,0,1,0,0,
 *0,1,1,1,1,1,1,1,1,0,

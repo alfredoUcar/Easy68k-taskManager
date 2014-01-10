@@ -647,7 +647,7 @@ T5_VAR_X	EQU	4
 T5_VAR_SX	EQU	6
 ;draw:
 T5_PIXEL_SIZE		EQU	4
-T5_SPEED        EQU     1
+T5_SPEED        EQU     2
 ; ==========================================================
 ; Task 5 functions
 ; ==========================================================
@@ -679,11 +679,11 @@ T5_START:
                                 TRAP   #15
                                 BTST.L #24,D1     ; test for left arrow
                                 IF <NE> THEN      ; if 'left'
-                                  sub     #T5_SPEED*2, T5_VAR_X(A0)
+                                  sub     #T5_SPEED, T5_VAR_X(A0)
                                 ENDI
                                 BTST.L #16,D1     ; test for right arrow
                                 IF <NE> THEN      ; if 'right'
-                                  add     #T5_SPEED*2,T5_VAR_X(A0)
+                                  add     #T5_SPEED,T5_VAR_X(A0)
                                 ENDI
                                 
                                 ;teclas de disparo
@@ -792,7 +792,9 @@ T6_START:
 ; uptade beam position
 *				move.w	T6_VAR_Y(A0), D1
 *				add.w	D1, T6_VAR_Y(A0)	; Y=Y+SY	
-				
+				; switch
+			        move.b	#3,D0
+			        trap	#0
 * ----------------------------------------------------------
 T6_INIT:
 * Task 6 initialization
