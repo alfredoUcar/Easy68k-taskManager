@@ -18,7 +18,13 @@ TK_NAVE_ROWS	EQU	3
 TK_NAVE_COLUMNS	EQU	9
 TK_NAVE_COLOR	EQU	$00FFFFFF
 *-----------------------------------------------
-*		EXPLOSIÓN
+*		DISPARO
+*-----------------------------------------------
+TK_DISP_ROWS	EQU	3
+TK_DISP_COLUMNS	EQU	9
+TK_DISP_COLOR	EQU	$00FF00FF
+*-----------------------------------------------
+*		EXPLOSION
 *-----------------------------------------------
 TK_EXP_ROWS	EQU	7
 TK_EXP_COLUMNS	EQU	10
@@ -27,7 +33,7 @@ TK_EXP_COLOR2	EQU	$000066FF
 *-----------------------------------------------------------
 TK_DRAW_ENEM:
 
-* Description : dibuja un enemigo en la posición indicada
+* Description : dibuja un enemigo en la posiciï¿½n indicada
 * Pre         : D0.L: coordenadas del centro(W1:X,W2:Y)
 * Post        : 
 * Modified    : Nothing: all registers are restored.
@@ -38,7 +44,7 @@ TK_DRAW_ENEM:
 		movem.l	D0-D5/A0,-(A7)
 		;paso de parametros
 		clr	D7
-		move.b	TK_PIXEL(A1),D7		; guarda el tamaño de pixel en un word
+		move.b	TK_PIXEL(A1),D7		; guarda el tamaï¿½o de pixel en un word
 		
 		move	D7,D1
 		mulu	#TK_ENEM_ROWS,D1
@@ -64,8 +70,8 @@ TK_DRAW_ENEM:
 
 *-----------------------------------------------------------
 TK_DRAW_NAVE:
-* Description : dibuja una nave en la posición indicada
-* Pre         : D0.L: coordenadas del centro(W1:X,W2:Y) //Creo que la coordenada X debería ser una constante
+* Description : dibuja una nave en la posiciï¿½n indicada
+* Pre         : D0.L: coordenada X
 * Post        : 
 * Modified    : Nothing: all registers are restored.
 * Note        : When calling this macro, the required constants
@@ -74,8 +80,14 @@ TK_DRAW_NAVE:
 		;push
 		movem.l	D0-D5/A0,-(A7)
 		;paso de parametros
+		
+		;ponemos la coordenada Y como constante
+		swap	D0
+		move	#(TK_SCREEN_HEIGHT-T5_PIXEL_SIZE-3),D0
+		;D0 = coordenadas del centro(W1:X,W2:Y)
+		
 		clr	D7
-		move.b	TK_PIXEL(A1),D7		; guarda el tamaño de pixel en un word
+		move.b	TK_PIXEL(A1),D7		; guarda el tamaï¿½o de pixel en un word
 		
 		move	D7,D1
 		mulu	#TK_NAVE_ROWS,D1
@@ -85,8 +97,8 @@ TK_DRAW_NAVE:
 		mulu	#TK_NAVE_COLUMNS,D2
 		divu	#2,D2		; width/2
 
-		move.l	TK_VAR_COLOR_1(A1),D3
-		move.l	TK_VAR_COLOR_2(A1),D4
+		move.l	TK_NAVE_COLOR,D3
+		move.l	TK_NAVE_COLOR,D4
 		move.w	#TK_NAVE_COLUMNS-1, D5
 		swap	D5
 		move.w	#TK_NAVE_ROWS-1, D5
@@ -99,7 +111,7 @@ TK_DRAW_NAVE:
 		rts		
 *-----------------------------------------------------------
 TK_DRAW_EXP:
-* Description : dibuja una explosión en la posición indicada
+* Description : dibuja una explosiï¿½n en la posiciï¿½n indicada
 * Pre         : D0.L: coordenadas del centro(W1:X,W2:Y)
 * Post        : 
 * Modified    : Nothing: all registers are restored.
@@ -110,7 +122,7 @@ TK_DRAW_EXP:
 		movem.l	D0-D5/A0,-(A7)
 		;paso de parametros
 		clr	D7
-		move.b	TK_PIXEL(A1),D7		; guarda el tamaño de pixel en un word
+		move.b	TK_PIXEL(A1),D7		; guarda el tamaï¿½o de pixel en un word
 		
 		move	D7,D1
 		mulu	#TK_EXP_ROWS,D1
@@ -132,9 +144,51 @@ TK_DRAW_EXP:
 .END:		;pop
 		movem.l (A7)+, D0-D5/A0
 		rts
+
+*-----------------------------------------------------------
+TK_DRAW_DISPARO:
+* Description : dibuja una disparo simple en la posiciï¿½n indicada
+* Pre         : D0.L: coordenada X
+* Post        : 
+* Modified    : Nothing: all registers are restored.
+* Note        : When calling this macro, the required constants
+*               are assumed to have the correct values.
+*-----------------------------------------------------------
+		;push
+		movem.l	D0-D5/A0,-(A7)
+		;paso de parametros
+		
+		;ponemos la coordenada Y como constante
+		swap	D0
+		move	#(TK_SCREEN_HEIGHT-T5_PIXEL_SIZE-3),D0
+		;D0 = coordenadas del centro(W1:X,W2:Y)
+		
+		clr	D7
+		move.b	TK_PIXEL(A1),D7		; guarda el tamaï¿½o de pixel en un word
+		
+		move	D7,D1
+		mulu	#TK_DISP_ROWS,D1
+		divu	#2,D1		; height/2	
+
+		move	D7,D2
+		mulu	#TK_DISP_COLUMNS,D2
+		divu	#2,D2		; width/2
+
+		move.l	TK_DISP_COLOR,D3
+		move.l	TK_DISP_COLOR,D4
+		move.w	#TK_DISP_COLUMNS-1, D5
+		swap	D5
+		move.w	#TK_DISP_ROWS-1, D5
+*		lea	TK_DISP_LIST, A0	; lista de puntos
+		;dibuja la figura
+		bsr	TK_DRAW_FIG				
+
+.END:		;pop
+		movem.l (A7)+, D0-D5/A0
+		rts		
 *-----------------------------------------------------------
 TK_DRAW_FIG:
-* Description : dibuja una figura en la posición indicada
+* Description : dibuja una figura en la posiciï¿½n indicada
 * Pre         : D0.L: coordenadas del centro(W1:X,W2:Y)
 *		D1.W: height/2
 *		D2.W: width/2
@@ -192,6 +246,14 @@ TK_DRAW_FIG:
 ************************************************************
 *                         VARIABLES                        *
 ************************************************************
+***** DISPARO *******
+*0,0,0,0,1,0,0,0,0,
+*0,0,0,0,1,0,0,0,0,
+*0,0,0,0,1,0,0,0,0,
+*0,0,0,0,1,0,0,0,0,
+*0,0,0,0,1,0,0,0,0,
+*******************
+*TK_DISP_LIST:	dc.b 0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,
 ***** ENEMIGO *******
 *0,0,1,0,0,0,0,1,0,0,
 *0,1,1,1,1,1,1,1,1,0,
@@ -208,7 +270,7 @@ TK_ENEM_LIST:	dc.b 0,0,1,0,0,0,0,1,0,0,0,1,1,1,1,1,1,1,1,0,1,1,0,0,1,1,0,0,1,1,1
 *1,1,1,1,1,1,1,1,1
 *********************
 TK_NAVE_LIST:	dc.b 0,1,0,0,0,0,0,1,0,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1
-*** EXPLOSIÓN ****
+*** EXPLOSIï¿½N ****
 *0,1,0,0,0,0,0,0,1,0,
 *0,0,1,0,0,0,0,1,0,0,
 *0,0,0,1,0,0,1,0,0,0,
@@ -224,6 +286,8 @@ TK_EXP_LIST:	dc.b 0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,1,
 
 
 	
+
+
 
 
 
