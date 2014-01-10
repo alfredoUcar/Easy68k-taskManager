@@ -788,7 +788,7 @@ T6_START:
 				move.b #T6_PIXEL_SIZE,TK_PIXEL(A1)
 ;set colors and draw
 				move	T5_VAR_X(A0),D0	;set X = ship's X
-				bsr	TK_DRAW_DISPARO
+*				bsr	T6_DRAW_DISPARO
 ; uptade beam position
 *				move.w	T6_VAR_Y(A0), D1
 *				add.w	D1, T6_VAR_Y(A0)	; Y=Y+SY	
