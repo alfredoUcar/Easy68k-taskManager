@@ -647,8 +647,7 @@ T5_VAR_X	EQU	4
 T5_VAR_SX	EQU	6
 ;draw:
 T5_PIXEL_SIZE		EQU	4
-T5_COLOR_1              EQU     $00AAAA00
-T5_COLOR_2              EQU     $00AAAA00
+T5_SPEED        EQU     1
 ; ==========================================================
 ; Task 5 functions
 ; ==========================================================
@@ -666,22 +665,29 @@ T5_START:
 ; draw ship
 				move.b #T5_PIXEL_SIZE,TK_PIXEL(A1)
 ;set colors and draw
-*				move.l	#T5_COLOR_1,TK_VAR_COLOR_1(A1)
-*				move.l	#T5_COLOR_2,TK_VAR_COLOR_2(A1)
 				move	T5_VAR_X(A0),D0	;set X
 				bsr	TK_DRAW_NAVE
-; uptade ship position
-*				move.w	T5_VAR_Y(A0), D1
-*				add.w	D1, T5_VAR_Y(A0)	; Y=Y+SY	
 				
-;capturamos del teclado
 				
+
+;capturamos del teclado				
 				; Check for up/down keys	
 				move.b	#19, D0
 				move.l	#$26<<24+$26<<16+$28<<8+$28,D1
 				trap	#15
+				
+				BTST.L #24,D1     ; test for 'A'
+                                IF <NE> THEN      ; if 'intro'
+                                                  ;start the game
+                                add     #T5_SPEED,T5_VAR_X(A0)
+                                ENDI
+                                BTST.L #16,D1     ; test for 'D'
+                                IF <NE> THEN      ; if 'intro'
+                                                  ;start the game
+                                sub     #T5_SPEED,T5_VAR_X(A0)
+                                ENDI
 								
-T5_CHECK_INTRO:                 ;check for intro key
+                                ;check for intro key
                                 move.b	#19, D0
 				move.l	#$D<<24+$D<<16+$D<<8+$D,D1
 				trap	#15
@@ -689,14 +695,17 @@ T5_CHECK_INTRO:                 ;check for intro key
 				BTST.L #24,D1     ; test for 'intro'
                                 IF <NE> THEN      ; if 'intro'
                                                   ;start the game
-                                bsr	T6_START
-				
-T5_LIMLEFT:		move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0
-			bsr	TK_DRAW_NAVE
-			
-T5_LIMRIGHT:		move    #(TK_SCREEN_WIDTH-SHIP_SIZE),D0
-			bsr	TK_DRAW_NAVE
-
+                                bsr     T6_START
+                                ENDI
+*				
+*T5_LIMLEFT:		move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0
+*			bsr	TK_DRAW_NAVE
+*			
+*T5_LIMRIGHT:		move    #(TK_SCREEN_WIDTH-SHIP_SIZE),D0
+*			bsr	TK_DRAW_NAVE
+; switch
+			move.b	#3,D0
+			trap	#0
 
 * ----------------------------------------------------------
 T5_INIT:
@@ -712,16 +721,16 @@ T5_INIT:
 ; la siguiente vez que volvamos a esta task, no sera la primera
 			move.b	#$FF, TK_VAR_FIRST_TIME(A0)
 ; set initial position of the ship
-			move    #((TK_ENEM_ROWS*T5_PIXEL_SIZE)/2),T5_VAR_X(A0)      ; set y
-			move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0      ; game window width
-                       	move    #(TK_ENEM_COLUMNS*T5_PIXEL_SIZE+20),D1        ; width needed by enemy
-                       	move    #TK_INFO_SCREEN_WIDTH,D1
-                        sub     #1,D0
-                        mulu    D2,D0
-                        divu    #2,D2
-                        add     D2,D0
-                        add     D1,D0
-                        move    D0,T5_VAR_X(A0)
+*			move    #((TK_NAVE_ROWS*T5_PIXEL_SIZE)/2),T5_VAR_X(A0)      ; set y
+			move    #((TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH)/2+TK_INFO_SCREEN_WIDTH),T5_VAR_X(A0)      ; game window width
+*                       	move    #(TK_ENEM_COLUMNS*T5_PIXEL_SIZE+20),D1        ; width needed by enemy
+*                       	move    #TK_INFO_SCREEN_WIDTH,D1
+*                        sub     #1,D0
+*                        mulu    D2,D0
+*                        divu    #2,D2
+*                        add     D2,D0
+*                        add     D1,D0
+*                        move    D0,T5_VAR_X(A0)
 
 ; switch
 			move.b	#3,D0
