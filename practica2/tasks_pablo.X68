@@ -792,6 +792,10 @@ T6_START:
 ;set colors and draw
 				move	T5_VAR_X(A0),D0	;set X = ship's X
 *				bsr	T6_DRAW_DISPARO
+                                TK_SET_PEN #$00FFFFFF	; fija el color del borde a blanco
+
+                                TK_DRAW_SQUARE #3, #3, #40, #40
+
 ; uptade beam position
 *				move.w	T6_VAR_Y(A0), D1
 *				add.w	D1, T6_VAR_Y(A0)	; Y=Y+SY	
