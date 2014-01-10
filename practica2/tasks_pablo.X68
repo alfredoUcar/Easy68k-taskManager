@@ -280,7 +280,8 @@ T1_START_GAME:
 
                                 lea	T5_START, A0
 			        move.b	#0, D0
-			        trap	#0	
+			        trap	#0
+
 			        
 			        ;get current task info
 			        move.b  #4,D0
@@ -694,7 +695,9 @@ T5_START:
                                 TRAP   #15
                                 BTST.L #24,D1     ; test for space
                                 IF <NE> THEN      ; if 'space'
-*                                  bsr T6_START
+*                                  lea	T6_START, A0
+*			            move.b	#0, D0
+*			            trap	#0
                                 ENDI
                                 BTST.L #16,D1     ; test for z
                                 IF <NE> THEN      ; if 'z'
@@ -823,6 +826,7 @@ T6_INIT:
 ; switch
 			move.b	#3,D0
 			trap	#0
+
 
 
 

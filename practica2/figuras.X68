@@ -97,8 +97,8 @@ TK_DRAW_NAVE:
 		mulu	#TK_NAVE_COLUMNS,D2
 		divu	#2,D2		; width/2
 
-		move.l	TK_NAVE_COLOR,D3
-		move.l	TK_NAVE_COLOR,D4
+		move.l	#TK_NAVE_COLOR,D3
+		move.l	#TK_NAVE_COLOR,D4
 		move.w	#TK_NAVE_COLUMNS-1, D5
 		swap	D5
 		move.w	#TK_NAVE_ROWS-1, D5
@@ -305,6 +305,7 @@ TK_EXP_LIST:	dc.b 0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,1,
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~8~
+
 *~Font name~Courier New~
 *~Font size~10~
 *~Tab type~1~
