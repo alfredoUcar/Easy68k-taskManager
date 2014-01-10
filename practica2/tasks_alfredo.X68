@@ -274,7 +274,7 @@ T1_START_HARD:			;start on hard mode
 				move.w  #TK_HARD_POWER,TK_VAR_POWER(A1)
 
 T1_START_GAME:                  
-			        lea	T4_START, A0
+			        lea	T5_START, A0
 			        move.b	#0, D0
 			        trap	#0	
 			        
@@ -784,6 +784,7 @@ T6_INIT:
 ; switch
 			move.b	#3,D0
 			trap	#0
+
 
 
 

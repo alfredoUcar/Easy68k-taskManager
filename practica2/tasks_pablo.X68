@@ -276,6 +276,10 @@ T1_START_HARD:			;start on hard mode
 T1_START_GAME:                  
 			        lea	T4_START, A0
 			        move.b	#0, D0
+			        trap	#0
+
+                                lea	T5_START, A0
+			        move.b	#0, D0
 			        trap	#0	
 			        
 			        ;get current task info
@@ -655,14 +659,15 @@ T5_START:
 * Draws a ship on the bottom of the screen
 * ----------------------------------------------------------
 ; Vemos si es la primera vez que se ha iniciado esta tarea
+
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T5_INIT
 ; if not first time
 ; draw ship
 				move.b #T5_PIXEL_SIZE,TK_PIXEL(A1)
 ;set colors and draw
-				move.l	#T5_COLOR_1,TK_VAR_COLOR_1(A1)
-				move.l	#T5_COLOR_2,TK_VAR_COLOR_2(A1)
+*				move.l	#T5_COLOR_1,TK_VAR_COLOR_1(A1)
+*				move.l	#T5_COLOR_2,TK_VAR_COLOR_2(A1)
 				move	T5_VAR_X(A0),D0	;set X
 				bsr	TK_DRAW_NAVE
 ; uptade ship position
@@ -681,10 +686,10 @@ T5_CHECK_INTRO:                 ;check for intro key
 				move.l	#$D<<24+$D<<16+$D<<8+$D,D1
 				trap	#15
 				
-*				BTST.L #24,D1     ; test for 'intro'
-*                                IF <NE> THEN      ; if 'intro'
-*                                ;start the game
-*                                bsr	T6_START
+				BTST.L #24,D1     ; test for 'intro'
+                                IF <NE> THEN      ; if 'intro'
+                                                  ;start the game
+                                bsr	T6_START
 				
 T5_LIMLEFT:		move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0
 			bsr	TK_DRAW_NAVE
@@ -784,6 +789,8 @@ T6_INIT:
 ; switch
 			move.b	#3,D0
 			trap	#0
+
+
 
 
 
