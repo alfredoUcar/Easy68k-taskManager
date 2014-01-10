@@ -695,7 +695,7 @@ T5_START:
                                 TRAP   #15
                                 BTST.L #24,D1     ; test for space
                                 IF <NE> THEN      ; if 'space'
-                                   lea	T6_START, A0
+                                    lea	T6_START, A0
 			            move.b	#0, D0
 			            trap	#0
                                 ENDI
@@ -732,7 +732,7 @@ T5_INIT:
 ; storing in shared memory makes things easier.
 			move.b	D1, TK_VAR_ID(A0)
 ; store the task type
-			move.b #TK_TYPE_SCREEN, TK_VAR_TYPE(A0)
+			move.b #TK_TYPE_PLAYER, TK_VAR_TYPE(A0)
 ; la siguiente vez que volvamos a esta task, no sera la primera
 			move.b	#$FF, TK_VAR_FIRST_TIME(A0)
 ; set initial position of the ship
@@ -767,15 +767,12 @@ T6_START:
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T6_INIT
 ; if not first time
-; draw ship
-				move.b #T6_PIXEL_SIZE,TK_PIXEL(A1)
+; draw beam
 ;set colors and draw
                                 TK_SET_PEN #$00FFFFFF	; fija el color del borde a blanco
                                 TK_SET_FILL #$0000AAFF
-*				move	T5_VAR_X(A0),D0	;set beam's X = ship's X
-                                add     #T6_PIXEL_SIZE,D0
 
-                                TK_DRAW_SQUARE T6_VAR_X(A0), T6_VAR_Y(A0), T6_VAR_X(A0), T6_VAR_Y(A0) 
+                                TK_DRAW_RECTANGLE #T6_PIXEL_SIZE, T6_VAR_Y(A0), T6_VAR_X(A0), #40
 
 ; uptade beam position
 	
@@ -808,10 +805,9 @@ T6_CHECK:               cmp.b   #TK_TYPE_PLAYER, TK_VAR_TYPE(A1)                
                         trap    #0
                         ; TODO: coger la X y la Y de la nave
                         move    T5_VAR_X(A1),T6_VAR_X(A0)
-
                          ;Y DE LA NAVE
-                        move    #(TK_NAVE_ROWS*T5_PIXEL_SIZE),T6_VAR_Y(A0)
-
+                        move	#((TK_SCREEN_HEIGHT-T5_PIXEL_SIZE-3)-(TK_NAVE_ROWS*T5_PIXEL_SIZE)/2),T6_VAR_Y(A0)
+                        
 T6_CHECK_NEXT:          move.b  #7,D0                                           ; get next task info
                         trap    #0
                         cmp.b   #$FF,D1
@@ -820,23 +816,6 @@ T6_CHECK_NEXT:          move.b  #7,D0                                           
 ; switch
 			move.b	#3,D0
 			trap	#0
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 *~Font name~Courier New~
 *~Font size~10~
