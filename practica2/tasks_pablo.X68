@@ -712,17 +712,6 @@ T5_START:
 *                                  disparo 'c'
                                 ENDI
 
-								
-                                ;check for intro key
-*                                move.b	#19, D0
-*				move.l	#$D<<24+$D<<16+$D<<8+$D,D1
-*				trap	#15
-*				
-*				BTST.L #24,D1     ; test for 'intro'
-*                                IF <NE> THEN      ; if 'intro'
-*                                                  ;start the game
-*                                
-*                                ENDI
 *				
 *T5_LIMLEFT:		move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0
 *			bsr	TK_DRAW_NAVE
@@ -747,16 +736,7 @@ T5_INIT:
 ; la siguiente vez que volvamos a esta task, no sera la primera
 			move.b	#$FF, TK_VAR_FIRST_TIME(A0)
 ; set initial position of the ship
-*			move    #((TK_NAVE_ROWS*T5_PIXEL_SIZE)/2),T5_VAR_X(A0)      ; set y
 			move    #((TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH)/2+TK_INFO_SCREEN_WIDTH),T5_VAR_X(A0)      ; game window width
-*                       	move    #(TK_ENEM_COLUMNS*T5_PIXEL_SIZE+20),D1        ; width needed by enemy
-*                       	move    #TK_INFO_SCREEN_WIDTH,D1
-*                        sub     #1,D0
-*                        mulu    D2,D0
-*                        divu    #2,D2
-*                        add     D2,D0
-*                        add     D1,D0
-*                        move    D0,T5_VAR_X(A0)
 
 ; switch
 			move.b	#3,D0
@@ -771,9 +751,9 @@ T5_INIT:
 ; Task 6 constants
 ; ==========================================================
 T6_VAR_Y	EQU	4
-TY_VAR_SY	EQU	6
+T6_VAR_X        EQU     6
 ;draw:
-T6_PIXEL_SIZE		EQU	4
+T6_PIXEL_SIZE		EQU	8
 ; ==========================================================
 ; Task 6 functions
 ; ==========================================================
@@ -790,16 +770,16 @@ T6_START:
 ; draw ship
 				move.b #T6_PIXEL_SIZE,TK_PIXEL(A1)
 ;set colors and draw
-				move	T5_VAR_X(A0),D0	;set X = ship's X
-*				bsr	T6_DRAW_DISPARO
                                 TK_SET_PEN #$00FFFFFF	; fija el color del borde a blanco
+                                TK_SET_FILL #$0000AAFF
+*				move	T5_VAR_X(A0),D0	;set beam's X = ship's X
+                                add     #T6_PIXEL_SIZE,D0
 
-                                TK_DRAW_SQUARE #3, #3, #40, #40
+                                TK_DRAW_SQUARE T6_VAR_X(A0), T6_VAR_Y(A0), T6_VAR_X(A0), T6_VAR_Y(A0) 
 
 ; uptade beam position
-*				move.w	T6_VAR_Y(A0), D1
-*				add.w	D1, T6_VAR_Y(A0)	; Y=Y+SY	
-				; switch
+	
+; switch
 			        move.b	#3,D0
 			        trap	#0
 * ----------------------------------------------------------
@@ -816,16 +796,26 @@ T6_INIT:
 ; la siguiente vez que volvamos a esta task, no sera la primera
 			move.b	#$FF, TK_VAR_FIRST_TIME(A0)
 ; set initial position of the ship
-			move    #((TK_ENEM_ROWS*T5_PIXEL_SIZE)/2),T5_VAR_X(A0)      ; set y
-			move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0      ; game window width
-                       	move    #(TK_ENEM_COLUMNS*T5_PIXEL_SIZE+20),D1        ; width needed by enemy
-                       	move    #TK_INFO_SCREEN_WIDTH,D1
-                        sub     #1,D0
-                        mulu    D2,D0
-                        divu    #2,D2
-                        add     D2,D0
-                        add     D1,D0
-                        move    D0,T6_VAR_Y(A0)
+
+                        move.b  #6,D0                                           ; get first task info
+                        trap    #0
+                                
+T6_CHECK:               cmp.b   #TK_TYPE_PLAYER, TK_VAR_TYPE(A1)                  ;it's ship?
+                        bne     T6_CHECK_NEXT
+
+                        ;recuperamos la info de la task actual
+                        move.b  #4,D0
+                        trap    #0
+                        ; TODO: coger la X y la Y de la nave
+                        move    T5_VAR_X(A1),T6_VAR_X(A0)
+
+                         ;Y DE LA NAVE
+                        move    #(TK_NAVE_ROWS*T5_PIXEL_SIZE),T6_VAR_Y(A0)
+
+T6_CHECK_NEXT:          move.b  #7,D0                                           ; get next task info
+                        trap    #0
+                        cmp.b   #$FF,D1
+                        bne     T6_CHECK
 
 ; switch
 			move.b	#3,D0
