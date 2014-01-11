@@ -1,9 +1,6 @@
 *-----------------------------------------------
 *		FIGURAS
-**-----------------------------------------------
-*TK_PIXEL	EQU	3
-*TK_SCREEN__WIDTH	EQU	640
-*TK_SCREEN_HEIGHT	EQU	480
+**----------------------------------------------
 *-----------------------------------------------
 *		ENEMIGO
 *-----------------------------------------------
@@ -132,8 +129,8 @@ TK_DRAW_EXP:
 		mulu	#TK_EXP_COLUMNS,D2
 		divu	#2,D2		; width/2
 		
-		move.l	TK_VAR_COLOR_1(A1),D3
-		move.l	TK_VAR_COLOR_2(A1),D4
+		move.l	#TK_EXP_COLOR1,D3
+		move.l	#TK_EXP_COLOR2,D4
 		move.w	#TK_EXP_COLUMNS-1, D5
 		swap	D5
 		move.w	#TK_EXP_ROWS-1, D5
@@ -237,6 +234,7 @@ TK_EXP_LIST:	dc.b 0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,1,
 
 
 	
+
 
 
 

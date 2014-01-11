@@ -800,7 +800,11 @@ T6_GET_ALIEN:                   move.l  A1,A2   ;save actual state
                                 move.b  #4,D0
                                 trap    #0
                                 ;alien's X
+<<<<<<< HEAD
                                 cmp     T3_X(A2), T6_VAR_X(A0)
+=======
+                                cmp.b    #T3_X(A2), #T6_VAR_X(A0)
+>>>>>>> master
                                 IF <EQ> THEN
                                         ;alien's Y
                                         cmp T3_Y(A2),T6_VAR_Y(A2)
