@@ -831,10 +831,10 @@ T8_KILL_CHECK:                  move.b  D1,D5                                   
                                 bsr     T8_CHECK_CONTACT
                                 cmp     #0,D0
                                 beq     T8_CHECK_NEXT                                   ; doesn't touch the enemy                                
-                                ; kill the enemy
+; kill the enemy
                                 move    T3_X(A1),D2
-                                move    T3_Y(A1),D3
-                                move.b  TK_VAR_ID(A1),D4
+                                move    T3_Y(A1),D6
+                                move.b  TK_VAR_ID(A1),D7
                                 ; add explosion
                                 lea	T5_START, A0
 			        move.b	#0, D0
@@ -843,9 +843,9 @@ T8_KILL_CHECK:                  move.b  D1,D5                                   
 			        trap    #0
 			        ; asign same position of killed enemy
 			        move    D2,T5_X(A0)
-			        move    D3,T5_Y(A0)
+			        move    D6,T5_Y(A0)
 			        ; remove enemy
-			        move.b  D4,D1
+			        move.b  D7,D1
 			        move.b	#1, D0
 			        trap	#0                               
                                                        
