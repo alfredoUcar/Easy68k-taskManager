@@ -768,6 +768,7 @@ T6_START:
 ; Vemos si es la primera vez que se ha iniciado esta tarea
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T6_INIT
+				
 ; if not first time
 ; draw beam
 ;set colors and draw
@@ -787,29 +788,36 @@ T6_START:
                                 move.b  #6,D0                                           ; get first task info
                                 trap    #0
                                 
-T6_CHECK:                       cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's alien?
-                                beq     T6_GET_ALIEN
+T6_CHECK_ALIEN:                 cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's alien?
+                                beq    T6_GET_ALIEN
                                 move.b  #7,D0                                           ; get next task info
                                 trap    #0
                                 cmp.b   #$FF,D1
-                                bne     T6_CHECK
+                                bne     T6_CHECK_ALIEN
 
 ;smash the aliens!
                                 ;get coordenates
 T6_GET_ALIEN:                   move.l  A1,A2   ;save actual state
                                 move.b  #4,D0
                                 trap    #0
-                                ;alien's X
-<<<<<<< HEAD
-                                cmp     T3_X(A2), T6_VAR_X(A0)
-=======
-                                cmp.b    #T3_X(A2), #T6_VAR_X(A0)
->>>>>>> master
+                                ;brace ourselves, the compares are coming
+                                move.w  T3_X(A2),D1
+                                swap    D1
+                                move.w  T3_Y(A2),D1
+                                ;now the X,Y of the beam
+                                move.w  T6_VAR_X(A0),D2
+                                swap    D2
+                                move.w  T6_VAR_Y(A0),D2
+                                
+*                                ;so, at this point we've got alien's X:Y on D1 and beam's X:Y on D2
+*                                cmp.b     D1, D2
                                 IF <EQ> THEN
-                                        ;alien's Y
-                                        cmp T3_Y(A2),T6_VAR_Y(A2)
+                                        swap D1
+                                        swap D2
+                                        cmp.b D1,D2
                                         IF <EQ> THEN
-                                                ;BOOM!
+                                               move.l D2,D0
+                                               bsr      TK_DRAW_EXP
                                         ENDI
                                 ENDI
 	
@@ -853,6 +861,7 @@ T6_GET_DATA:            ;recuperamos la info de la task actual
 ; switch
 			move.b	#3,D0
 			trap	#0
+
 
 
 
