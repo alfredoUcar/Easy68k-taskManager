@@ -19,6 +19,7 @@ TK_TYPE_ENEM			EQU	2
 TK_TYPE_PLAYER                  EQU     3
 TK_TYPE_SHOT                    EQU     4
 TK_TYPE_CONTROL                 EQU     5
+TK_TYPE_EXP                     EQU     6
 ; Game configuration for each level
 ;LEVEL 1
 TK_EASY_SPEED                   EQU     3
@@ -807,25 +808,31 @@ T6_GET_ALIEN:                   move.l  A1,A2   ;save actual state
                                 move.w  T6_VAR_X(A0),D3
                                 move.w  T6_VAR_Y(A0),D4
                                 
-                                movem.l	D0-D4/A0,-(A7)
                                 bsr     T6_CHECK_CONTACT
-                                movem.l (A7)+, D0-D5/A0
-
                                 
-*                                ;so, at this point we've got alien's X:Y on D1 and beam's X:Y on D2
-*                                cmp.b     D1, D2
-*                                IF <EQ> THEN
-*                                        swap D1
-*                                        swap D2
-*                                        cmp.b D1,D2
-*                                        IF <EQ> THEN
-*                                               move.l D2,D0
-*                                               bsr      TK_DRAW_EXP
-*                                        ENDI
-*                                ENDI
-	
+                                
+                               
+                                cmp     #$FFFF,D0
+                                bne     T6_SWITCH
+                                
+                                move    T3_X(A2),D2
+                                move    T3_Y(A2),D6
+                                move.b  TK_VAR_ID(A1),D7
+                                ; add explosion
+                                lea	T7_START, A0
+			        move.b	#0, D0
+			        trap	#0
+			        move.b  #5,D0
+			        trap    #0
+			        ; asign same position of killed enemy
+			        move    D2,T7_X(A0)
+			        move    D6,T7_Y(A0)
+			        ; remove enemy
+			        move.b  D7,D1
+			        move.b	#1, D0
+			        trap	#0 
 ; switch
-			        move.b	#3,D0
+T6_SWITCH			        move.b	#3,D0
 			        trap	#0
 
 * ----------------------------------------------------------
@@ -895,6 +902,80 @@ T6_NO_CONTACT:                  clr     D0
 
 
 
+************************************************************
+*                            TASK 7                        *
+************************************************************
+; ==========================================================
+; Task 7 constants
+; ==========================================================
+;memory offsets:
+T7_X                    EQU     4
+T7_Y                    EQU     6
+T7_LIVED                EQU     8 
+;draw:
+T7_PIXEL_SIZE		EQU	4
+T7_LIFE_TIME            EQU     1    ; hundredths of a second 
+; ==========================================================
+; Task 7 functions
+; ==========================================================
+* ----------------------------------------------------------
+T7_START:
+* Task 7 entry point.
+* Explosion
+* First time:
+* - set time lived to 0
+* Further executions
+* - paint an explosion
+* ----------------------------------------------------------
+				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
+				beq	T7_INIT
+				
+				cmp     #T7_LIFE_TIME,T7_LIVED(A0)
+				bge     T7_DEAD                         ; life time expired
+				
+				move.b  #8,D0
+				trap    #15
+				move.l  D1,D2
+				
+				move.b	#T3_PIXEL_SIZE,TK_PIXEL(A1) 	; set global pixel
+				;set position
+				move    T7_X(A0),D0
+				swap    D0
+                                move    T7_Y(A0),D0
+                                
+                                bsr     TK_DRAW_EXP
+T7_UPDATE:                      move.b  #8,D0
+				trap    #15
+				sub.l   D2,D1
+                                add     D1,T7_LIVED(A0)                ; updates life time( in cycles)
+                                bra     T7_NEXT                             
+                                
+T7_DEAD:                        move.b  TK_VAR_ID(A0),D1                ;remove itself
+                                move.b  #1,D0
+                                trap    #0
+				
+; End by switching to next task
+T7_NEXT:			move.b	#3, D0
+				trap	#0		
+								
+
+* ----------------------------------------------------------
+T7_INIT:
+* Task 7 initialization
+* ----------------------------------------------------------
+; Store task ID. When switching to a task, the ID is in D1, but
+; storing in shared memory makes things easier.
+				move.b	D1, TK_VAR_ID(A0)
+; Store the task type
+				move.b	#TK_TYPE_EXP, TK_VAR_TYPE(A0)				
+; Remember next time will not be the first one
+				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
+				; set time lived to 0
+                                move    #0,T7_LIVED(A0)
+
+; End by switching to next task
+				move.b	#3, D0
+				trap	#0		
 
 *~Font name~Courier New~
 *~Font size~10~
