@@ -632,6 +632,7 @@ T3_CHECK_NEXT:                  move.b  #7,D0                                   
 T4_POWER_BOX_WIDTH      EQU     (TK_INFO_SCREEN_WIDTH*90/100) ;90% of info screen
 T4_POWER_BOX_HEIGHT     EQU     40
 T4_POWER_SLOT_WIDTH     EQU     T4_POWER_BOX_WIDTH/3
+T4_POWER_COLOR          EQU     $00FFFF00 ; yellow
 T4_COLOR                EQU     $00FFFFFF  
 ; ==========================================================
 ; Task 4 functions
@@ -648,6 +649,8 @@ T4_START:
 * ----------------------------------------------------------
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T4_INIT
+				
+				bsr     T4_SHOW_ENERGY
 				
 				TK_SET_PEN      #T4_COLOR
 				TK_DRAW_LINE    #TK_INFO_SCREEN_WIDTH,#0,#TK_INFO_SCREEN_WIDTH,#TK_SCREEN_HEIGHT       
@@ -686,7 +689,22 @@ T4_ADD_ENEM:			lea         T3_START, A0
 
 ; End by switching to next task
 				move.b	#3, D0
-				trap	#0		
+				trap	#0
+* ----------------------------------------------------------
+T4_SHOW_ENERGY:
+* show energy bar
+* ----------------------------------------------------------
+                        movem.l D0-D4,-(A7)     ; push
+                        
+                        TK_SET_PEN      #$00FFFFFF
+                        TK_SET_PEN      #$00FFFFFF
+                        move    #((TK_INFO_SCREEN_WIDTH-T4_POWER_BOX_WIDTH)/2-T4_POWER_BOX_WIDTH),D1    ;left X
+                        move    #(TK_SCREEN_HEIGHT-TK_POWER_BOX_WIDTH-20),D2                            ;upper Y
+                        move    #((TK_INFO_SCREEN_WIDTH-T4_POWER_BOX_WIDTH)/2),D3                       ;right X
+                        move    #(TK_SCREEN_HEIGHT-20),D4                                               ;lower Y
+                        TK_DRAW_RECTANGLE D1,D2,D3,D4
+                        
+                        movem.l (A7)+,D0-D4     ; pop
 * ----------------------------------------------------------
 ************************************************************
 *                            TASK 5                        *
@@ -918,6 +936,7 @@ T8_INIT:
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
