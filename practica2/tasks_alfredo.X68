@@ -12,6 +12,9 @@
 TK_SCREEN_WIDTH			EQU	640
 TK_SCREEN_HEIGHT		EQU	480
 TK_INFO_SCREEN_WIDTH            EQU     140
+; game control
+TK_MAX_POWER                    EQU     30
+TK_SLOT_ENERGY                  EQU     (TK_MAX_POWER/3)
 ; Task types
 TK_TYPE_MENU			EQU	0
 TK_TYPE_SCREEN			EQU	1
@@ -630,7 +633,7 @@ T3_CHECK_NEXT:                  move.b  #7,D0                                   
 ;memory offsets:
 ;draw
 T4_POWER_BOX_WIDTH      EQU     (TK_INFO_SCREEN_WIDTH*90/100) ;90% of info screen
-T4_POWER_BOX_HEIGHT     EQU     40
+T4_POWER_BOX_HEIGHT     EQU     25
 T4_POWER_SLOT_WIDTH     EQU     T4_POWER_BOX_WIDTH/3
 T4_POWER_COLOR          EQU     $00FFFF00 ; yellow
 T4_COLOR                EQU     $00FFFFFF  
@@ -697,14 +700,33 @@ T4_SHOW_ENERGY:
                         movem.l D0-D4,-(A7)     ; push
                         
                         TK_SET_PEN      #$00FFFFFF
-                        TK_SET_PEN      #$00FFFFFF
-                        move    #((TK_INFO_SCREEN_WIDTH-T4_POWER_BOX_WIDTH)/2-T4_POWER_BOX_WIDTH),D1    ;left X
-                        move    #(TK_SCREEN_HEIGHT-TK_POWER_BOX_WIDTH-20),D2                            ;upper Y
-                        move    #((TK_INFO_SCREEN_WIDTH-T4_POWER_BOX_WIDTH)/2),D3                       ;right X
-                        move    #(TK_SCREEN_HEIGHT-20),D4                                               ;lower Y
+                        TK_SET_FILL      #$00FFFFFF
+                        clr     D1
+                        move    #(TK_INFO_SCREEN_WIDTH-T4_POWER_BOX_WIDTH),D1
+                        divu    #2,D1                           ;left x
+                        move    #TK_INFO_SCREEN_WIDTH,D3   
+                        sub     D1,D3                           ;right x
+                        move    #(TK_SCREEN_HEIGHT-20),D2
+                        move    D2,D4                           ; lower y
+                        sub     #(T4_POWER_BOX_HEIGHT),D2       ;upper y
                         TK_DRAW_RECTANGLE D1,D2,D3,D4
                         
+                        move    D1,D5   ; copy
+                        TK_SET_PEN      #$0000FF00
+                        TK_SET_FILL      #$0000FF00
+                        move    D5,D1   ; restore
+                        
+                        add     #2,D2
+                        sub     #2,D4
+                        
+                        move    #1,D5   ;count (0..2 slots)
+.T4_DRAW_SLOT:          add     #2,D1
+                        move    #(T4_POWER_BOX_WIDTH/3-4),D3
+                        add     D1,D3
+                        TK_DRAW_RECTANGLE D1,D2,D3,D4
+                        dbra    D5,.T4_DRAW_SLOT
                         movem.l (A7)+,D0-D4     ; pop
+                        rts
 * ----------------------------------------------------------
 ************************************************************
 *                            TASK 5                        *
@@ -936,6 +958,7 @@ T8_INIT:
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
