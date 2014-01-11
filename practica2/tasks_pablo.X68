@@ -780,9 +780,34 @@ T6_START:
                                 sub     #T6_PIXEL_SIZE,D2
 
                                 TK_DRAW_SQUARE D1, D2, #T6_PIXEL_SIZE
-                                
+;uptdate beam position
                                 sub     #T6_SPEED,T6_VAR_Y(A0)
-; uptade beam position
+
+;look if an enemy is around
+                                move.b  #6,D0                                           ; get first task info
+                                trap    #0
+                                
+T6_CHECK:                       cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's alien?
+                                beq     T6_GET_ALIEN
+                                move.b  #7,D0                                           ; get next task info
+                                trap    #0
+                                cmp.b   #$FF,D1
+                                bne     T6_CHECK
+
+;smash the aliens!
+                                ;get coordenates
+T6_GET_ALIEN:                   move.l  A1,A2   ;save actual state
+                                move.b  #4,D0
+                                trap    #0
+                                ;alien's X
+                                cmp     T3_X(A2), T6_VAR_X(A0)
+                                IF <EQ> THEN
+                                        ;alien's Y
+                                        cmp T3_Y(A2),T6_VAR_Y(A2)
+                                        IF <EQ> THEN
+                                                ;BOOM!
+                                        ENDI
+                                ENDI
 	
 ; switch
 			        move.b	#3,D0
