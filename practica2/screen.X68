@@ -195,8 +195,7 @@ TK_DRAW_CIRCLE MACRO
 		move.w	\2, D2
 		move.w	\1, D3
 		move.w	\2, D4
-		move.w	\3, D5
-                divu    #2,D5
+		move.w	\3, D5                
                 sub     D5,D1
                 sub     D5,D2
                 add     D5,D3
@@ -249,6 +248,7 @@ TK_SET_FONT	MACRO
 		movem.w	(A7)+, D0-D2
 		ENDM
 		
+
 
 
 

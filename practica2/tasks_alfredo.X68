@@ -2,8 +2,8 @@
 * Program    : Some routines implementing tasks to be used
 *              with taskmanager installed on trap #0. See
 *              taskmanager.x68 for more details.
-* Written by : A. Burguera
-* Date       : 14-Dec-2011
+* Written by : Pablo Riutort y Alfredo Ucendo
+* Date       : 14-Dec-2013
 * Description: 
 *-----------------------------------------------------------
 ************************************************************
@@ -54,27 +54,27 @@ TK_INIT:
 * manager.
 * ----------------------------------------------------------
 ; Define minimum cycle time
-			move.l	#12, D1
+			move.l	#20, D1
 			move.b	#8, D0
 			trap	#0
 
-*; Add task 1
-*			lea	T1_START, A0
-*			move.b	#0, D0
-*			trap	#0
-*		
-*; add task 2
+; Add task 1
+			lea	T1_START, A0
+			move.b	#0, D0
+			trap	#0
+		
+; add task 2
 			lea	T2_START, A0
 			move.b	#0, D0
 			trap	#0
 			
-			lea	T3_START, A0
-			move.b	#0, D0
-			trap	#0
-	
-                        lea	T8_START, A0
-			move.b	#0, D0
-			trap	#0
+*			lea	T3_START, A0
+*			move.b	#0, D0
+*			trap	#0
+*	
+*                        lea	T8_START, A0
+*			move.b	#0, D0
+*			trap	#0
 		
 			rts
                                 
@@ -629,12 +629,12 @@ T4_COLOR        EQU     $00FFFFFF
 * ----------------------------------------------------------
 T4_START:
 * Task 4 entry point.
-* Manage game: add enemies, pause/resume game...
+* Manage game
 * First time:
-* - Init double buffer
-* - Clears hidden buffer
+* - add player
+* - add first enemies
 * Further executions
-* - Shows graphics
+* - add enemies randomly and manage game state
 * ----------------------------------------------------------
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T4_INIT
@@ -658,27 +658,19 @@ T4_INIT:
 				move.b	#TK_TYPE_CONTROL, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
 				move.b  #$ff, TK_VAR_FIRST_TIME(A0)
-				
-				
-				
-				;add explosion
-        			lea         T5_START, A0
-			        move.b	    #0, D0
-        			trap	    #0
-        			move.b	    #5, D0
-        			trap	    #0                      
-        			move        #500,T5_X(A0)
-                                move        #300,T5_Y(A0)
-                                move.b	    #4, D0
-        			trap	    #0      			
+      			
 				
 				move        #3,D2               ; number of enemies to add
 				sub         #1,D2               ; loop 0..N-1
-				
+; add first enemies				
 T4_ADD_ENEM:			lea         T3_START, A0
 			        move.b	    #0, D0
         			trap	    #0
         			dbra        D2,T4_ADD_ENEM
+        		        
+                                lea	T8_START, A0
+                                move.b	#0, D0
+                                trap	#0
         			
         			
 
@@ -698,7 +690,7 @@ T5_Y                    EQU     6
 T5_LIVED                EQU     8 
 ;draw:
 T5_PIXEL_SIZE		EQU	4
-T5_LIFE_TIME            EQU     3    ; hundredths of a second 
+T5_LIFE_TIME            EQU     1    ; hundredths of a second 
 ; ==========================================================
 ; Task 5 functions
 ; ==========================================================
@@ -746,7 +738,6 @@ T5_NEXT:			move.b	#3, D0
 * ----------------------------------------------------------
 T5_INIT:
 * Task 5 initialization
-*       pre: TK_VAR_X/Y with position
 * ----------------------------------------------------------
 ; Store task ID. When switching to a task, the ID is in D1, but
 ; storing in shared memory makes things easier.
@@ -755,11 +746,7 @@ T5_INIT:
 				move.b	#TK_TYPE_EXP, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
-				
-*                                move    TK_VAR_X(A1),T5_X(A0)
-*                                move    TK_VAR_Y(A1),T5_Y(A0)
-*                                move    #200,T5_X(A0)
-*                                move    #150,T5_Y(A0)
+				; set time lived to 0
                                 move    #0,T5_LIVED(A0)
 
 ; End by switching to next task
@@ -780,6 +767,7 @@ T8_X            EQU     8
 T8_Y            EQU     10
 ;draw
 T8_RADIUS       EQU     50
+T8_ANIM_STEP    EQU     T8_RADIUS/10
 T8_COLOR        EQU     $000000FF
 ; ==========================================================
 ; Task 8 functions
@@ -808,36 +796,99 @@ T8_START:
 				
 				and.b   #1,D0
 				cmp.b   #0,D0
-				beq     T8_CHECK_RELEASE        ; not pressed, check if released
-				move.b  #$FF,T8_MOUSE_STATE(A0) ; save pressed state
+				beq     T8_CHECK_RELEASE                ; not pressed, check if released
+				move.b  #$FF,T8_MOUSE_STATE(A0)         ; save pressed state
 				bra     T8_WAIT_CLICK
 T8_CHECK_RELEASE:               cmp.b   #0,T8_MOUSE_STATE(A0)
                                 beq     T8_WAIT_CLICK
-                                move.b  #$FF,T8_STATE(A0)           ; click, next time will kill
+                                move.b  #$FF,T8_STATE(A0)               ; click, next time will kill
 				
 T8_WAIT_CLICK:			TK_SET_PEN      #T8_COLOR
                                 TK_DRAW_CIRCLE  T8_X(A0),T8_Y(A0),#T8_RADIUS
                                 
                                 bra     T8_NEXT
                                 
-T8_KILL:                        add     #1,T8_SMALL_RADIUS(A0)
-                                TK_SET_PEN      #T8_COLOR
-                                TK_DRAW_CIRCLE  T8_X(A0),T8_Y(A0),T8_SMALL_RADIUS(A0)
-                                cmp     #T8_RADIUS,T8_SMALL_RADIUS(A0)
-                                ble     T8_NEXT
-
-                                ;TODO: kill enemies touched by circle
+T8_KILL:                        
+                                ; save bomb position
+                                move    T8_X(A0),D3
+                                move    T8_Y(A0),D4
+; check if there's enemies to kill
+                                move.b  #6,D0                                           ; get first task info
+                                trap    #0                                
+                                
+T8_KILL_CHECK:                  move.b  D1,D5                                           ; copy index of current task for T8_CHECK_NEXT
+                                cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's enemy?
+                                bne     T8_CHECK_NEXT                                   ;no, next task
+                                ; it's enemy... check distance                                
+                                move    T3_Y(A1),D1
+                                move    T3_X(A1),D0                                
+                                bsr     T8_CHECK_CONTACT
+                                cmp     #0,D0
+                                beq     T8_CHECK_NEXT                                   ; doesn't touch the enemy                                
+                                ; kill the enemy
+                                move    T3_X(A1),D2
+                                move    T3_Y(A1),D3
+                                move.b  TK_VAR_ID(A1),D4
+                                ; add explosion
+                                lea	T5_START, A0
+			        move.b	#0, D0
+			        trap	#0
+			        move.b  #5,D0
+			        trap    #0
+			        ; asign same position of killed enemy
+			        move    D2,T5_X(A0)
+			        move    D3,T5_Y(A0)
+			        ; remove enemy
+			        move.b  D4,D1
+			        move.b	#1, D0
+			        trap	#0                               
+                                                       
+                                
+T8_CHECK_NEXT:                  move.b  D5,D1                                           ; restore index
+                                move.b  #7,D0                                           ; get next task info
+                                trap    #0
+                                cmp.b   #$FF,D1
+                                bne     T8_KILL_CHECK                                   ; not last task
+                                
                                 ;remove itself
                                 move.b  #4,D0
                                 trap    #0
                                 move.b  #1,D0
                                 trap    #0
+                                
+T8_ANIM:
+                                add     #T8_ANIM_STEP,T8_SMALL_RADIUS(A0)
+                                TK_SET_PEN      #T8_COLOR
+                                TK_DRAW_CIRCLE  T8_X(A0),T8_Y(A0),T8_SMALL_RADIUS(A0)
+                                cmp     #T8_RADIUS,T8_SMALL_RADIUS(A0)
+                                ble     T8_ANIM
 				
 
 ; End by switching to next task
 T8_NEXT:      			move.b	#3, D0
 				trap	#0
+* ----------------------------------------------------------
+T8_CHECK_CONTACT:
+* indicates if the enemy with position D0=X,D1=Y touch the circle on D3=X, D4=Y(return $FFFF)
+* modifies: D0,D1
+*---------------------------------------------------------------------------
 
+				sub     D3,D0
+				bge     T8_CONT_X
+				neg     D0
+T8_CONT_X:			sub     D4,D1
+				bge     T8_CONT_Y
+				neg     D1
+; At this point, D0=abs(XBomb-XEnem) and D1=abs(YBomb-YEnem)
+T8_CONT_Y:                      cmp     #(T8_RADIUS+((T3_PIXEL_SIZE*TK_ENEM_COLUMNS)/2)),D0
+                                bgt     T8_NO_CONTACT
+                                cmp     #(T8_RADIUS+((T3_PIXEL_SIZE*TK_ENEM_ROWS)/2)),D1
+                                bgt     T8_NO_CONTACT
+                                ;contact
+                                move    #$FFFF,D0
+                                rts
+T8_NO_CONTACT:                  clr     D0
+                                rts
 * ----------------------------------------------------------
 T8_INIT:
 * Task 8 initialization
@@ -857,6 +908,10 @@ T8_INIT:
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
+
+
+
 
 
 
