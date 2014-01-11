@@ -680,11 +680,19 @@ T5_START:
                                 TRAP   #15
                                 BTST.L #24,D1     ; test for left arrow
                                 IF <NE> THEN      ; if 'left'
-                                  sub     #T5_SPEED, T5_VAR_X(A0)
+                                  sub #T5_SPEED, T5_VAR_X(A0)
+                                  cmp #(TK_INFO_SCREEN_WIDTH+((TK_NAVE_COLUMNS*T5_PIXEL_SIZE)/2)), T5_VAR_X(A0)
+                                  IF <EQ> THEN
+                                        add     #T5_SPEED,T5_VAR_X(A0)
+                                  ENDI
                                 ENDI
                                 BTST.L #16,D1     ; test for right arrow
                                 IF <NE> THEN      ; if 'right'
-                                  add     #T5_SPEED,T5_VAR_X(A0)
+                                  add #T5_SPEED, T5_VAR_X(A0)
+                                  cmp #(TK_SCREEN_WIDTH-((TK_NAVE_COLUMNS*T5_PIXEL_SIZE)/2)), T5_VAR_X(A0)
+                                  IF <EQ> THEN
+                                        sub     #T5_SPEED,T5_VAR_X(A0)
+                                  ENDI
                                 ENDI
                                 
                                 ;teclas de disparo
@@ -708,16 +716,9 @@ T5_START:
 *                                  disparo 'x'
                                 ENDI
                                 BTST.L #8,D1     ; test for c
-                                IF <NE> THEN      ; if 'x'
+                                IF <NE> THEN      ; if 'c'
 *                                  disparo 'c'
                                 ENDI
-
-*				
-*T5_LIMLEFT:		move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0
-*			bsr	TK_DRAW_NAVE
-*			
-*T5_LIMRIGHT:		move    #(TK_SCREEN_WIDTH-SHIP_SIZE),D0
-*			bsr	TK_DRAW_NAVE
 ; switch
 			move.b	#3,D0
 			trap	#0
@@ -816,6 +817,8 @@ T6_CHECK_NEXT:          move.b  #7,D0                                           
 ; switch
 			move.b	#3,D0
 			trap	#0
+
+
 
 *~Font name~Courier New~
 *~Font size~10~
