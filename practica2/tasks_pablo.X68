@@ -703,7 +703,7 @@ T5_START:
                                 TRAP   #15
                                 BTST.L #24,D1     ; test for space
                                 IF <NE> THEN      ; if 'space'
-                                    lea	T6_START, A0
+                                    lea	T6_START, A0 ;new laser beam task
 			            move.b	#0, D0
 			            trap	#0
                                 ENDI
@@ -755,6 +755,7 @@ T6_VAR_Y	EQU	4
 T6_VAR_X        EQU     6
 ;draw:
 T6_PIXEL_SIZE		EQU	8
+T6_SPEED                EQU     2
 ; ==========================================================
 ; Task 6 functions
 ; ==========================================================
@@ -772,9 +773,15 @@ T6_START:
 ;set colors and draw
                                 TK_SET_PEN #$00FFFFFF	; fija el color del borde a blanco
                                 TK_SET_FILL #$0000AAFF
+                                
+                                move    T6_VAR_X(A0),D1
+                                sub     #T6_PIXEL_SIZE,D1
+                                move    T6_VAR_Y(A0),D2
+                                sub     #T6_PIXEL_SIZE,D2
 
-                                TK_DRAW_RECTANGLE #T6_PIXEL_SIZE, T6_VAR_Y(A0), T6_VAR_X(A0), #40
-
+                                TK_DRAW_SQUARE D1, D2, #T6_PIXEL_SIZE
+                                
+                                sub     #T6_SPEED,T6_VAR_Y(A0)
 ; uptade beam position
 	
 ; switch
@@ -799,20 +806,20 @@ T6_INIT:
                         trap    #0
                                 
 T6_CHECK:               cmp.b   #TK_TYPE_PLAYER, TK_VAR_TYPE(A1)                  ;it's ship?
-                        bne     T6_CHECK_NEXT
-
-                        ;recuperamos la info de la task actual
-                        move.b  #4,D0
-                        trap    #0
-                        ; TODO: coger la X y la Y de la nave
-                        move    T5_VAR_X(A1),T6_VAR_X(A0)
-                         ;Y DE LA NAVE
-                        move	#((TK_SCREEN_HEIGHT-T5_PIXEL_SIZE-3)-(TK_NAVE_ROWS*T5_PIXEL_SIZE)/2),T6_VAR_Y(A0)
-                        
-T6_CHECK_NEXT:          move.b  #7,D0                                           ; get next task info
+                        beq     T6_GET_DATA
+                        move.b  #7,D0                                           ; get next task info
                         trap    #0
                         cmp.b   #$FF,D1
                         bne     T6_CHECK
+                        
+T6_GET_DATA:            ;recuperamos la info de la task actual
+                        move.l  A1,A2   ;salvamos
+                        move.b  #4,D0
+                        trap    #0
+                        ; coger la X de la nave
+                        move    T5_VAR_X(A2),T6_VAR_X(A0)
+                         ;Y DE LA NAVE
+                        move	#((TK_SCREEN_HEIGHT-T5_PIXEL_SIZE-3)-(TK_NAVE_ROWS*T5_PIXEL_SIZE)/2),T6_VAR_Y(A0)  
 
 ; switch
 			move.b	#3,D0
