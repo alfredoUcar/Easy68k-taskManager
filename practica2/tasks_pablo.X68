@@ -824,6 +824,7 @@ T6_GET_ALIEN:                   move.l  A1,A2   ;save actual state
 ; switch
 			        move.b	#3,D0
 			        trap	#0
+
 * ----------------------------------------------------------
 T6_INIT:
 * Task 6 initialization
@@ -861,6 +862,29 @@ T6_GET_DATA:            ;recuperamos la info de la task actual
 ; switch
 			move.b	#3,D0
 			trap	#0
+			
+* ----------------------------------------------------------
+T6_CHECK_CONTACT:
+* indicates if the enemy with position D0=X,D1=Y touch the circle on D3=X, D4=Y(return $FFFF)
+* modifies: D0,D1
+*---------------------------------------------------------------------------
+
+				sub     D3,D0
+				bge     T6_CONT_X
+				neg     D0
+T6_CONT_X:			sub     D4,D1
+				bge     T6_CONT_Y
+				neg     D1
+; At this point, D0=abs(XBomb-XEnem) and D1=abs(YBomb-YEnem)
+T6_CONT_Y:                      cmp     #(T6_RADIUS+((T3_PIXEL_SIZE*TK_ENEM_COLUMNS)/2)),D0
+                                bgt     T6_NO_CONTACT
+                                cmp     #(T6_RADIUS+((T3_PIXEL_SIZE*TK_ENEM_ROWS)/2)),D1
+                                bgt     T6_NO_CONTACT
+                                ;contact
+                                move    #$FFFF,D0
+                                rts
+T6_NO_CONTACT:                  clr     D0
+                                rts
 
 
 
