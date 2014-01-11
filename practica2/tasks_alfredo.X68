@@ -494,7 +494,7 @@ T3_X                    EQU     4
 T3_Y                    EQU     6
 ;draw:
 T3_PIXEL_SIZE		EQU	4
-T3_SPEED                EQU     1
+T3_SPEED                EQU     0
 T3_COLOR_1              EQU     $00FF6600
 T3_COLOR_2              EQU     $00AA0000
 
@@ -577,6 +577,8 @@ T3_INIT:
 T3_SET_POS:                     move.b  #4,D0                                           ; get current task info (restore)
                                 trap    #0                                              ; values may be changed during loop
                                 
+                                clr.l   D0
+                                clr.l   D1
                                 move    #((TK_ENEM_ROWS*T3_PIXEL_SIZE)/2),T3_Y(A0)      ; set y
                                 move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0      ; game window width
                                 move    #(TK_ENEM_COLUMNS*T3_PIXEL_SIZE+20),D1          ; width needed by enemy
@@ -593,10 +595,11 @@ T3_SET_POS:                     move.b  #4,D0                                   
                                 add     D1,D0
                                 move    D0,T3_X(A0)                                     ; set x
 ; check if there's another enemy for that position
+                                move.b  TK_VAR_ID(A0),D4                                ; save current task ID
                                 move.b  #6,D0                                           ; get first task info
                                 trap    #0
                                 
-T3_CHECK_REPEAT:                cmp.b   D1,D2
+T3_CHECK_REPEAT:                cmp.b   D4,D2
                                 beq     T3_CHECK_NEXT                                   ; it's current task, next
                                 cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's enemy?
                                 bne     T3_CHECK_NEXT                                   ;no
@@ -662,7 +665,7 @@ T4_INIT:
 				
 				move        #3,D2               ; number of enemies to add
 				sub         #1,D2               ; loop 0..N-1
-; add first enemies				
+				
 T4_ADD_ENEM:			lea         T3_START, A0
 			        move.b	    #0, D0
         			trap	    #0
