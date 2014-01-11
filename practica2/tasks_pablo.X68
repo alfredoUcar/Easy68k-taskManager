@@ -801,25 +801,28 @@ T6_GET_ALIEN:                   move.l  A1,A2   ;save actual state
                                 move.b  #4,D0
                                 trap    #0
                                 ;brace ourselves, the compares are coming
-                                move.w  T3_X(A2),D1
-                                swap    D1
+                                move.w  T3_X(A2),D0
                                 move.w  T3_Y(A2),D1
                                 ;now the X,Y of the beam
-                                move.w  T6_VAR_X(A0),D2
-                                swap    D2
-                                move.w  T6_VAR_Y(A0),D2
+                                move.w  T6_VAR_X(A0),D3
+                                move.w  T6_VAR_Y(A0),D4
+                                
+                                movem.l	D0-D4/A0,-(A7)
+                                bsr     T6_CHECK_CONTACT
+                                movem.l (A7)+, D0-D5/A0
+
                                 
 *                                ;so, at this point we've got alien's X:Y on D1 and beam's X:Y on D2
 *                                cmp.b     D1, D2
-                                IF <EQ> THEN
-                                        swap D1
-                                        swap D2
-                                        cmp.b D1,D2
-                                        IF <EQ> THEN
-                                               move.l D2,D0
-                                               bsr      TK_DRAW_EXP
-                                        ENDI
-                                ENDI
+*                                IF <EQ> THEN
+*                                        swap D1
+*                                        swap D2
+*                                        cmp.b D1,D2
+*                                        IF <EQ> THEN
+*                                               move.l D2,D0
+*                                               bsr      TK_DRAW_EXP
+*                                        ENDI
+*                                ENDI
 	
 ; switch
 			        move.b	#3,D0
@@ -876,9 +879,13 @@ T6_CONT_X:			sub     D4,D1
 				bge     T6_CONT_Y
 				neg     D1
 ; At this point, D0=abs(XBomb-XEnem) and D1=abs(YBomb-YEnem)
-T6_CONT_Y:                      cmp     #(T6_RADIUS+((T3_PIXEL_SIZE*TK_ENEM_COLUMNS)/2)),D0
+                                move    #((T6_PIXEL_SIZE*TK_NAVE_COLUMNS)/2),D2
+                                add     #((T3_PIXEL_SIZE*TK_ENEM_COLUMNS)/2),D2
+T6_CONT_Y:                      cmp     D2,D0
                                 bgt     T6_NO_CONTACT
-                                cmp     #(T6_RADIUS+((T3_PIXEL_SIZE*TK_ENEM_ROWS)/2)),D1
+                                move    #((T6_PIXEL_SIZE*TK_NAVE_ROWS)/2),D2
+                                add     #((T3_PIXEL_SIZE*TK_ENEM_ROWS)/2),D2
+                                cmp     D2,D1
                                 bgt     T6_NO_CONTACT
                                 ;contact
                                 move    #$FFFF,D0
