@@ -627,8 +627,12 @@ T3_CHECK_NEXT:                  move.b  #7,D0                                   
 ; ==========================================================
 ; Task 4 constants
 ; ==========================================================
-T4_COLOR        EQU     $00FFFFFF
 ;memory offsets:
+;draw
+T4_POWER_BOX_WIDTH      EQU     (TK_INFO_SCREEN_WIDTH*90/100) ;90% of info screen
+T4_POWER_BOX_HEIGHT     EQU     40
+T4_POWER_SLOT_WIDTH     EQU     T4_POWER_BOX_WIDTH/3
+T4_COLOR                EQU     $00FFFFFF  
 ; ==========================================================
 ; Task 4 functions
 ; ==========================================================
@@ -914,6 +918,7 @@ T8_INIT:
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
