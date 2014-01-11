@@ -117,7 +117,7 @@ T1_STR_2			dc.b	'   MEDIUM   ',0	; option 2
 T1_STR_3			dc.b	'    HARD    ',0	; option 3
 T1_STR_4			dc.b	10,13,0
 T1_STR_PRESS			dc.b	'Press "enter" to start the game',0
-T1_STR_COPYRIGHT		dc.b	'©antoil',10,13,'Made by Pablo Riutort & Alfredo Ucendo',0
+T1_STR_COPYRIGHT		dc.b	'ï¿½antoil',10,13,'Made by Pablo Riutort & Alfredo Ucendo',0
 
 ; ==========================================================
 ; Task 1 functions
@@ -276,7 +276,12 @@ T1_START_HARD:			;start on hard mode
 T1_START_GAME:                  
 			        lea	T4_START, A0
 			        move.b	#0, D0
-			        trap	#0	
+			        trap	#0
+
+                                lea	T5_START, A0
+			        move.b	#0, D0
+			        trap	#0
+
 			        
 			        ;get current task info
 			        move.b  #4,D0
@@ -643,41 +648,84 @@ T5_VAR_X	EQU	4
 T5_VAR_SX	EQU	6
 ;draw:
 T5_PIXEL_SIZE		EQU	4
-T5_COLOR_1              EQU     $00AAAA00
-T5_COLOR_2              EQU     $00AAAA00
+T5_SPEED        EQU     2
 ; ==========================================================
 ; Task 5 functions
 ; ==========================================================
 
 * ----------------------------------------------------------
 T5_START:
-* Task 3 entry point.
+* Task 5 entry point.
 * Draws a ship on the bottom of the screen
 * ----------------------------------------------------------
 ; Vemos si es la primera vez que se ha iniciado esta tarea
+
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T5_INIT
 ; if not first time
 ; draw ship
 				move.b #T5_PIXEL_SIZE,TK_PIXEL(A1)
 ;set colors and draw
-				move.l	#T5_COLOR_1,TK_VAR_COLOR_1(A1)
-				move.l	#T5_COLOR_2,TK_VAR_COLOR_2(A1)
 				move	T5_VAR_X(A0),D0	;set X
 				bsr	TK_DRAW_NAVE
-; uptade ship position
-*				move.w	T5_VAR_Y(A0), D1
-*				add.w	D1, T5_VAR_Y(A0)	; Y=Y+SY	
 				
-;capturamos del teclado
-				move.b	#19, D0
-				move.l	#$26<<24+$26<<16+$28<<8+$28,D1
-				trap	#15
+				
 
+;capturamos del teclado		
+                                ;teclas de movimiento		
+                                MOVE.B #19,D0     
+
+                                MOVE.L #$25<<24+$27<<16,D1 ; check for keypress (left, right)
+
+                                TRAP   #15
+                                BTST.L #24,D1     ; test for left arrow
+                                IF <NE> THEN      ; if 'left'
+                                  sub #T5_SPEED, T5_VAR_X(A0)
+                                  cmp #(TK_INFO_SCREEN_WIDTH+((TK_NAVE_COLUMNS*T5_PIXEL_SIZE)/2)), T5_VAR_X(A0)
+                                  IF <EQ> THEN
+                                        add     #T5_SPEED,T5_VAR_X(A0)
+                                  ENDI
+                                ENDI
+                                BTST.L #16,D1     ; test for right arrow
+                                IF <NE> THEN      ; if 'right'
+                                  add #T5_SPEED, T5_VAR_X(A0)
+                                  cmp #(TK_SCREEN_WIDTH-((TK_NAVE_COLUMNS*T5_PIXEL_SIZE)/2)), T5_VAR_X(A0)
+                                  IF <EQ> THEN
+                                        sub     #T5_SPEED,T5_VAR_X(A0)
+                                  ENDI
+                                ENDI
+                                
+                                ;teclas de disparo
+                                MOVE.B #19,D0     
+
+                                MOVE.L #$20<<24+$27<<16+$20<<8+'F',D1 ; check for keypress (space,z,x,c)
+
+                                TRAP   #15
+                                BTST.L #24,D1     ; test for space
+                                IF <NE> THEN      ; if 'space'
+                                    lea	T6_START, A0 ;new laser beam task
+			            move.b	#0, D0
+			            trap	#0
+                                ENDI
+                                BTST.L #16,D1     ; test for z
+                                IF <NE> THEN      ; if 'z'
+*                                  disparo 'z'
+                                ENDI
+                                BTST.L #8,D1     ; test for x
+                                IF <NE> THEN      ; if 'x'
+*                                  disparo 'x'
+                                ENDI
+                                BTST.L #8,D1     ; test for c
+                                IF <NE> THEN      ; if 'c'
+*                                  disparo 'c'
+                                ENDI
+; switch
+			move.b	#3,D0
+			trap	#0
 
 * ----------------------------------------------------------
 T5_INIT:
-* Task 1 initialization
+* Task 5 initialization
 * 
 * Pone la nave en las coordenadas indicadas
 * ----------------------------------------------------------
@@ -685,50 +733,122 @@ T5_INIT:
 ; storing in shared memory makes things easier.
 			move.b	D1, TK_VAR_ID(A0)
 ; store the task type
-			move.b #TK_TYPE_SCREEN, TK_VAR_TYPE(A0)
-; la siguiente vez que volvamos a esta task, no será la primera
+			move.b #TK_TYPE_PLAYER, TK_VAR_TYPE(A0)
+; la siguiente vez que volvamos a esta task, no sera la primera
 			move.b	#$FF, TK_VAR_FIRST_TIME(A0)
 ; set initial position of the ship
-			move    #((TK_ENEM_ROWS*T5_PIXEL_SIZE)/2),T5_VAR_X(A0)      ; set y
-			move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0      ; game window width
-                       	move    #(TK_ENEM_COLUMNS*T5_PIXEL_SIZE+20),D1        ; width needed by enemy
-                       	move    #TK_INFO_SCREEN_WIDTH,D1
-                        sub     #1,D0
-                        mulu    D2,D0
-                        divu    #2,D2
-                        add     D2,D0
-                        add     D1,D0
-                        move    D0,T5_VAR_X(A0)
+			move    #((TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH)/2+TK_INFO_SCREEN_WIDTH),T5_VAR_X(A0)      ; game window width
 
 ; switch
 			move.b	#3,D0
 			trap	#0
+			
+				
+************************************************************
+*                            TASK 6                        *
+************************************************************
 
+; ==========================================================
+; Task 6 constants
+; ==========================================================
+T6_VAR_Y	EQU	4
+T6_VAR_X        EQU     6
+;draw:
+T6_PIXEL_SIZE		EQU	8
+T6_SPEED                EQU     2
+; ==========================================================
+; Task 6 functions
+; ==========================================================
 
+* ----------------------------------------------------------
+T6_START:
+* Task 5 entry point.
+* Draws a laser beam from the position of the ship
+* ----------------------------------------------------------
+; Vemos si es la primera vez que se ha iniciado esta tarea
+				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
+				beq	T6_INIT
+; if not first time
+; draw beam
+;set colors and draw
+                                TK_SET_PEN #$00FFFFFF	; fija el color del borde a blanco
+                                TK_SET_FILL #$0000AAFF
+                                
+                                move    T6_VAR_X(A0),D1
+                                sub     #T6_PIXEL_SIZE,D1
+                                move    T6_VAR_Y(A0),D2
+                                sub     #T6_PIXEL_SIZE,D2
 
+                                TK_DRAW_SQUARE D1, D2, #T6_PIXEL_SIZE
+;uptdate beam position
+                                sub     #T6_SPEED,T6_VAR_Y(A0)
 
+;look if an enemy is around
+                                move.b  #6,D0                                           ; get first task info
+                                trap    #0
+                                
+T6_CHECK:                       cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's alien?
+                                beq     T6_GET_ALIEN
+                                move.b  #7,D0                                           ; get next task info
+                                trap    #0
+                                cmp.b   #$FF,D1
+                                bne     T6_CHECK
 
+;smash the aliens!
+                                ;get coordenates
+T6_GET_ALIEN:                   move.l  A1,A2   ;save actual state
+                                move.b  #4,D0
+                                trap    #0
+                                ;alien's X
+                                cmp.b    #T3_X(A2), #T6_VAR_X(A0)
+                                IF <EQ> THEN
+                                        ;alien's Y
+                                        cmp T3_Y(A2),T6_VAR_Y(A2)
+                                        IF <EQ> THEN
+                                                ;BOOM!
+                                        ENDI
+                                ENDI
+	
+; switch
+			        move.b	#3,D0
+			        trap	#0
+* ----------------------------------------------------------
+T6_INIT:
+* Task 6 initialization
+* 
+* Mueve el disparo por el eje Y de la pantalla de juego
+* ----------------------------------------------------------
+; Store task ID. When switching to a task, the ID is in D1, but
+; storing in shared memory makes things easier.
+			move.b	D1, TK_VAR_ID(A0)
+; store the task type
+			move.b #TK_TYPE_SCREEN, TK_VAR_TYPE(A0)
+; la siguiente vez que volvamos a esta task, no sera la primera
+			move.b	#$FF, TK_VAR_FIRST_TIME(A0)
+; set initial position of the ship
 
+                        move.b  #6,D0                                           ; get first task info
+                        trap    #0
+                                
+T6_CHECK:               cmp.b   #TK_TYPE_PLAYER, TK_VAR_TYPE(A1)                  ;it's ship?
+                        beq     T6_GET_DATA
+                        move.b  #7,D0                                           ; get next task info
+                        trap    #0
+                        cmp.b   #$FF,D1
+                        bne     T6_CHECK
+                        
+T6_GET_DATA:            ;recuperamos la info de la task actual
+                        move.l  A1,A2   ;salvamos
+                        move.b  #4,D0
+                        trap    #0
+                        ; coger la X de la nave
+                        move    T5_VAR_X(A2),T6_VAR_X(A0)
+                         ;Y DE LA NAVE
+                        move	#((TK_SCREEN_HEIGHT-T5_PIXEL_SIZE-3)-(TK_NAVE_ROWS*T5_PIXEL_SIZE)/2),T6_VAR_Y(A0)  
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+; switch
+			move.b	#3,D0
+			trap	#0
 
 
 
