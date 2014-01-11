@@ -2,8 +2,8 @@
 * Program    : Some routines implementing tasks to be used
 *              with taskmanager installed on trap #0. See
 *              taskmanager.x68 for more details.
-* Written by : Pablo Riutort y Alfredo Ucendo
-* Date       : 14-Dec-2013
+* Written by : A. Burguera
+* Date       : 14-Dec-2011
 * Description: 
 *-----------------------------------------------------------
 ************************************************************
@@ -18,11 +18,20 @@ TK_TYPE_SCREEN			EQU	1
 TK_TYPE_ENEM			EQU	2
 TK_TYPE_PLAYER                  EQU     3
 TK_TYPE_SHOT                    EQU     4
-TK_TYPE_CONTROL                 EQU     5   
-TK_TYPE_EXP                     EQU     6
-TK_TYPE_BONUS_1                 EQU     7
-TK_TYPE_BONUS_2                 EQU     8   
-TK_TYPE_BONUS_3                 EQU     9               
+TK_TYPE_CONTROL                 EQU     5
+; Game configuration for each level
+;LEVEL 1
+TK_EASY_SPEED                   EQU     3
+TK_EASY_ENEM                    EQU     25
+TK_EASY_POWER                   EQU     20
+;LEVEL 2
+TK_MEDIUM_SPEED                 EQU     2
+TK_MEDIUM_ENEM                  EQU     50
+TK_MEDIUM_POWER                 EQU     15  
+;LEVEL 3
+TK_HARD_SPEED                   EQU     1
+TK_HARD_ENEM                    EQU     100
+TK_HARD_POWER                   EQU     10                 
 ; Variable offsets used for all tasks
 TK_VAR_FIRST_TIME		EQU	0
 TK_VAR_ID			EQU	1
@@ -34,8 +43,6 @@ TK_VAR_SPEED                    EQU     12
 TK_VAR_ENEM                     EQU     14
 TK_VAR_POWER                    EQU     16 
 TK_VAR_GAME_STATE               EQU     18 ;BYTE
-TK_VAR_X                        EQU     20   
-TK_VAR_Y                        EQU     22                   
 
 ************************************************************
 *                   SOURCE FILE INCLUDES                   *
@@ -54,7 +61,7 @@ TK_INIT:
 * manager.
 * ----------------------------------------------------------
 ; Define minimum cycle time
-			move.l	#20, D1
+			move.l	#15, D1
 			move.b	#8, D0
 			trap	#0
 
@@ -66,18 +73,8 @@ TK_INIT:
 ; add task 2
 			lea	T2_START, A0
 			move.b	#0, D0
-			trap	#0
-			
-*			lea	T3_START, A0
-*			move.b	#0, D0
-*			trap	#0
-*	
-*                        lea	T8_START, A0
-*			move.b	#0, D0
-*			trap	#0
-		
+			trap	#0			
 			rts
-                                
 * ----------------------------------------------------------
 
 
@@ -95,19 +92,6 @@ T1_PIXEL		EQU	7
 T1_ENEM_COLOR		EQU	8
 ;draw:
 T1_PIXEL_SIZE		EQU	15
-; Game configuration for each level
-;LEVEL 1
-T1_EASY_SPEED                   EQU     3
-T1_EASY_ENEM                    EQU     25
-T1_EASY_POWER                   EQU     20
-;LEVEL 2
-T1_MEDIUM_SPEED                 EQU     2
-T1_MEDIUM_ENEM                  EQU     50
-T1_MEDIUM_POWER                 EQU     15  
-;LEVEL 3
-T1_HARD_SPEED                   EQU     1
-T1_HARD_ENEM                    EQU     100
-T1_HARD_POWER                   EQU     10
 ;colors
 T1_COLOR_1		EQU	$00FFFFFF
 T1_COLOR_2		EQU	$00000000
@@ -147,8 +131,7 @@ T1_START:
 ; Task shared memory is set to 0 when task is created. Use
 ; this to decide whether is the first time or not.
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
-				beq	T1_INIT				
-				
+				beq	T1_INIT
 ; draw enemy(decoration)	
 				move.b	T1_PIXEL(A0),TK_PIXEL(A1) 	; set global pixel
 				; set global color
@@ -274,23 +257,23 @@ T1_CHECK_INTRO:                 ;check for intro key
 				bne     T1_START_HARD
 				
 				;start on medium mode
-				move.w  #T1_MEDIUM_SPEED,TK_VAR_SPEED(A1)
-				move.w  #T1_MEDIUM_ENEM,TK_VAR_ENEM(A1)
-				move.w  #T1_MEDIUM_POWER,TK_VAR_POWER(A1)
+				move.w  #TK_MEDIUM_SPEED,TK_VAR_SPEED(A1)
+				move.w  #TK_MEDIUM_ENEM,TK_VAR_ENEM(A1)
+				move.w  #TK_MEDIUM_POWER,TK_VAR_POWER(A1)
 				bra     T1_START_GAME
 				
 T1_START_EASY:			;start on easy mode
-				move.w  #T1_EASY_SPEED,TK_VAR_SPEED(A1)
-				move.w  #T1_EASY_ENEM,TK_VAR_ENEM(A1)
-				move.w  #T1_EASY_POWER,TK_VAR_POWER(A1)
+				move.w  #TK_EASY_SPEED,TK_VAR_SPEED(A1)
+				move.w  #TK_EASY_ENEM,TK_VAR_ENEM(A1)
+				move.w  #TK_EASY_POWER,TK_VAR_POWER(A1)
 				bra     T1_START_GAME
 				
 T1_START_HARD:			;start on hard mode
-				move.w  #T1_HARD_SPEED,TK_VAR_SPEED(A1)
-				move.w  #T1_HARD_ENEM,TK_VAR_ENEM(A1)
-				move.w  #T1_HARD_POWER,TK_VAR_POWER(A1)
+				move.w  #TK_HARD_SPEED,TK_VAR_SPEED(A1)
+				move.w  #TK_HARD_ENEM,TK_VAR_ENEM(A1)
+				move.w  #TK_HARD_POWER,TK_VAR_POWER(A1)
 
-T1_START_GAME:                  		
+T1_START_GAME:                  
 			        lea	T4_START, A0
 			        move.b	#0, D0
 			        trap	#0	
@@ -303,11 +286,11 @@ T1_START_GAME:
                                 move.b  TK_VAR_ID(A0),D1
                                 move.b  #1,D0
                                 trap    #0
-                                ENDI      
+                                ENDI
+
 
 ; End by switching to next task
-T1_NEXT:						        
-                                move.b	#3, D0
+T1_NEXT:			move.b	#3, D0
 				trap	#0
 				
 
@@ -411,7 +394,6 @@ T1_INIT:
 				move.b	#TK_TYPE_MENU, TK_VAR_TYPE(A0)				
 ; Remember that next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
-				
 ; set option 2 as default
 				move.b	#2, T1_OPTION(A0)
 ; set up/down keys as not pressed
@@ -494,7 +476,7 @@ T3_X                    EQU     4
 T3_Y                    EQU     6
 ;draw:
 T3_PIXEL_SIZE		EQU	4
-T3_SPEED                EQU     0
+T3_SPEED                EQU     1
 T3_COLOR_1              EQU     $00FF6600
 T3_COLOR_2              EQU     $00AA0000
 
@@ -547,8 +529,8 @@ T3_RANDOM:
 		move    D4,D0
                 clr     D3
 		move.b  TK_VAR_ID(A0),D3
-		add     #1,D3                   ; [1..31] avoid case ID=0 for next operations
-		*mulu    TK_VAR_POWER(A1),D3     ; (my ID)*(current power)
+		add     #1,D3                   ; avoid case ID=0 for next operations
+		;mulu    TK_VAR_POWER(A1),D3     ; (my ID)*(current power)
 		and.l   #$0000FFFF,D1
 		and.l   #$0000FFFF,D3
 		divu    D3,D1
@@ -564,21 +546,16 @@ T3_RANDOM:
 		
 * ----------------------------------------------------------
 T3_INIT:
-* Task 3 initialization
+* Task 2 initialization
 * ----------------------------------------------------------
 ; Store task ID. When switching to a task, the ID is in D1, but
 ; storing in shared memory makes things easier.
 				move.b	D1, TK_VAR_ID(A0)
 ; Store the task type
-				move.b	#TK_TYPE_ENEM, TK_VAR_TYPE(A0)				
+				move.b	#TK_TYPE_SCREEN, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)				
 ; Set initial position and size
-T3_SET_POS:                     move.b  #4,D0                                           ; get current task info (restore)
-                                trap    #0                                              ; values may be changed during loop
-                                
-                                clr.l   D0
-                                clr.l   D1
                                 move    #((TK_ENEM_ROWS*T3_PIXEL_SIZE)/2),T3_Y(A0)      ; set y
                                 move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0      ; game window width
                                 move    #(TK_ENEM_COLUMNS*T3_PIXEL_SIZE+20),D1          ; width needed by enemy
@@ -594,29 +571,6 @@ T3_SET_POS:                     move.b  #4,D0                                   
                                 add     D2,D0
                                 add     D1,D0
                                 move    D0,T3_X(A0)                                     ; set x
-; check if there's another enemy for that position
-                                move.b  TK_VAR_ID(A0),D4                                ; save current task ID
-                                move.b  #6,D0                                           ; get first task info
-                                trap    #0
-                                
-T3_CHECK_REPEAT:                cmp.b   D4,D2
-                                beq     T3_CHECK_NEXT                                   ; it's current task, next
-                                cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's enemy?
-                                bne     T3_CHECK_NEXT                                   ;no
-                                ; it's enemy... check position
-                                
-                                move    T3_Y(A0),D3
-                                cmp     T3_Y(A1),D3
-                                bne     T3_CHECK_NEXT                                   ; distinct Y, no coincidence
-                                move    T3_X(A0),D3
-                                cmp     T3_X(A1),D3
-                                beq     T3_SET_POS                                      ; same Y, distinct X                      
-                                
-T3_CHECK_NEXT:                  move.b  #7,D0                                           ; get next task info
-                                trap    #0
-                                cmp.b   #$FF,D1
-                                bne     T3_CHECK_REPEAT                                 ; not last task
-                                
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0				
@@ -627,24 +581,20 @@ T3_CHECK_NEXT:                  move.b  #7,D0                                   
 ; ==========================================================
 ; Task 4 constants
 ; ==========================================================
+T4_COLOR        EQU     $00FFFFFF
 ;memory offsets:
-;draw
-T4_POWER_BOX_WIDTH      EQU     (TK_INFO_SCREEN_WIDTH*90/100) ;90% of info screen
-T4_POWER_BOX_HEIGHT     EQU     40
-T4_POWER_SLOT_WIDTH     EQU     T4_POWER_BOX_WIDTH/3
-T4_COLOR                EQU     $00FFFFFF  
 ; ==========================================================
 ; Task 4 functions
 ; ==========================================================
 * ----------------------------------------------------------
 T4_START:
 * Task 4 entry point.
-* Manage game
+* Manage game: add enemies, pause/resume game...
 * First time:
-* - add player
-* - add first enemies
+* - Init double buffer
+* - Clears hidden buffer
 * Further executions
-* - add enemies randomly and manage game state
+* - Shows graphics
 * ----------------------------------------------------------
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T4_INIT
@@ -665,264 +615,94 @@ T4_INIT:
 ; storing in shared memory makes things easier.
 				move.b	D1, TK_VAR_ID(A0)
 ; Store the task type
-				move.b	#TK_TYPE_CONTROL, TK_VAR_TYPE(A0)				
+				move.b	#TK_TYPE_SCREEN, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
-				move.b  #$ff, TK_VAR_FIRST_TIME(A0)
-      			
+				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
 				
 				move        #3,D2               ; number of enemies to add
-				sub         #1,D2               ; loop 0..N-1
-				
+
+; @FIXME: ENTRY POINT OF ALL TASKS!!
 T4_ADD_ENEM:			lea         T3_START, A0
 			        move.b	    #0, D0
         			trap	    #0
-        			dbra        D2,T4_ADD_ENEM
-        		        
-                                lea	T8_START, A0
-                                move.b	#0, D0
-                                trap	#0
-        			
-        			
+        			dbra        D2,T4_ADD_ENEM 
 
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
-* ----------------------------------------------------------
+				
 ************************************************************
 *                            TASK 5                        *
 ************************************************************
+
 ; ==========================================================
 ; Task 5 constants
 ; ==========================================================
-;memory offsets:
-T5_X                    EQU     4
-T5_Y                    EQU     6
-T5_LIVED                EQU     8 
+SHIP_SIZE	EQU	20
+T5_VAR_X	EQU	4
+T5_VAR_SX	EQU	6
 ;draw:
 T5_PIXEL_SIZE		EQU	4
-T5_LIFE_TIME            EQU     1    ; hundredths of a second 
+T5_COLOR_1              EQU     $00AAAA00
+T5_COLOR_2              EQU     $00AAAA00
 ; ==========================================================
 ; Task 5 functions
 ; ==========================================================
+
 * ----------------------------------------------------------
 T5_START:
-* Task 5 entry point.
-* Explosion
-* First time:
-* - set time lived to 0
-* Further executions
-* - paint an explosion
+* Task 3 entry point.
+* Draws a ship on the bottom of the screen
 * ----------------------------------------------------------
+; Vemos si es la primera vez que se ha iniciado esta tarea
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T5_INIT
+; if not first time
+; draw ship
+				move.b #T5_PIXEL_SIZE,TK_PIXEL(A1)
+;set colors and draw
+				move.l	#T5_COLOR_1,TK_VAR_COLOR_1(A1)
+				move.l	#T5_COLOR_2,TK_VAR_COLOR_2(A1)
+				move	T5_VAR_X(A0),D0	;set X
+				bsr	TK_DRAW_NAVE
+; uptade ship position
+*				move.w	T5_VAR_Y(A0), D1
+*				add.w	D1, T5_VAR_Y(A0)	; Y=Y+SY	
 				
-				cmp     #T5_LIFE_TIME,T5_LIVED(A0)
-				bge     T5_DEAD                         ; life time expired
-				
-				move.b  #8,D0
-				trap    #15
-				move.l  D1,D2
-				
-				move.b	#T3_PIXEL_SIZE,TK_PIXEL(A1) 	; set global pixel
-				;set position
-				move    T5_X(A0),D0
-				swap    D0
-                                move    T5_Y(A0),D0
-                                
-                                bsr     TK_DRAW_EXP
-T5_UPDATE:                      move.b  #8,D0
-				trap    #15
-				sub.l   D2,D1
-                                add     D1,T5_LIVED(A0)                ; updates life time( in cycles)
-                                bra     T5_NEXT                             
-                                
-T5_DEAD:                        move.b  TK_VAR_ID(A0),D1                ;remove itself
-                                move.b  #1,D0
-                                trap    #0
-				
-; End by switching to next task
-T5_NEXT:			move.b	#3, D0
-				trap	#0		
-								
+;capturamos del teclado
+				move.b	#19, D0
+				move.l	#$26<<24+$26<<16+$28<<8+$28,D1
+				trap	#15
+
 
 * ----------------------------------------------------------
 T5_INIT:
-* Task 5 initialization
+* Task 1 initialization
+* 
+* Pone la nave en las coordenadas indicadas
 * ----------------------------------------------------------
 ; Store task ID. When switching to a task, the ID is in D1, but
 ; storing in shared memory makes things easier.
-				move.b	D1, TK_VAR_ID(A0)
-; Store the task type
-				move.b	#TK_TYPE_EXP, TK_VAR_TYPE(A0)				
-; Remember next time will not be the first one
-				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
-				; set time lived to 0
-                                move    #0,T5_LIVED(A0)
+			move.b	D1, TK_VAR_ID(A0)
+; store the task type
+			move.b #TK_TYPE_SCREEN, TK_VAR_TYPE(A0)
+; la siguiente vez que volvamos a esta task, no será la primera
+			move.b	#$FF, TK_VAR_FIRST_TIME(A0)
+; set initial position of the ship
+			move    #((TK_ENEM_ROWS*T5_PIXEL_SIZE)/2),T5_VAR_X(A0)      ; set y
+			move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0      ; game window width
+                       	move    #(TK_ENEM_COLUMNS*T5_PIXEL_SIZE+20),D1        ; width needed by enemy
+                       	move    #TK_INFO_SCREEN_WIDTH,D1
+                        sub     #1,D0
+                        mulu    D2,D0
+                        divu    #2,D2
+                        add     D2,D0
+                        add     D1,D0
+                        move    D0,T5_VAR_X(A0)
 
-; End by switching to next task
-				move.b	#3, D0
-				trap	#0		
-* ----------------------------------------------------------
-************************************************************
-*                            TASK 8                        *
-************************************************************
-; ==========================================================
-; Task 8 constants
-; ==========================================================
-;memory offsets
-T8_STATE        EQU     4
-T8_MOUSE_STATE  EQU     5
-T8_SMALL_RADIUS EQU     6
-T8_X            EQU     8
-T8_Y            EQU     10
-;draw
-T8_RADIUS       EQU     50
-T8_ANIM_STEP    EQU     T8_RADIUS/10
-T8_COLOR        EQU     $000000FF
-; ==========================================================
-; Task 8 functions
-; ==========================================================
-* ----------------------------------------------------------
-T8_START:
-* Task 8 entry point.
-* Bonus 1: shows a circle on mouse position and kills
-* every enemy in his radius by clicking
-* First time:
-* - set state to 0(awaiting the click)
-* Further executions
-* - paint an explosion
-* ----------------------------------------------------------
-				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
-				beq	T8_INIT
-				cmp.b   #0,T8_STATE(A0)
-				bne     T8_KILL
-				
-				clr     D1
-				move.b  #61,D0
-				trap    #15
-				move    D1,T8_X(A0)        ; X
-				swap    D1
-				move    D1,T8_Y(A0)        ; Y
-				
-				and.b   #1,D0
-				cmp.b   #0,D0
-				beq     T8_CHECK_RELEASE                ; not pressed, check if released
-				move.b  #$FF,T8_MOUSE_STATE(A0)         ; save pressed state
-				bra     T8_WAIT_CLICK
-T8_CHECK_RELEASE:               cmp.b   #0,T8_MOUSE_STATE(A0)
-                                beq     T8_WAIT_CLICK
-                                move.b  #$FF,T8_STATE(A0)               ; click, next time will kill
-				
-T8_WAIT_CLICK:			TK_SET_PEN      #T8_COLOR
-                                TK_DRAW_CIRCLE  T8_X(A0),T8_Y(A0),#T8_RADIUS
-                                
-                                bra     T8_NEXT
-                                
-T8_KILL:                        
-                                ; save bomb position
-                                move    T8_X(A0),D3
-                                move    T8_Y(A0),D4
-; check if there's enemies to kill
-                                move.b  #6,D0                                           ; get first task info
-                                trap    #0                                
-                                
-T8_KILL_CHECK:                  move.b  D1,D5                                           ; copy index of current task for T8_CHECK_NEXT
-                                cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's enemy?
-                                bne     T8_CHECK_NEXT                                   ;no, next task
-                                ; it's enemy... check distance                                
-                                move    T3_Y(A1),D1
-                                move    T3_X(A1),D0                                
-                                bsr     T8_CHECK_CONTACT
-                                cmp     #0,D0
-                                beq     T8_CHECK_NEXT                                   ; doesn't touch the enemy                                
-; kill the enemy
-                                move    T3_X(A1),D2
-                                move    T3_Y(A1),D6
-                                move.b  TK_VAR_ID(A1),D7
-                                ; add explosion
-                                lea	T5_START, A0
-			        move.b	#0, D0
-			        trap	#0
-			        move.b  #5,D0
-			        trap    #0
-			        ; asign same position of killed enemy
-			        move    D2,T5_X(A0)
-			        move    D6,T5_Y(A0)
-			        ; remove enemy
-			        move.b  D7,D1
-			        move.b	#1, D0
-			        trap	#0                               
-                                                       
-                                
-T8_CHECK_NEXT:                  move.b  D5,D1                                           ; restore index
-                                move.b  #7,D0                                           ; get next task info
-                                trap    #0
-                                cmp.b   #$FF,D1
-                                bne     T8_KILL_CHECK                                   ; not last task
-                                
-                                ;remove itself
-                                move.b  #4,D0
-                                trap    #0
-                                move.b  #1,D0
-                                trap    #0
-                                
-T8_ANIM:
-                                add     #T8_ANIM_STEP,T8_SMALL_RADIUS(A0)
-                                TK_SET_PEN      #T8_COLOR
-                                TK_DRAW_CIRCLE  T8_X(A0),T8_Y(A0),T8_SMALL_RADIUS(A0)
-                                cmp     #T8_RADIUS,T8_SMALL_RADIUS(A0)
-                                ble     T8_ANIM
-				
-
-; End by switching to next task
-T8_NEXT:      			move.b	#3, D0
-				trap	#0
-* ----------------------------------------------------------
-T8_CHECK_CONTACT:
-* indicates if the enemy with position D0=X,D1=Y touch the circle on D3=X, D4=Y(return $FFFF)
-* modifies: D0,D1
-*---------------------------------------------------------------------------
-
-				sub     D3,D0
-				bge     T8_CONT_X
-				neg     D0
-T8_CONT_X:			sub     D4,D1
-				bge     T8_CONT_Y
-				neg     D1
-; At this point, D0=abs(XBomb-XEnem) and D1=abs(YBomb-YEnem)
-T8_CONT_Y:                      cmp     #(T8_RADIUS+((T3_PIXEL_SIZE*TK_ENEM_COLUMNS)/2)),D0
-                                bgt     T8_NO_CONTACT
-                                cmp     #(T8_RADIUS+((T3_PIXEL_SIZE*TK_ENEM_ROWS)/2)),D1
-                                bgt     T8_NO_CONTACT
-                                ;contact
-                                move    #$FFFF,D0
-                                rts
-T8_NO_CONTACT:                  clr     D0
-                                rts
-* ----------------------------------------------------------
-T8_INIT:
-* Task 8 initialization
-* ----------------------------------------------------------
-; Store task ID. When switching to a task, the ID is in D1, but
-; storing in shared memory makes things easier.
-				move.b	D1, TK_VAR_ID(A0)
-; Store the task type
-				move.b	#TK_TYPE_BONUS_1, TK_VAR_TYPE(A0)				
-; Remember next time will not be the first one
-				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
-				
-				move.b  #0,T8_STATE(A0)
-                                move.b  #0,T8_SMALL_RADIUS(A0)				
-
-; End by switching to next task
-				move.b	#3, D0
-				trap	#0		
-* ----------------------------------------------------------
-
-
-
-
-
+; switch
+			move.b	#3,D0
+			trap	#0
 
 
 
