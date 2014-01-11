@@ -605,9 +605,12 @@ T3_CHECK_REPEAT:                cmp.b   D4,D2
                                 bne     T3_CHECK_NEXT                                   ;no
                                 ; it's enemy... check position
                                 
+                                move    T3_Y(A0),D3
+                                cmp     T3_Y(A1),D3
+                                bne     T3_CHECK_NEXT                                   ; distinct Y, no coincidence
                                 move    T3_X(A0),D3
                                 cmp     T3_X(A1),D3
-                                beq     T3_SET_POS                                                                   
+                                beq     T3_SET_POS                                      ; same Y, distinct X                      
                                 
 T3_CHECK_NEXT:                  move.b  #7,D0                                           ; get next task info
                                 trap    #0
