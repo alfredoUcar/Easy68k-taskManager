@@ -1040,7 +1040,9 @@ T6_CHECK_BONUS:
                                                 IF.B   #$FF <EQ> T6_LASER_KEY_STATE(A0) THEN
                                                  ; do the laser thing
                                                  move.b #0,T6_LASER_KEY_STATE(A0)
-                                                 move.b #1,D0   ;result laser
+                                                 lea	T10_START, A0
+                                                 move.b	#0, D0
+                                                 trap	#0  
                                                  bra T6_CB_END
                                                 ENDI
                                         ENDI
@@ -1356,7 +1358,7 @@ T8_INIT:
 ; storing in shared memory makes things easier.
 				move.b	D1, TK_VAR_ID(A0)
 ; Store the task type
-				move.b	#TK_TYPE_LASER, TK_VAR_TYPE(A0)				
+				move.b	#TK_TYPE_BOMB, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
 				
@@ -1427,7 +1429,7 @@ T9_INIT:
 ; storing in shared memory makes things easier.
 				move.b	D1, TK_VAR_ID(A0)
 ; Store the task type
-				move.b	#TK_TYPE_LASER, TK_VAR_TYPE(A0)				
+				move.b	#TK_TYPE_FREEZE, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
                                 
@@ -1440,6 +1442,104 @@ T9_INIT:
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+************************************************************
+*                            TASK 10                        *
+************************************************************
+; ==========================================================
+; Task 10 constants
+; ==========================================================
+;memory offsets
+T10_TIMEOUT     EQU     4
+T10_X           EQU     6
+T10_Y           EQU     8    
+T10_STATE       EQU     10
+;time
+T10_DELAY       EQU     200 ; 2 seconds
+;draw
+T10_COLOR       EQU     $00FF33CC
+; ==========================================================
+; Task 10 functions
+; ==========================================================
+* ----------------------------------------------------------
+T10_START:
+* Task 10 entry point.
+* launch a laser beam which destroys each enmey on his way
+* First time:
+* - get x,y from ship
+* Further executions
+* - state 0: if timeout then paint laser line
+* - state 1(FF): if timeout' then restores energy
+* ----------------------------------------------------------
+				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
+				beq	T10_INIT
+				
+				;draw a line
+				TK_SET_PEN      #T10_COLOR
+				TK_DRAW_LINE    T10_X(A0),T10_Y(A0), T10_X(A0),#0 
+                                
+                                cmp     #0,T10_TIMEOUT(A0)
+				beq     T10_CHECK_STATE
+				sub     #1,T10_TIMEOUT(A0)       ; updates timeout
+				bra     T10_NEXT
+				;time expired
+T10_CHECK_STATE: 		cmp.b   #0,T10_STATE(A0)
+				bne     T10_RESTORE
+				;end phase 1
+T10_LASER:			move.b  #$FF,T10_STATE(A0)                              ; set state to 'restore energy'
+                                move    #(T10_DELAY/TK_CYCLE),T10_TIMEOUT(A0)           ;reset timeout
+                                bra     T10_NEXT
+                                ;phase 2
+T10_RESTORE:                     add     #TK_LASER_PW,TK_VAR_POWER(A1)                  ; restore energy                                
+				;remove itself
+				move.b  #4,D0
+				trap    #0
+				move.b  #1,D0
+				trap    #0
+		
+
+; End by switching to next task
+T10_NEXT:        		move.b	#3, D0
+				trap	#0		
+* ----------------------------------------------------------
+* ----------------------------------------------------------
+T10_INIT:
+* Task 10 initialization
+* ----------------------------------------------------------
+; Store task ID. When switching to a task, the ID is in D1, but
+; storing in shared memory makes things easier.
+				move.b	D1, TK_VAR_ID(A0)
+; Store the task type
+				move.b	#TK_TYPE_LASER, TK_VAR_TYPE(A0)				
+; Remember next time will not be the first one
+				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
+                                
+                        move.b  #6,D0                                           ; get first task info
+                        trap    #0
+                                
+T10_CHECK:              cmp.b   #TK_TYPE_PLAYER, TK_VAR_TYPE(A1)                  ;it's ship?
+                        beq     T10_GET_DATA
+                        move.b  #7,D0                                           ; get next task info
+                        trap    #0
+                        cmp.b   #$FF,D1
+                        bne     T10_CHECK
+                        
+T10_GET_DATA:            ;recuperamos la info de la task actual
+                        move.l  A1,A2   ;salvamos
+                        move.b  #4,D0
+                        trap    #0
+                        ; coger la X de la nave
+                        move    T3_VAR_X(A2),T10_X(A0)
+                        ;Y de la nave
+                        move	#((TK_SCREEN_HEIGHT-T3_PIXEL_SIZE-3)-(TK_NAVE_ROWS*T3_PIXEL_SIZE)/2),T10_Y(A0)
+                        
+                        move    #(T10_DELAY/TK_CYCLE),T10_TIMEOUT(A0)     ;set timeout
+                        sub     #TK_LASER_PW,TK_VAR_POWER(A1)          ; consume energy
+                        clr.b   T10_STATE(A0)                            ; set state to 'laser' 
+; End by switching to next task
+				move.b	#3, D0
+				trap	#0		
+* ----------------------------------------------------------
+
 
 
 *~Font name~Courier New~
