@@ -587,8 +587,20 @@ T3_INIT:
 ; ==========================================================
 ; Task 4 constants
 ; ==========================================================
-T4_COLOR        EQU     $00FFFFFF
 ;memory offsets:
+; energy bar
+T4_ENERGY_BOX_WIDTH     EQU     (TK_INFO_SCREEN_WIDTH*90/100)   ;90% of info screen
+T4_ENERGY_BOX_HEIGHT    EQU     25
+T4_ENERGY_LEFT          EQU     (TK_INFO_SCREEN_WIDTH*5/100)    
+T4_ENERGY_BOTTOM        EQU     (TK_SCREEN_HEIGHT-20)
+T4_ENERGY_TOP           EQU     (T4_ENERGY_BOTTOM-T4_ENERGY_BOX_HEIGHT)
+*T4_ENERGY_SLOT_WIDTH    EQU     
+T4_ENERGY_POINT         EQU     T4_ENERGY_BOX_WIDTH/TK_MAX_POWER
+T4_COLOR_1              EQU     $0000FF00       ; first slot
+T4_COLOR_2              EQU     $0000FFFF       ; second slot
+T4_COLOR_3              EQU     $000000FF       ; third slot
+T4_COLOR_4              EQU     $00000000       ; not available energy
+
 ; ==========================================================
 ; Task 4 functions
 ; ==========================================================
@@ -635,7 +647,51 @@ T4_ADD_ENEM:			lea         T3_START, A0
 
 ; End by switching to next task
 				move.b	#3, D0
-				trap	#0		
+				trap	#0	
+
+* ----------------------------------------------------------
+T4_SHOW_ENERGY:
+* show energy bar
+* ----------------------------------------------------------
+                        movem.l D0-D4,-(A7)     ; push
+                        
+                        move.b  #4,D0   ;get current task info
+                        trap    #0
+                        
+                        TK_SET_PEN      #$00FFFFFF
+                        TK_SET_FILL     #T4_COLOR_2
+                        
+                        clr     D5      ; counter (0..MAX_POWER-1)
+.DRAW_POINT:            move    TK_VAR_POWER(A1),D1
+                        cmp     D5,D1
+                        bgt     .C1
+                        move.l  #T4_COLOR_4,D1
+                        bra     .FILL
+.C1                     cmp     #(TK_BONUS_1_PW-1),D5   
+                        bgt     .C2
+                        move.l  #T4_COLOR_1,D1
+                        bra     .FILL
+.C2:                    cmp     #(TK_BONUS_2_PW-1),D5
+                        bgt     .C3
+                        move.l  #T4_COLOR_2,D1
+                        bra     .FILL
+.C3:                    move.l  #T4_COLOR_3,D1
+.FILL:                  TK_SET_FILL     D1
+                        move    D5,D1
+                        mulu    #T4_ENERGY_POINT,D1
+                        add     #T4_ENERGY_LEFT,D1              ;left x
+                        move    D1,D3
+                        add     #T4_ENERGY_POINT,D3             ;right x
+                        move    #T4_ENERGY_TOP,D2               ;upper y
+                        move    #T4_ENERGY_BOTTOM,D4            ;lower y
+                        TK_DRAW_RECTANGLE D1,D2,D3,D4
+                        add     #1,D5
+                        cmp     #TK_MAX_POWER,D5
+                        bne     .DRAW_POINT
+
+                        movem.l (A7)+,D0-D4     ; pop
+                        rts
+	
 				
 ************************************************************
 *                            TASK 5                        *
@@ -822,10 +878,8 @@ T6_GET_ALIEN:                   move.l  A1,A2   ;save actual state
                                 
                                 bsr     T6_CHECK_CONTACT
                                 
-                                
-                               
                                 cmp     #$FFFF,D0
-                                bne     T6_SWITCH
+                                bne     T6_CHECK_LIMITS
                                 
                                 move    T3_X(A2),D2
                                 move    T3_Y(A2),D6
@@ -842,13 +896,15 @@ T6_GET_ALIEN:                   move.l  A1,A2   ;save actual state
 			        ; remove enemy
 			        move.b  D7,D1
 			        move.b	#1, D0
-			        trap	#0
-			        
-			        ;get current task info
+			        trap	#0  
+			                                   
+T6_CHECK_LIMITS:                ;check if beam has arrived to the end of the screen
+                                ;kill task if it has
+                                ;get current task info
 			        move.b  #4,D0
                                 trap    #0
 		
-			        ; remove menu task(itself)
+			        ; remove task
                                 move.b  TK_VAR_ID(A0),D1
                                 move.b  #1,D0
                                 trap    #0
@@ -998,6 +1054,7 @@ T7_INIT:
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
 
 
 *~Font name~Courier New~
