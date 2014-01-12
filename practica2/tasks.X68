@@ -841,9 +841,13 @@ T5_GET_ALIEN:                   move.l  A1,A2   ;save actual state
 			        move.b  D7,D1
 			        move.b	#1, D0
 			        trap	#0  
+			        
+			        bra T5_END			        
 			                                   
 T5_CHECK_LIMITS:                ;check if beam has arrived to the end of the screen
-                                ;kill task if it has
+                                cmp     #0,T5_VAR_Y(A0)    ; TODO: ensure that A0 points to task memory(work fckin' nigga!)
+                                bne     T5_SWITCH       ; if shot hasn't reached the top then scape from death claws and switch to next task to live another day (mygod!!)
+T5_END:                         ;kill task if it has
                                 ;get current task info
 			        move.b  #4,D0
                                 trap    #0
@@ -1363,6 +1367,7 @@ T8_INIT:
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 *~Font name~Courier New~
 *~Font size~10~
