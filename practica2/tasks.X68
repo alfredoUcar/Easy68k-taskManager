@@ -1054,8 +1054,10 @@ T6_CHECK_BONUS:
                                                 ELSE    ;check if released
                                                         IF.B   #$FF <EQ> T6_FREEZE_KEY_STATE(A0) THEN
                                                         ; do the freeze thing
-                                                        move.b #0,T6_FREEZE_KEY_STATE(A0)
-                                                        move.b #2,D0   ;result freeze 
+                                                        move.b	#0,T6_FREEZE_KEY_STATE(A0)
+                                                        lea	T9_START, A0
+                                                        move.b	#0, D0
+                                                        trap	#0                                                        
                                                         bra T6_CB_END
                                                         ENDI
                                                 ENDI
@@ -1069,10 +1071,10 @@ T6_CHECK_BONUS:
                                                         ELSE    ;check if released
                                                                 IF.B   #$FF <EQ> T6_BOMB_KEY_STATE(A0) THEN
                                                                 ; do the bomb thing
-                                                                move.b #0,T6_BOMB_KEY_STATE(A0)
+                                                                move.b #0,T6_BOMB_KEY_STATE(A0)                                                                
                                                                 lea	T8_START, A0
                                                                 move.b	#0, D0
-                                                                trap	#0 
+                                                                trap	#0
                                                                 bra T6_CB_END
                                                                 ENDI
                                                         ENDI				        
@@ -1363,6 +1365,77 @@ T8_INIT:
                                 move.b  #0,T8_SMALL_RADIUS(A0)		; set start for animation
 		                move    #(T8_DELAY/TK_CYCLE),T8_TIMEOUT(A0) ; cycles before restore the energy  
 
+; End by switching to next task
+				move.b	#3, D0
+				trap	#0		
+* ----------------------------------------------------------
+************************************************************
+*                            TASK 9                        *
+************************************************************
+; ==========================================================
+; Task 9 constants
+; ==========================================================
+;memory offsets
+T9_SPEED        EQU     4
+T9_TIMEOUT      EQU     6
+T9_STATE        EQU     8
+;time
+T9_DELAY        EQU     400 ; 4 seconds
+; ==========================================================
+; Task 9 functions
+; ==========================================================
+* ----------------------------------------------------------
+T9_START:
+* Task 9 entry point.
+* freezes all enemies for a certain time
+* First time:
+* - save speed used for enemies and set it to 0
+* Further executions
+* - state 0: if timeout then restores enemies speed
+* - state 1(FF): if timeout' then restores energy
+* ----------------------------------------------------------
+				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
+				beq	T9_INIT			
+				
+				cmp     #0,T9_TIMEOUT(A0)
+				beq     T9_CHECK_STATE
+				sub     #1,T9_TIMEOUT(A0)       ; updates timeout
+				bra     T9_NEXT
+				;time expired
+T9_CHECK_STATE: 		cmp.b   #0,T9_STATE(A0)
+				bne     T9_RESTORE
+				;phase 1
+T9_DEFROST:			move    T9_SPEED(A0),TK_VAR_SPEED(A1)   ; restore speed
+                                move.b  #$FF,T9_STATE(A0)               ; set state to 'restore energy'
+                                move    #(T9_DELAY/TK_CYCLE),T9_TIMEOUT(A0)     ;reset timeout
+                                bra     T9_NEXT
+                                ;phase 2
+T9_RESTORE:                     add     #TK_FREEZE_PW,TK_VAR_POWER(A1)          ; restore energy                                
+				;remove itself
+				move    #1,D0
+				trap    #0
+
+; End by switching to next task
+T9_NEXT:        		move.b	#3, D0
+				trap	#0		
+* ----------------------------------------------------------
+* ----------------------------------------------------------
+T9_INIT:
+* Task 9 initialization
+* ----------------------------------------------------------
+; Store task ID. When switching to a task, the ID is in D1, but
+; storing in shared memory makes things easier.
+				move.b	D1, TK_VAR_ID(A0)
+; Store the task type
+				move.b	#TK_TYPE_LASER, TK_VAR_TYPE(A0)				
+; Remember next time will not be the first one
+				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
+                                
+                                move    TK_VAR_SPEED(A1),T9_SPEED(A0)           ; save speed
+                                clr     TK_VAR_SPEED(A1)                        ; set speed to 0
+                                move    #(T9_DELAY/TK_CYCLE),T9_TIMEOUT(A0)     ;set timeout
+                                sub     #TK_FREEZE_PW,TK_VAR_POWER(A1)          ; consume energy
+                                clr.b   T9_STATE(A0)                            ; set state to 'freeze'
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
