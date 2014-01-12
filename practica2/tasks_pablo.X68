@@ -647,6 +647,7 @@ T4_ADD_ENEM:			lea         T3_START, A0
 SHIP_SIZE	EQU	20
 T5_VAR_X	EQU	4
 T5_VAR_SX	EQU	6
+T5_SPACE_KEY       EQU     7
 ;draw:
 T5_PIXEL_SIZE		EQU	4
 T5_SPEED        EQU     2
@@ -704,9 +705,20 @@ T5_START:
                                 TRAP   #15
                                 BTST.L #24,D1     ; test for space
                                 IF <NE> THEN      ; if 'space'
-                                    lea	T6_START, A0 ;new laser beam task
-			            move.b	#0, D0
-			            trap	#0
+                                    ; get last state
+*				        move.b	T5_SPACE_KEY(A0),D2
+*	            			; save new state
+*		        		move.b	D1,T5_SPACE_KEY(A0)
+	    			
+	            			;check for DOWN state
+*		               		cmp.b 	#$FF,D2
+*				        beq	T5_SWITCH
+*				        cmp.b	#$FF,D1		
+*				        bne	T5_SWITCH
+                                        ;before FF, now 00 = shoot 1 beam
+                                        lea	T6_START, A0 ;new laser beam task
+			                move.b	#0, D0
+			                trap	#0
                                 ENDI
                                 BTST.L #16,D1     ; test for z
                                 IF <NE> THEN      ; if 'z'
@@ -721,7 +733,7 @@ T5_START:
 *                                  disparo 'c'
                                 ENDI
 ; switch
-			move.b	#3,D0
+T5_SWITCH:		move.b	#3,D0
 			trap	#0
 
 * ----------------------------------------------------------
@@ -830,9 +842,19 @@ T6_GET_ALIEN:                   move.l  A1,A2   ;save actual state
 			        ; remove enemy
 			        move.b  D7,D1
 			        move.b	#1, D0
-			        trap	#0 
+			        trap	#0
+			        
+			        ;get current task info
+			        move.b  #4,D0
+                                trap    #0
+		
+			        ; remove menu task(itself)
+                                move.b  TK_VAR_ID(A0),D1
+                                move.b  #1,D0
+                                trap    #0
+
 ; switch
-T6_SWITCH			        move.b	#3,D0
+T6_SWITCH:			move.b	#3,D0
 			        trap	#0
 
 * ----------------------------------------------------------
@@ -976,6 +998,7 @@ T7_INIT:
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
 
 *~Font name~Courier New~
 *~Font size~10~
