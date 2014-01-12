@@ -1,3 +1,22 @@
+ *-----------------------------------------------------------
+* Program    : Main file for game.
+* Written by : Pablo Riutort & Alfredo Ucendo
+* Date       : December-2013
+* List of tasks :
+*
+*       task 1: main menu
+*       task 2: double buffer
+*       task 3: ship(player)
+*       task 4: enemy
+*       task 5: normal shot
+*       task 6: game control
+*       task 7: explosion
+*       task 8: bomb
+*       task 9: freeze
+*       task 10: laser
+*       task 11: final menu
+*------------------------------------------------------------
+
 ************************************************************
 *                     COMMON CONSTANTS                     *
 ************************************************************
@@ -89,7 +108,7 @@ T1_PIXEL_SIZE		EQU	15
 ;LEVEL 1
 T1_EASY_SPEED                   EQU     3
 T1_EASY_ENEM                    EQU     25
-T1_EASY_POWER                   EQU     TK_MAX_POWER-1
+T1_EASY_POWER                   EQU     TK_MAX_POWER
 ;LEVEL 2
 T1_MEDIUM_SPEED                 EQU     2
 T1_MEDIUM_ENEM                  EQU     50

@@ -996,7 +996,7 @@ T8_CHECK_CONTACT:
 				sub     D3,D0
 				bge     T8_CONT_X
 				neg     D0
-T8_CONT_X:			sub     D4,D1
+T8_CONT_X:		sub     D4,D1
 				bge     T8_CONT_Y
 				neg     D1
 ; At this point, D0=abs(XBomb-XEnem) and D1=abs(YBomb-YEnem)
@@ -1028,6 +1028,7 @@ T8_INIT:
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
