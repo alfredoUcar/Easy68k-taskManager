@@ -4,6 +4,12 @@
 TK_SCREEN_WIDTH			EQU	640
 TK_SCREEN_HEIGHT		EQU	480
 TK_INFO_SCREEN_WIDTH            EQU     140
+; game control
+TK_MAX_POWER                    EQU     12                                      ; max energy available for the player(for shots and bonus)
+TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1)         ; max number of (task)enemies to launch at same time 
+TK_BONUS_1_PW                   EQU     (TK_MAX_POWER/3)                        ; energy needed to use bonus 1
+TK_BONUS_2_PW                   EQU     (TK_MAX_POWER/3*2)                        ; energy needed to use bonus 2
+TK_BONUS_3_PW                   EQU     TK_MAX_POWER                            ; energy needed to use bonus 3
 ; Task types
 TK_TYPE_MENU			EQU	0
 TK_TYPE_SCREEN			EQU	1
@@ -91,15 +97,15 @@ T1_PIXEL_SIZE		EQU	15
 ;LEVEL 1
 T1_EASY_SPEED                   EQU     3
 T1_EASY_ENEM                    EQU     25
-T1_EASY_POWER                   EQU     20
+T1_EASY_POWER                   EQU     TK_MAX_POWER-1
 ;LEVEL 2
 T1_MEDIUM_SPEED                 EQU     2
 T1_MEDIUM_ENEM                  EQU     50
-T1_MEDIUM_POWER                 EQU     15  
+T1_MEDIUM_POWER                 EQU     TK_MAX_POWER  
 ;LEVEL 3
 T1_HARD_SPEED                   EQU     1
 T1_HARD_ENEM                    EQU     100
-T1_HARD_POWER                   EQU     10
+T1_HARD_POWER                   EQU     TK_MAX_POWER
 ;colors
 T1_COLOR_1		EQU	$00FFFFFF
 T1_COLOR_2		EQU	$00000000
@@ -140,7 +146,7 @@ T1_START:
 ; this to decide whether is the first time or not.
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T1_INIT				
-				
+				move.l  A1,A2   ; copy, A1 used for print strings
 ; draw enemy(decoration)	
 				move.b	T1_PIXEL(A0),TK_PIXEL(A1) 	; set global pixel
 				; set global color
@@ -258,6 +264,7 @@ T1_CHECK_INTRO:                 ;check for intro key
 				
 				BTST.L #24,D1     ; test for 'intro'
                                 IF <NE> THEN      ; if 'intro'
+                                move.l  A2,A1     ; restore shared memory pointer
                                 ;start the game
                                 cmp.b	#1,T1_OPTION(A0)
 				beq	T1_START_EASY
@@ -620,12 +627,18 @@ T3_CHECK_NEXT:                  move.b  #7,D0                                   
 ; Task 4 constants
 ; ==========================================================
 ;memory offsets:
-;draw
-T4_POWER_BOX_WIDTH      EQU     (TK_INFO_SCREEN_WIDTH*90/100) ;90% of info screen
-T4_POWER_BOX_HEIGHT     EQU     40
-T4_POWER_SLOT_WIDTH     EQU     T4_POWER_BOX_WIDTH/3
-T4_POWER_COLOR          EQU     $00FFFF00 ; yellow
-T4_COLOR                EQU     $00FFFFFF  
+; energy bar
+T4_ENERGY_BOX_WIDTH     EQU     (TK_INFO_SCREEN_WIDTH*90/100)   ;90% of info screen
+T4_ENERGY_BOX_HEIGHT    EQU     25
+T4_ENERGY_LEFT          EQU     (TK_INFO_SCREEN_WIDTH*5/100)    
+T4_ENERGY_BOTTOM        EQU     (TK_SCREEN_HEIGHT-20)
+T4_ENERGY_TOP           EQU     (T4_ENERGY_BOTTOM-T4_ENERGY_BOX_HEIGHT)
+*T4_ENERGY_SLOT_WIDTH    EQU     
+T4_ENERGY_POINT         EQU     T4_ENERGY_BOX_WIDTH/TK_MAX_POWER
+T4_COLOR_1              EQU     $0000FF00       ; first slot
+T4_COLOR_2              EQU     $0000FFFF       ; second slot
+T4_COLOR_3              EQU     $000000FF       ; third slot
+T4_COLOR_4              EQU     $00000000       ; not available energy
 ; ==========================================================
 ; Task 4 functions
 ; ==========================================================
@@ -644,7 +657,7 @@ T4_START:
 				
 				bsr     T4_SHOW_ENERGY
 				
-				TK_SET_PEN      #T4_COLOR
+				TK_SET_PEN      #$00FFFFFF
 				TK_DRAW_LINE    #TK_INFO_SCREEN_WIDTH,#0,#TK_INFO_SCREEN_WIDTH,#TK_SCREEN_HEIGHT       
 				
 ; End by switching to next task
@@ -688,15 +701,42 @@ T4_SHOW_ENERGY:
 * ----------------------------------------------------------
                         movem.l D0-D4,-(A7)     ; push
                         
-                        TK_SET_PEN      #$00FFFFFF
-                        TK_SET_PEN      #$00FFFFFF
-                        move    #((TK_INFO_SCREEN_WIDTH-T4_POWER_BOX_WIDTH)/2-T4_POWER_BOX_WIDTH),D1    ;left X
-                        move    #(TK_SCREEN_HEIGHT-TK_POWER_BOX_WIDTH-20),D2                            ;upper Y
-                        move    #((TK_INFO_SCREEN_WIDTH-T4_POWER_BOX_WIDTH)/2),D3                       ;right X
-                        move    #(TK_SCREEN_HEIGHT-20),D4                                               ;lower Y
-                        TK_DRAW_RECTANGLE D1,D2,D3,D4
+                        move.b  #4,D0   ;get current task info
+                        trap    #0
                         
+                        TK_SET_PEN      #$00FFFFFF
+                        TK_SET_FILL     #T4_COLOR_2
+                        
+                        clr     D5      ; counter (0..MAX_POWER-1)
+.DRAW_POINT:            move    TK_VAR_POWER(A1),D1
+                        cmp     D5,D1
+                        bgt     .C1
+                        move.l  #T4_COLOR_4,D1
+                        bra     .FILL
+.C1                     cmp     #(TK_BONUS_1_PW-1),D5   
+                        bgt     .C2
+                        move.l  #T4_COLOR_1,D1
+                        bra     .FILL
+.C2:                    cmp     #(TK_BONUS_2_PW-1),D5
+                        bgt     .C3
+                        move.l  #T4_COLOR_2,D1
+                        bra     .FILL
+.C3:                    move.l  #T4_COLOR_3,D1
+.FILL:                  TK_SET_FILL     D1
+                        move    D5,D1
+                        mulu    #T4_ENERGY_POINT,D1
+                        add     #T4_ENERGY_LEFT,D1              ;left x
+                        move    D1,D3
+                        add     #T4_ENERGY_POINT,D3             ;right x
+                        move    #T4_ENERGY_TOP,D2               ;upper y
+                        move    #T4_ENERGY_BOTTOM,D4            ;lower y
+                        TK_DRAW_RECTANGLE D1,D2,D3,D4
+                        add     #1,D5
+                        cmp     #TK_MAX_POWER,D5
+                        bne     .DRAW_POINT
+
                         movem.l (A7)+,D0-D4     ; pop
+                        rts
 * ----------------------------------------------------------
 ************************************************************
 *                            TASK 5                        *
@@ -928,6 +968,8 @@ T8_INIT:
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
+
 
 
 
