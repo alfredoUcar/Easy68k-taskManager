@@ -80,7 +80,7 @@ TK_DRAW_NAVE:
 		
 		;ponemos la coordenada Y como constante
 		swap	D0
-		move	#(TK_SCREEN_HEIGHT-T5_PIXEL_SIZE-3),D0
+*		move	#(TK_SCREEN_HEIGHT-T5_PIXEL_SIZE-3),D0 ;TODO: descomentar cuando se añada la task de la nave
 		;D0 = coordenadas del centro(W1:X,W2:Y)
 		
 		clr	D7
@@ -254,6 +254,7 @@ TK_EXP_LIST:	dc.b 0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,1,
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~8~
+
 
 *~Font name~Courier New~
 *~Font size~10~

@@ -7,9 +7,9 @@ TK_INFO_SCREEN_WIDTH            EQU     140
 ; game control
 TK_MAX_POWER                    EQU     12                                      ; max energy available for the player(for shots and bonus)
 TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1)         ; max number of (task)enemies to launch at same time 
-TK_BONUS_1_PW                   EQU     (TK_MAX_POWER/3)                        ; energy needed to use bonus 1
-TK_BONUS_2_PW                   EQU     (TK_MAX_POWER/3*2)                        ; energy needed to use bonus 2
-TK_BONUS_3_PW                   EQU     TK_MAX_POWER                            ; energy needed to use bonus 3
+TK_LASER_PW                     EQU     (TK_MAX_POWER/3)                        ; energy needed to use bonus 1
+TK_FREEZE_PW                    EQU     (TK_MAX_POWER/3*2)                        ; energy needed to use bonus 2
+TK_BOMB_PW                      EQU     TK_MAX_POWER                            ; energy needed to use bonus 3
 ; Task types
 TK_TYPE_MENU			EQU	0
 TK_TYPE_SCREEN			EQU	1
@@ -18,9 +18,9 @@ TK_TYPE_PLAYER                  EQU     3
 TK_TYPE_SHOT                    EQU     4
 TK_TYPE_CONTROL                 EQU     5   
 TK_TYPE_EXP                     EQU     6
-TK_TYPE_BONUS_1                 EQU     7
-TK_TYPE_BONUS_2                 EQU     8   
-TK_TYPE_BONUS_3                 EQU     9               
+TK_TYPE_LASER                   EQU     7
+TK_TYPE_FREEZE                  EQU     8   
+TK_TYPE_BOMB                    EQU     9               
 ; Variable offsets used for all tasks
 TK_VAR_FIRST_TIME		EQU	0
 TK_VAR_ID			EQU	1
@@ -65,14 +65,6 @@ TK_INIT:
 			lea	T2_START, A0
 			move.b	#0, D0
 			trap	#0
-			
-*			lea	T3_START, A0
-*			move.b	#0, D0
-*			trap	#0
-*	
-*                        lea	T8_START, A0
-*			move.b	#0, D0
-*			trap	#0
 		
 			rts
                                 
@@ -290,7 +282,7 @@ T1_START_HARD:			;start on hard mode
 				move.w  #T1_HARD_POWER,TK_VAR_POWER(A1)
 
 T1_START_GAME:                  		
-			        lea	T4_START, A0
+			        lea	T6_START, A0
 			        move.b	#0, D0
 			        trap	#0	
 			        
@@ -493,7 +485,7 @@ T3_X                    EQU     4
 T3_Y                    EQU     6
 ;draw:
 T3_PIXEL_SIZE		EQU	4
-T3_SPEED                EQU     0
+T3_SPEED                EQU     1
 T3_COLOR_1              EQU     $00FF6600
 T3_COLOR_2              EQU     $00AA0000
 
@@ -627,23 +619,29 @@ T3_CHECK_NEXT:                  move.b  #7,D0                                   
 ; Task 4 constants
 ; ==========================================================
 ;memory offsets:
+T6_LASER_KEY_STATE      EQU     4 
+T6_FREEZE_KEY_STATE     EQU     5 
+T6_BOMB_KEY_STATE       EQU     6
+;bonus keys
+T6_LASER_KEY            EQU     'Z' 
+T6_FREEZE_KEY           EQU     'X' 
+T6_BOMB_KEY             EQU     'C'          
 ; energy bar
-T4_ENERGY_BOX_WIDTH     EQU     (TK_INFO_SCREEN_WIDTH*90/100)   ;90% of info screen
-T4_ENERGY_BOX_HEIGHT    EQU     25
-T4_ENERGY_LEFT          EQU     (TK_INFO_SCREEN_WIDTH*5/100)    
-T4_ENERGY_BOTTOM        EQU     (TK_SCREEN_HEIGHT-20)
-T4_ENERGY_TOP           EQU     (T4_ENERGY_BOTTOM-T4_ENERGY_BOX_HEIGHT)
-*T4_ENERGY_SLOT_WIDTH    EQU     
-T4_ENERGY_POINT         EQU     T4_ENERGY_BOX_WIDTH/TK_MAX_POWER
-T4_COLOR_1              EQU     $0000FF00       ; first slot
-T4_COLOR_2              EQU     $0000FFFF       ; second slot
-T4_COLOR_3              EQU     $000000FF       ; third slot
-T4_COLOR_4              EQU     $00000000       ; not available energy
+T6_ENERGY_BOX_WIDTH     EQU     (TK_INFO_SCREEN_WIDTH*90/100)   ;90% of info screen
+T6_ENERGY_BOX_HEIGHT    EQU     25
+T6_ENERGY_LEFT          EQU     (TK_INFO_SCREEN_WIDTH*5/100)    
+T6_ENERGY_BOTTOM        EQU     (TK_SCREEN_HEIGHT-20)
+T6_ENERGY_TOP           EQU     (T6_ENERGY_BOTTOM-T6_ENERGY_BOX_HEIGHT)
+T6_ENERGY_POINT         EQU     T6_ENERGY_BOX_WIDTH/TK_MAX_POWER
+T6_COLOR_1              EQU     $0000FF00       ; first slot
+T6_COLOR_2              EQU     $0000FFFF       ; second slot
+T6_COLOR_3              EQU     $000000FF       ; third slot
+T6_COLOR_4              EQU     $00000000       ; not available energy
 ; ==========================================================
 ; Task 4 functions
 ; ==========================================================
 * ----------------------------------------------------------
-T4_START:
+T6_START:
 * Task 4 entry point.
 * Manage game
 * First time:
@@ -653,10 +651,12 @@ T4_START:
 * - add enemies randomly and manage game state
 * ----------------------------------------------------------
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
-				beq	T4_INIT
+				beq	T6_INIT
 				
-				bsr     T4_SHOW_ENERGY
+				bsr     T6_SHOW_ENERGY  ; show available energy
+*				bsr     T6_CHECK_BONUS  ; check state of bonuses
 				
+				;draw a line
 				TK_SET_PEN      #$00FFFFFF
 				TK_DRAW_LINE    #TK_INFO_SCREEN_WIDTH,#0,#TK_INFO_SCREEN_WIDTH,#TK_SCREEN_HEIGHT       
 				
@@ -666,7 +666,7 @@ T4_START:
 								
 
 * ----------------------------------------------------------
-T4_INIT:
+T6_INIT:
 * Task 4 initialization
 * ----------------------------------------------------------
 ; Store task ID. When switching to a task, the ID is in D1, but
@@ -676,15 +676,19 @@ T4_INIT:
 				move.b	#TK_TYPE_CONTROL, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
 				move.b  #$ff, TK_VAR_FIRST_TIME(A0)
-      			
+      			        
+      			        ; set keys as not pressed
+				move.b  #0,T6_LASER_KEY_STATE(A0)
+				move.b  #0,T6_FREEZE_KEY_STATE(A0)
+				move.b  #0,T6_BOMB_KEY_STATE(A0)
 				
-				move        #3,D2               ; number of enemies to add
-				sub         #1,D2               ; loop 0..N-1
+				move    #3,D2               ; number of enemies to add
+				sub     #1,D2               ; loop 0..N-1
 				
-T4_ADD_ENEM:			lea         T3_START, A0
+T6_ADD_ENEM:			lea         T3_START, A0
 			        move.b	    #0, D0
         			trap	    #0
-        			dbra        D2,T4_ADD_ENEM
+        			dbra        D2,T6_ADD_ENEM
         		        
                                 lea	T8_START, A0
                                 move.b	#0, D0
@@ -696,7 +700,63 @@ T4_ADD_ENEM:			lea         T3_START, A0
 				move.b	#3, D0
 				trap	#0
 * ----------------------------------------------------------
-T4_SHOW_ENERGY:
+T6_CHECK_BONUS:
+* check bonuses state
+* pre: A0 pointer to task memory
+* post: D0.b    0 => do nothing
+*               1 => do the laser
+*               2 => do the freeze
+*               3 => do the bomb
+* ----------------------------------------------------------
+; Check for bonus keys	
+				move.b	#19, D0
+				move.l	#T6_LASER_KEY<<16+T6_FREEZE_KEY<<8+T6_BOMB_KEY,D1
+				trap	#15
+				
+				move    TK_VAR_POWER(A1),D2     ; current energy
+				
+				IF.W #(TK_LASER_PW-1) <LE> D2 THEN
+				; enough energy for laser
+				        BTST.L #16,D1     ; test for laser
+                                        IF <NE> THEN      ; if laser pressed
+                                                ; save state 'pressed'
+				                move.b	#$FF,T6_LASER_KEY_STATE(A0)
+                                                bra T6_CB_END
+                                        ELSE    ;check if released
+                                                IF.B   #$FF <EQ> T6_LASER_KEY_STATE(A0) THEN
+                                                 ; do the laser thing
+                                                 move.b #0,T6_LASER_KEY_STATE(A0)
+                                                 move.b #1,D0   ;result laser
+                                                 bra T6_CB_END
+                                                ENDI
+                                        ENDI
+				        IF.W #(TK_FREEZE_PW-1) <LE> D2 THEN
+				        ; enough energy for freeze
+				                BTST.L #8,D1     ; test for freeze 
+                                                IF <NE> THEN      ; if freeze pressed
+                                                        ; save state 'pressed'
+				                        move.b	#$FF,T6_FREEZE_KEY_STATE(A0)
+                                                        bra T6_CB_END
+                                                ELSE    ;check if released
+                                                        IF.B   #$FF <EQ> T6_FREEZE_KEY_STATE(A0) THEN
+                                                        ; do the freeze thing
+                                                        move.b #0,T6_FREEZE_KEY_STATE(A0)
+                                                        move.b #2,D0   ;result freeze 
+                                                        bra T6_CB_END
+                                                        ENDI
+                                                ENDI
+				                IF.W #(TK_BOMB_PW-1) <LE> D2 THEN
+				                ; enough energy for bomb
+
+				        
+				                ENDI    
+				        ENDI 
+				ENDI
+T6_CB_END:				
+				rts
+*-----------------------------------------------------------
+* ----------------------------------------------------------
+T6_SHOW_ENERGY:
 * show energy bar
 * ----------------------------------------------------------
                         movem.l D0-D4,-(A7)     ; push
@@ -705,31 +765,31 @@ T4_SHOW_ENERGY:
                         trap    #0
                         
                         TK_SET_PEN      #$00FFFFFF
-                        TK_SET_FILL     #T4_COLOR_2
+                        TK_SET_FILL     #T6_COLOR_2
                         
                         clr     D5      ; counter (0..MAX_POWER-1)
 .DRAW_POINT:            move    TK_VAR_POWER(A1),D1
                         cmp     D5,D1
                         bgt     .C1
-                        move.l  #T4_COLOR_4,D1
+                        move.l  #T6_COLOR_4,D1
                         bra     .FILL
-.C1                     cmp     #(TK_BONUS_1_PW-1),D5   
+.C1                     cmp     #(TK_LASER_PW-1),D5   
                         bgt     .C2
-                        move.l  #T4_COLOR_1,D1
+                        move.l  #T6_COLOR_1,D1
                         bra     .FILL
-.C2:                    cmp     #(TK_BONUS_2_PW-1),D5
+.C2:                    cmp     #(TK_FREEZE_PW-1),D5
                         bgt     .C3
-                        move.l  #T4_COLOR_2,D1
+                        move.l  #T6_COLOR_2,D1
                         bra     .FILL
-.C3:                    move.l  #T4_COLOR_3,D1
+.C3:                    move.l  #T6_COLOR_3,D1
 .FILL:                  TK_SET_FILL     D1
                         move    D5,D1
-                        mulu    #T4_ENERGY_POINT,D1
-                        add     #T4_ENERGY_LEFT,D1              ;left x
+                        mulu    #T6_ENERGY_POINT,D1
+                        add     #T6_ENERGY_LEFT,D1              ;left x
                         move    D1,D3
-                        add     #T4_ENERGY_POINT,D3             ;right x
-                        move    #T4_ENERGY_TOP,D2               ;upper y
-                        move    #T4_ENERGY_BOTTOM,D4            ;lower y
+                        add     #T6_ENERGY_POINT,D3             ;right x
+                        move    #T6_ENERGY_TOP,D2               ;upper y
+                        move    #T6_ENERGY_BOTTOM,D4            ;lower y
                         TK_DRAW_RECTANGLE D1,D2,D3,D4
                         add     #1,D5
                         cmp     #TK_MAX_POWER,D5
@@ -739,23 +799,23 @@ T4_SHOW_ENERGY:
                         rts
 * ----------------------------------------------------------
 ************************************************************
-*                            TASK 5                        *
+*                            TASK 7                        *
 ************************************************************
 ; ==========================================================
-; Task 5 constants
+; Task 7 constants
 ; ==========================================================
 ;memory offsets:
-T5_X                    EQU     4
-T5_Y                    EQU     6
-T5_LIVED                EQU     8 
+T7_X                    EQU     4
+T7_Y                    EQU     6
+T7_LIVED                EQU     8 
 ;draw:
-T5_PIXEL_SIZE		EQU	4
-T5_LIFE_TIME            EQU     1    ; hundredths of a second 
+T7_PIXEL_SIZE		EQU	4
+T7_LIFE_TIME            EQU     1    ; hundredths of a second 
 ; ==========================================================
-; Task 5 functions
+; Task 7 functions
 ; ==========================================================
 * ----------------------------------------------------------
-T5_START:
+T7_START:
 * Task 5 entry point.
 * Explosion
 * First time:
@@ -764,10 +824,10 @@ T5_START:
 * - paint an explosion
 * ----------------------------------------------------------
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
-				beq	T5_INIT
+				beq	T7_INIT
 				
-				cmp     #T5_LIFE_TIME,T5_LIVED(A0)
-				bge     T5_DEAD                         ; life time expired
+				cmp     #T7_LIFE_TIME,T7_LIVED(A0)
+				bge     T7_DEAD                         ; life time expired
 				
 				move.b  #8,D0
 				trap    #15
@@ -775,28 +835,28 @@ T5_START:
 				
 				move.b	#T3_PIXEL_SIZE,TK_PIXEL(A1) 	; set global pixel
 				;set position
-				move    T5_X(A0),D0
+				move    T7_X(A0),D0
 				swap    D0
-                                move    T5_Y(A0),D0
+                                move    T7_Y(A0),D0
                                 
                                 bsr     TK_DRAW_EXP
-T5_UPDATE:                      move.b  #8,D0
+T7_UPDATE:                      move.b  #8,D0
 				trap    #15
 				sub.l   D2,D1
-                                add     D1,T5_LIVED(A0)                ; updates life time( in cycles)
-                                bra     T5_NEXT                             
+                                add     D1,T7_LIVED(A0)                ; updates life time( in cycles)
+                                bra     T7_NEXT                             
                                 
-T5_DEAD:                        move.b  TK_VAR_ID(A0),D1                ;remove itself
+T7_DEAD:                        move.b  TK_VAR_ID(A0),D1                ;remove itself
                                 move.b  #1,D0
                                 trap    #0
 				
 ; End by switching to next task
-T5_NEXT:			move.b	#3, D0
+T7_NEXT:			move.b	#3, D0
 				trap	#0		
 								
 
 * ----------------------------------------------------------
-T5_INIT:
+T7_INIT:
 * Task 5 initialization
 * ----------------------------------------------------------
 ; Store task ID. When switching to a task, the ID is in D1, but
@@ -807,7 +867,7 @@ T5_INIT:
 ; Remember next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
 				; set time lived to 0
-                                move    #0,T5_LIVED(A0)
+                                move    #0,T7_LIVED(A0)
 
 ; End by switching to next task
 				move.b	#3, D0
@@ -890,14 +950,14 @@ T8_KILL_CHECK:                  move.b  D1,D5                                   
                                 move    T3_Y(A1),D6
                                 move.b  TK_VAR_ID(A1),D7
                                 ; add explosion
-                                lea	T5_START, A0
+                                lea	T7_START, A0
 			        move.b	#0, D0
 			        trap	#0
 			        move.b  #5,D0
 			        trap    #0
 			        ; asign same position of killed enemy
-			        move    D2,T5_X(A0)
-			        move    D6,T5_Y(A0)
+			        move    D2,T7_X(A0)
+			        move    D6,T7_Y(A0)
 			        ; remove enemy
 			        move.b  D7,D1
 			        move.b	#1, D0
@@ -936,7 +996,7 @@ T8_CHECK_CONTACT:
 				sub     D3,D0
 				bge     T8_CONT_X
 				neg     D0
-T8_CONT_X:			sub     D4,D1
+T8_CONT_X:		sub     D4,D1
 				bge     T8_CONT_Y
 				neg     D1
 ; At this point, D0=abs(XBomb-XEnem) and D1=abs(YBomb-YEnem)
@@ -957,7 +1017,7 @@ T8_INIT:
 ; storing in shared memory makes things easier.
 				move.b	D1, TK_VAR_ID(A0)
 ; Store the task type
-				move.b	#TK_TYPE_BONUS_1, TK_VAR_TYPE(A0)				
+				move.b	#TK_TYPE_LASER, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
 				
@@ -968,6 +1028,8 @@ T8_INIT:
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
+
 
 
 

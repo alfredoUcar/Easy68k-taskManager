@@ -14,7 +14,7 @@
 ************************************************************
 			INCLUDE "taskmanager.x68" 	; Task manager library
 			ds.w	0		  	; Perform memory alignment, just in case.			
-			INCLUDE "tasks_pablo.x68" 	 	; The tasks
+			INCLUDE "tasks.x68" 	 	; The tasks
 			ds.w	0		  	; Perform memory alignment, just in case.						
 ************************************************************
 
@@ -50,6 +50,11 @@ START:
 
 
 
+
+<<<<<<< HEAD
+
+=======
+>>>>>>> alfredo
 
 
 
