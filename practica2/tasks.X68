@@ -23,6 +23,7 @@
 TK_SCREEN_WIDTH			EQU	640
 TK_SCREEN_HEIGHT		EQU	480
 TK_INFO_SCREEN_WIDTH            EQU     140
+TK_CYCLE                        EQU     20
 ; game control
 TK_MAX_POWER                    EQU     12                                      ; max energy available for the player(for shots and bonus)
 TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1)         ; max number of (task)enemies to launch at same time 
@@ -71,7 +72,7 @@ TK_INIT:
 * manager.
 * ----------------------------------------------------------
 ; Define minimum cycle time
-			move.l	#20, D1
+			move.l	#TK_CYCLE, D1
 			move.b	#8, D0
 			trap	#0
 
@@ -834,10 +835,10 @@ T6_SHOW_ENERGY:
 ;memory offsets:
 T7_X                    EQU     4
 T7_Y                    EQU     6
-T7_LIVED                EQU     8 
+T7_TIMEOUT              EQU     8 
 ;draw:
-T7_PIXEL_SIZE		EQU	4
-T7_LIFE_TIME            EQU     1    ; hundredths of a second 
+T7_PIXEL_SIZE           EQU	4
+T7_DELAY                EQU     40    ; one second 
 ; ==========================================================
 ; Task 7 functions
 ; ==========================================================
@@ -853,8 +854,8 @@ T7_START:
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T7_INIT
 				
-				cmp     #T7_LIFE_TIME,T7_LIVED(A0)
-				bge     T7_DEAD                         ; life time expired
+				cmp     #0,T7_TIMEOUT(A0)
+				beq     T7_DEAD                         ; life time expired
 				
 				move.b  #8,D0
 				trap    #15
@@ -867,10 +868,8 @@ T7_START:
                                 move    T7_Y(A0),D0
                                 
                                 bsr     TK_DRAW_EXP
-T7_UPDATE:                      move.b  #8,D0
-				trap    #15
-				sub.l   D2,D1
-                                add     D1,T7_LIVED(A0)                ; updates life time( in cycles)
+T7_UPDATE:                      
+                                sub     #1,T7_TIMEOUT(A0)                ; updates life time( in cycles)
                                 bra     T7_NEXT                             
                                 
 T7_DEAD:                        move.b  TK_VAR_ID(A0),D1                ;remove itself
@@ -894,7 +893,7 @@ T7_INIT:
 ; Remember next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
 				; set time lived to 0
-                                move    #0,T7_LIVED(A0)
+                                move    #(T7_DELAY/TK_CYCLE),T7_TIMEOUT(A0) ; cycles timeout  
 
 ; End by switching to next task
 				move.b	#3, D0
@@ -912,8 +911,10 @@ T8_MOUSE_STATE  EQU     5
 T8_SMALL_RADIUS EQU     6
 T8_X            EQU     8
 T8_Y            EQU     10
+T8_TIMEOUT      EQU     12 ;LONG
 ;draw
 T8_RADIUS       EQU     50
+T8_DELAY        EQU     500 ; 5 seconds
 T8_ANIM_STEP    EQU     T8_RADIUS/10
 T8_COLOR        EQU     $000000FF
 ; ==========================================================
@@ -927,12 +928,16 @@ T8_START:
 * First time:
 * - set state to 0(awaiting the click)
 * Further executions
+* - state 1: kill
+* - state 2: timeout
 * - paint an explosion
 * ----------------------------------------------------------
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T8_INIT
-				cmp.b   #0,T8_STATE(A0)
-				bne     T8_KILL
+				cmp.b   #1,T8_STATE(A0)
+				beq     T8_KILL
+				cmp.b   #2,T8_STATE(A0)
+				beq     T8_RESTORE
 				
 				clr     D1
 				move.b  #61,D0
@@ -948,7 +953,7 @@ T8_START:
 				bra     T8_WAIT_CLICK
 T8_CHECK_RELEASE:               cmp.b   #0,T8_MOUSE_STATE(A0)
                                 beq     T8_WAIT_CLICK
-                                move.b  #$FF,T8_STATE(A0)               ; click, next time will kill
+                                move.b  #1,T8_STATE(A0)               ; click, next time will kill
 				
 T8_WAIT_CLICK:			TK_SET_PEN      #T8_COLOR
                                 TK_DRAW_CIRCLE  T8_X(A0),T8_Y(A0),#T8_RADIUS
@@ -997,11 +1002,8 @@ T8_CHECK_NEXT:                  move.b  D5,D1                                   
                                 cmp.b   #$FF,D1
                                 bne     T8_KILL_CHECK                                   ; not last task
                                 
-                                ;remove itself
                                 move.b  #4,D0
-                                trap    #0
-                                move.b  #1,D0
-                                trap    #0
+                                trap    #0                      ; restore info
                                 
 T8_ANIM:
                                 add     #T8_ANIM_STEP,T8_SMALL_RADIUS(A0)
@@ -1009,8 +1011,16 @@ T8_ANIM:
                                 TK_DRAW_CIRCLE  T8_X(A0),T8_Y(A0),T8_SMALL_RADIUS(A0)
                                 cmp     #T8_RADIUS,T8_SMALL_RADIUS(A0)
                                 ble     T8_ANIM
-				
-				add     #TK_BOMB_PW,TK_VAR_POWER(A1)
+                                
+				move.b  #2,T8_STATE(A0)         ; set state 'timeout'				
+T8_RESTORE:                     cmp     #0,T8_TIMEOUT(A0)
+                                beq     T8_END
+                                sub     #1,T8_TIMEOUT(A0)
+                                bra     T8_NEXT
+T8_END:                         add     #TK_BOMB_PW,TK_VAR_POWER(A1) ; restore energy
+                                ;remove itself                                
+                                move.b  #1,D0
+                                trap    #0
 
 ; End by switching to next task
 T8_NEXT:      			move.b	#3, D0
@@ -1049,9 +1059,10 @@ T8_INIT:
 ; Remember next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
 				
-				sub     #TK_BOMB_PW,TK_VAR_POWER(A1)
-				move.b  #0,T8_STATE(A0)
-                                move.b  #0,T8_SMALL_RADIUS(A0)				
+				sub     #TK_BOMB_PW,TK_VAR_POWER(A1)    ; consume energy
+				move.b  #0,T8_STATE(A0)                 ; set state 'wait'
+                                move.b  #0,T8_SMALL_RADIUS(A0)		; set start for animation
+		                move    #(T8_DELAY/TK_CYCLE),T8_TIMEOUT(A0) ; cycles before restore the energy  
 
 ; End by switching to next task
 				move.b	#3, D0
