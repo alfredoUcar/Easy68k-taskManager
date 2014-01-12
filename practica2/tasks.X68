@@ -515,7 +515,7 @@ T4_COLOR_2              EQU     $00AA0000
 
 * ----------------------------------------------------------
 T4_START:
-* Task 3 entry point.
+* Task 4 entry point.
 * An enemy that moves down to reach the ship
 * First time:
 * - Init position(random)
@@ -537,7 +537,8 @@ T4_START:
 				bsr	TK_DRAW_ENEM
 
 ; updates position(move down)
-                                add     #TK_VAR_SPEED(A1),T4_Y(A0)
+                                move    TK_VAR_SPEED(A1),D0
+                                add     D0,T4_Y(A0)
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0
@@ -1068,6 +1069,7 @@ T8_INIT:
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
