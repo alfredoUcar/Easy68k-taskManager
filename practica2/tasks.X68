@@ -53,7 +53,7 @@ TK_VAR_ENEM                     EQU     14
 TK_VAR_POWER                    EQU     16 
 TK_VAR_GAME_STATE               EQU     18 ;BYTE
 TK_VAR_X                        EQU     20   
-TK_VAR_Y                        EQU     22                   
+TK_VAR_Y                        EQU     22   
 
 ************************************************************
 *                   SOURCE FILE INCLUDES                   *
@@ -495,26 +495,26 @@ T2_CLEAR_HIDDEN:		TK_SET_PEN	#$00000000
 				trap	#0				
 * ----------------------------------------------------------
 ************************************************************
-*                            TASK 3                        *
+*                            TASK 4                        *
 ************************************************************
 ; ==========================================================
-; Task 3 constants
+; Task 4 constants
 ; ==========================================================
 ;memory offsets:
-T3_X                    EQU     4
-T3_Y                    EQU     6
+T4_X                    EQU     4
+T4_Y                    EQU     6
 ;draw:
-T3_PIXEL_SIZE		EQU	4
-T3_SPEED                EQU     1
-T3_COLOR_1              EQU     $00FF6600
-T3_COLOR_2              EQU     $00AA0000
+T4_PIXEL_SIZE		EQU	4
+T4_SPEED                EQU     1
+T4_COLOR_1              EQU     $00FF6600
+T4_COLOR_2              EQU     $00AA0000
 
 ; ==========================================================
-; Task 3 functions
+; Task 4 functions
 ; ==========================================================
 
 * ----------------------------------------------------------
-T3_START:
+T4_START:
 * Task 3 entry point.
 * An enemy that moves down to reach the ship
 * First time:
@@ -525,25 +525,25 @@ T3_START:
 *       tasks that paint something on screen
 * ----------------------------------------------------------
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
-				beq	T3_INIT
+				beq	T4_INIT
 ; draw enemy	
-				move.b	#T3_PIXEL_SIZE,TK_PIXEL(A1) 	; set global pixel
+				move.b	#T4_PIXEL_SIZE,TK_PIXEL(A1) 	; set global pixel
 				; set global color
-				move.l	#T3_COLOR_1,TK_VAR_COLOR_1(A1) 	; pixel pen
-				move.l	#T3_COLOR_2,TK_VAR_COLOR_2(A1)	        ; pixel fill
-				move	T3_X(A0),D0		; set x
+				move.l	#T4_COLOR_1,TK_VAR_COLOR_1(A1) 	; pixel pen
+				move.l	#T4_COLOR_2,TK_VAR_COLOR_2(A1)	        ; pixel fill
+				move	T4_X(A0),D0		; set x
 				swap	D0
-				move	T3_Y(A0),D0 	        ; set y				
+				move	T4_Y(A0),D0 	        ; set y				
 				bsr	TK_DRAW_ENEM
 
 ; updates position(move down)
-                                add     #T3_SPEED,T3_Y(A0)
+                                add     #TK_VAR_SPEED(A1),T4_Y(A0)
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0
 								
 * ----------------------------------------------------------
-T3_RANDOM:
+T4_RANDOM:
 * return a random number between two limits
 * pre:  D0.W min limit 
 *       D1.W max limit
@@ -574,8 +574,8 @@ T3_RANDOM:
                 rts
 		
 * ----------------------------------------------------------
-T3_INIT:
-* Task 3 initialization
+T4_INIT:
+* Task 4 initialization
 * ----------------------------------------------------------
 ; Store task ID. When switching to a task, the ID is in D1, but
 ; storing in shared memory makes things easier.
@@ -585,58 +585,58 @@ T3_INIT:
 ; Remember next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)				
 ; Set initial position and size
-T3_SET_POS:                     move.b  #4,D0                                           ; get current task info (restore)
+T4_SET_POS:                     move.b  #4,D0                                           ; get current task info (restore)
                                 trap    #0                                              ; values may be changed during loop
                                 
                                 clr.l   D0
                                 clr.l   D1
-                                move    #((TK_ENEM_ROWS*T3_PIXEL_SIZE)/2),T3_Y(A0)      ; set y
+                                move    #((TK_ENEM_ROWS*T4_PIXEL_SIZE)/2),T4_Y(A0)      ; set y
                                 move    #(TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH),D0      ; game window width
-                                move    #(TK_ENEM_COLUMNS*T3_PIXEL_SIZE+20),D1          ; width needed by enemy
+                                move    #(TK_ENEM_COLUMNS*T4_PIXEL_SIZE+20),D1          ; width needed by enemy
                                 divu    D1,D0                                           ; max enemies by row
                                 move    D1,D2                                           ; copy
                                 move    D0,D1
                                 move    #1,D0
-                                bsr     T3_RANDOM                                       ; random between 1 and enems_by_row
+                                bsr     T4_RANDOM                                       ; random between 1 and enems_by_row
                                 move    #TK_INFO_SCREEN_WIDTH,D1
                                 sub     #1,D0
                                 mulu    D2,D0
                                 divu    #2,D2
                                 add     D2,D0
                                 add     D1,D0
-                                move    D0,T3_X(A0)                                     ; set x
+                                move    D0,T4_X(A0)                                     ; set x
 ; check if there's another enemy for that position
                                 move.b  TK_VAR_ID(A0),D4                                ; save current task ID
                                 move.b  #6,D0                                           ; get first task info
                                 trap    #0
                                 
-T3_CHECK_REPEAT:                cmp.b   D4,D2
-                                beq     T3_CHECK_NEXT                                   ; it's current task, next
+T4_CHECK_REPEAT:                cmp.b   D4,D2
+                                beq     T4_CHECK_NEXT                                   ; it's current task, next
                                 cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's enemy?
-                                bne     T3_CHECK_NEXT                                   ;no
+                                bne     T4_CHECK_NEXT                                   ;no
                                 ; it's enemy... check position
                                 
-                                move    T3_Y(A0),D3
-                                cmp     T3_Y(A1),D3
-                                bne     T3_CHECK_NEXT                                   ; distinct Y, no coincidence
-                                move    T3_X(A0),D3
-                                cmp     T3_X(A1),D3
-                                beq     T3_SET_POS                                      ; same Y, distinct X                      
+                                move    T4_Y(A0),D3
+                                cmp     T4_Y(A1),D3
+                                bne     T4_CHECK_NEXT                                   ; distinct Y, no coincidence
+                                move    T4_X(A0),D3
+                                cmp     T4_X(A1),D3
+                                beq     T4_SET_POS                                      ; same Y, distinct X                      
                                 
-T3_CHECK_NEXT:                  move.b  #7,D0                                           ; get next task info
+T4_CHECK_NEXT:                  move.b  #7,D0                                           ; get next task info
                                 trap    #0
                                 cmp.b   #$FF,D1
-                                bne     T3_CHECK_REPEAT                                 ; not last task
+                                bne     T4_CHECK_REPEAT                                 ; not last task
                                 
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0				
 * ----------------------------------------------------------
 ************************************************************
-*                            TASK 4                        *
+*                            TASK 6                        *
 ************************************************************
 ; ==========================================================
-; Task 4 constants
+; Task 6 constants
 ; ==========================================================
 ;memory offsets:
 T6_LASER_KEY_STATE      EQU     4 
@@ -658,11 +658,11 @@ T6_COLOR_2              EQU     $0000FFFF       ; second slot
 T6_COLOR_3              EQU     $000000FF       ; third slot
 T6_COLOR_4              EQU     $00000000       ; not available energy
 ; ==========================================================
-; Task 4 functions
+; Task 6 functions
 ; ==========================================================
 * ----------------------------------------------------------
 T6_START:
-* Task 4 entry point.
+* Task 6 entry point.
 * Manage game
 * First time:
 * - add player
@@ -687,7 +687,7 @@ T6_START:
 
 * ----------------------------------------------------------
 T6_INIT:
-* Task 4 initialization
+* Task 6 initialization
 * ----------------------------------------------------------
 ; Store task ID. When switching to a task, the ID is in D1, but
 ; storing in shared memory makes things easier.
@@ -705,7 +705,7 @@ T6_INIT:
 				move    #3,D2               ; number of enemies to add
 				sub     #1,D2               ; loop 0..N-1
 				
-T6_ADD_ENEM:			lea         T3_START, A0
+T6_ADD_ENEM:			lea         T4_START, A0
 			        move.b	    #0, D0
         			trap	    #0
         			dbra        D2,T6_ADD_ENEM
@@ -861,7 +861,7 @@ T7_START:
 				trap    #15
 				move.l  D1,D2
 				
-				move.b	#T3_PIXEL_SIZE,TK_PIXEL(A1) 	; set global pixel
+				move.b	#T4_PIXEL_SIZE,TK_PIXEL(A1) 	; set global pixel
 				;set position
 				move    T7_X(A0),D0
 				swap    D0
@@ -972,14 +972,14 @@ T8_KILL_CHECK:                  move.b  D1,D5                                   
                                 cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's enemy?
                                 bne     T8_CHECK_NEXT                                   ;no, next task
                                 ; it's enemy... check distance                                
-                                move    T3_Y(A1),D1
-                                move    T3_X(A1),D0                                
+                                move    T4_Y(A1),D1
+                                move    T4_X(A1),D0                                
                                 bsr     T8_CHECK_CONTACT
                                 cmp     #0,D0
                                 beq     T8_CHECK_NEXT                                   ; doesn't touch the enemy                                
 ; kill the enemy
-                                move    T3_X(A1),D2
-                                move    T3_Y(A1),D6
+                                move    T4_X(A1),D2
+                                move    T4_Y(A1),D6
                                 move.b  TK_VAR_ID(A1),D7
                                 ; add explosion
                                 lea	T7_START, A0
@@ -1038,9 +1038,9 @@ T8_CONT_X:			sub     D4,D1
 				bge     T8_CONT_Y
 				neg     D1
 ; At this point, D0=abs(XBomb-XEnem) and D1=abs(YBomb-YEnem)
-T8_CONT_Y:                      cmp     #(T8_RADIUS+((T3_PIXEL_SIZE*TK_ENEM_COLUMNS)/2)),D0
+T8_CONT_Y:                      cmp     #(T8_RADIUS+((T4_PIXEL_SIZE*TK_ENEM_COLUMNS)/2)),D0
                                 bgt     T8_NO_CONTACT
-                                cmp     #(T8_RADIUS+((T3_PIXEL_SIZE*TK_ENEM_ROWS)/2)),D1
+                                cmp     #(T8_RADIUS+((T4_PIXEL_SIZE*TK_ENEM_ROWS)/2)),D1
                                 bgt     T8_NO_CONTACT
                                 ;contact
                                 move    #$FFFF,D0
@@ -1068,6 +1068,7 @@ T8_INIT:
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
