@@ -673,7 +673,7 @@ T6_START:
 				beq	T6_INIT
 				
 				bsr     T6_SHOW_ENERGY  ; show available energy
-*				bsr     T6_CHECK_BONUS  ; check state of bonuses
+				bsr     T6_CHECK_BONUS  ; launch bonuses
 				
 				;draw a line
 				TK_SET_PEN      #$00FFFFFF
@@ -708,12 +708,6 @@ T6_ADD_ENEM:			lea         T3_START, A0
 			        move.b	    #0, D0
         			trap	    #0
         			dbra        D2,T6_ADD_ENEM
-        		        
-                                lea	T8_START, A0
-                                move.b	#0, D0
-                                trap	#0
-        			
-        			
 
 ; End by switching to next task
 				move.b	#3, D0
@@ -727,16 +721,17 @@ T6_CHECK_BONUS:
 *               2 => do the freeze
 *               3 => do the bomb
 * ----------------------------------------------------------
+                move.l  D1,-(A7) ; push                                
 ; Check for bonus keys	
 				move.b	#19, D0
-				move.l	#T6_LASER_KEY<<16+T6_FREEZE_KEY<<8+T6_BOMB_KEY,D1
+				move.l	#T6_LASER_KEY<<24+T6_FREEZE_KEY<<16+T6_BOMB_KEY<<8,D1
 				trap	#15
 				
 				move    TK_VAR_POWER(A1),D2     ; current energy
 				
 				IF.W #(TK_LASER_PW-1) <LE> D2 THEN
 				; enough energy for laser
-				        BTST.L #16,D1     ; test for laser
+				        BTST.L #24,D1     ; test for laser
                                         IF <NE> THEN      ; if laser pressed
                                                 ; save state 'pressed'
 				                move.b	#$FF,T6_LASER_KEY_STATE(A0)
@@ -751,7 +746,7 @@ T6_CHECK_BONUS:
                                         ENDI
 				        IF.W #(TK_FREEZE_PW-1) <LE> D2 THEN
 				        ; enough energy for freeze
-				                BTST.L #8,D1     ; test for freeze 
+				                BTST.L #16,D1     ; test for freeze 
                                                 IF <NE> THEN      ; if freeze pressed
                                                         ; save state 'pressed'
 				                        move.b	#$FF,T6_FREEZE_KEY_STATE(A0)
@@ -766,12 +761,25 @@ T6_CHECK_BONUS:
                                                 ENDI
 				                IF.W #(TK_BOMB_PW-1) <LE> D2 THEN
 				                ; enough energy for bomb
-
-				        
+                                                        BTST.L #8,D1     ; test for bomb
+                                                        IF <NE> THEN      ; if bomb pressed
+                                                                ; save state 'pressed'
+				                                move.b	#$FF,T6_BOMB_KEY_STATE(A0)
+                                                                bra T6_CB_END
+                                                        ELSE    ;check if released
+                                                                IF.B   #$FF <EQ> T6_BOMB_KEY_STATE(A0) THEN
+                                                                ; do the bomb thing
+                                                                move.b #0,T6_BOMB_KEY_STATE(A0)
+                                                                lea	T8_START, A0
+                                                                move.b	#0, D0
+                                                                trap	#0 
+                                                                bra T6_CB_END
+                                                                ENDI
+                                                        ENDI				        
 				                ENDI    
 				        ENDI 
 				ENDI
-T6_CB_END:				
+T6_CB_END:		        move.l  (A7)+,D1		
 				rts
 *-----------------------------------------------------------
 * ----------------------------------------------------------
@@ -1002,6 +1010,7 @@ T8_ANIM:
                                 cmp     #T8_RADIUS,T8_SMALL_RADIUS(A0)
                                 ble     T8_ANIM
 				
+				add     #TK_BOMB_PW,TK_VAR_POWER(A1)
 
 ; End by switching to next task
 T8_NEXT:      			move.b	#3, D0
@@ -1040,6 +1049,7 @@ T8_INIT:
 ; Remember next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
 				
+				sub     #TK_BOMB_PW,TK_VAR_POWER(A1)
 				move.b  #0,T8_STATE(A0)
                                 move.b  #0,T8_SMALL_RADIUS(A0)				
 
@@ -1047,6 +1057,7 @@ T8_INIT:
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
