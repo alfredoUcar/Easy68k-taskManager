@@ -1454,7 +1454,7 @@ T10_X           EQU     6
 T10_Y           EQU     8    
 T10_STATE       EQU     10
 ;time
-T10_DELAY       EQU     200 ; 2 seconds
+T10_DELAY       EQU     50 ; 0.5 seconds
 ;draw
 T10_COLOR       EQU     $00FF33CC
 ; ==========================================================
@@ -1473,21 +1473,67 @@ T10_START:
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T10_INIT
 				
-				;draw a line
-				TK_SET_PEN      #T10_COLOR
-				TK_DRAW_LINE    T10_X(A0),T10_Y(A0), T10_X(A0),#0 
-                                
                                 cmp     #0,T10_TIMEOUT(A0)
 				beq     T10_CHECK_STATE
 				sub     #1,T10_TIMEOUT(A0)       ; updates timeout
+				
+				cmp.b   #0,T10_STATE(A0)
+				beq     T10_LASER
 				bra     T10_NEXT
+				
 				;time expired
 T10_CHECK_STATE: 		cmp.b   #0,T10_STATE(A0)
 				bne     T10_RESTORE
-				;end phase 1
-T10_LASER:			move.b  #$FF,T10_STATE(A0)                              ; set state to 'restore energy'
-                                move    #(T10_DELAY/TK_CYCLE),T10_TIMEOUT(A0)           ;reset timeout
+				bra     T10_LASER_END
+				
+T10_LASER:                      ;draw a line
+				TK_SET_PEN      #T10_COLOR
+				TK_DRAW_LINE    T10_X(A0),T10_Y(A0), T10_X(A0),#0 
+				
+			        ; check if there's enemies to kill
+                                move.b  #6,D0                                           ; get first task info
+                                trap    #0                                
+                                
+T10_KILL_CHECK:                 move.b  D1,D5                                           ; copy index of current task for T10_CHECK_NEXT
+                                cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's enemy?
+                                bne     T10_CHECK_NEXT                                   ;no, next task
+                                ; it's enemy... check distance                                 
+                                move    T4_X(A1),D0                                
+                                bsr     T10_CHECK_CONTACT
+                                cmp     #0,D0
+                                beq     T10_CHECK_NEXT                                   ; doesn't touch the enemy                                
+; kill the enemy
+                                move    T4_X(A1),D2
+                                move    T4_Y(A1),D6
+                                move.b  TK_VAR_ID(A1),D7
+                                ; add explosion
+                                lea	T7_START, A0
+			        move.b	#0, D0
+			        trap	#0
+			        move.b  #5,D0
+			        trap    #0
+			        ; asign same position of killed enemy
+			        move    D2,T7_X(A0)
+			        move    D6,T7_Y(A0)
+			        ; remove enemy
+			        move.b  D7,D1
+			        move.b	#1, D0
+			        trap	#0
+                                
+T10_CHECK_NEXT:                 move.b  D5,D1                                           ; restore index
+                                move.b  #7,D0                                           ; get next task info
+                                trap    #0
+                                cmp.b   #$FF,D1
+                                bne     T10_KILL_CHECK                                   ; not last task
+                                
+                                move.b  #4,D0
+                                trap    #0                      ; restore info   
                                 bra     T10_NEXT
+                                
+				;end phase 1
+T10_LASER_END:			move.b  #$FF,T10_STATE(A0)                              ; set state to 'restore energy'
+                                move    #(T10_DELAY*8/TK_CYCLE),T10_TIMEOUT(A0)           ;reset timeout
+                                bra     T10_NEXT                                         
                                 ;phase 2
 T10_RESTORE:                     add     #TK_LASER_PW,TK_VAR_POWER(A1)                  ; restore energy                                
 				;remove itself
@@ -1501,6 +1547,27 @@ T10_RESTORE:                     add     #TK_LASER_PW,TK_VAR_POWER(A1)          
 T10_NEXT:        		move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+* ----------------------------------------------------------
+T10_CHECK_CONTACT:
+* indicates if the enemy with position D0=X,D1=Y touch the beam on D3=X(return $FFFF)
+* modifies: D0,D1
+*---------------------------------------------------------------------------
+
+				sub     D3,D0
+				bge     T10_CONT_X
+				neg     D0
+T10_CONT_X:			
+; At this point, D0=abs(XBeam-XEnem)
+                                move    #((T4_PIXEL_SIZE*TK_ENEM_COLUMNS)/2),D1         ; 1/2 of enemy width 
+                                ;add     T10_X(A0),D1
+                                cmp     D1,D0
+                                bgt     T10_NO_CONTACT
+           
+                                ;contact
+                                move    #$FFFF,D0
+                                rts
+T10_NO_CONTACT:                 clr     D0
+                                rts
 * ----------------------------------------------------------
 T10_INIT:
 * Task 10 initialization
@@ -1539,6 +1606,7 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
