@@ -30,6 +30,7 @@ TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1)         
 TK_LASER_PW                     EQU     (TK_MAX_POWER/3)                        ; energy needed to use bonus 1
 TK_FREEZE_PW                    EQU     (TK_MAX_POWER/3*2)                        ; energy needed to use bonus 2
 TK_BOMB_PW                      EQU     TK_MAX_POWER                            ; energy needed to use bonus 3
+TK_BEAM_PW                      EQU     TK_MAX_POWER-1
 ; Task types
 TK_TYPE_MENU			EQU	0
 TK_TYPE_SCREEN			EQU	1
@@ -538,7 +539,7 @@ T3_START:
                                 ;teclas de movimiento		
                                 MOVE.B #19,D0     
 
-                                MOVE.L #$25<<24+$27<<16+$20<<8,D1 ; check for keypress (left, right, space)
+                                MOVE.L #$25<<24+$27<<16,D1 ; check for keypress (left, right)
 
                                 TRAP   #15
                                 BTST.L #24,D1     ; test for left arrow
@@ -557,24 +558,7 @@ T3_START:
                                         sub     #T3_SPEED,T3_VAR_X(A0)
                                   ENDI
                                 ENDI
-                                BTST.L #8,D1     ; test for space
-                                IF <NE> THEN      ; if 'space'
-                                    ; get last state
-*				        move.b	T3_SPACE_KEY(A0),D2
-*	            			; save new state
-*		        		move.b	D1,T3_SPACE_KEY(A0)
-	    			
-	            			;check for DOWN state
-*		               		cmp.b 	#$FF,D2
-*				        beq	T3_SWITCH
-*				        cmp.b	#$FF,D1		
-*				        bne	T3_SWITCH
-                                        ;before FF, now 00 = shoot 1 beam
-                                        lea	T5_START, A0 ;new laser beam task
-			                move.b	#0, D0
-			                trap	#0
-                                ENDI
-                                
+                                                                
 ; switch
 T3_SWITCH:		move.b	#3,D0
 			trap	#0
@@ -923,10 +907,12 @@ T5_NO_CONTACT:                  clr     D0
 T6_LASER_KEY_STATE      EQU     4 
 T6_FREEZE_KEY_STATE     EQU     5 
 T6_BOMB_KEY_STATE       EQU     6
+T6_BEAM_KEY_STATE       EQU     8
 ;bonus keys
 T6_LASER_KEY            EQU     'Z' 
 T6_FREEZE_KEY           EQU     'X' 
-T6_BOMB_KEY             EQU     'C'          
+T6_BOMB_KEY             EQU     'C' 
+T6_BEAM_KEY             EQU     $20         
 ; energy bar
 T6_ENERGY_BOX_WIDTH     EQU     (TK_INFO_SCREEN_WIDTH*90/100)   ;90% of info screen
 T6_ENERGY_BOX_HEIGHT    EQU     25
@@ -1006,7 +992,7 @@ T6_CHECK_BONUS:
                 move.l  D1,-(A7) ; push                                
 ; Check for bonus keys	
 				move.b	#19, D0
-				move.l	#T6_LASER_KEY<<24+T6_FREEZE_KEY<<16+T6_BOMB_KEY<<8,D1
+				move.l	#T6_LASER_KEY<<24+T6_FREEZE_KEY<<16+T6_BOMB_KEY<<8+$20,D1
 				trap	#15
 				
 				move    TK_VAR_POWER(A1),D2     ; current energy
@@ -1061,7 +1047,29 @@ T6_CHECK_BONUS:
                                                                 trap	#0
                                                                 bra T6_CB_END
                                                                 ENDI
+                                                        ENDI
+                                                        IF.W #(TK_BEAM_PW-1) <LE> D2 THEN
+				                                ; enough energy for bomb
+                                                                BTST.L #8,D1     ; test for bomb
+                                                                IF <NE> THEN      ; if bomb pressed
+                                                                        ; save state 'pressed'
+				                                        move.b	#$FF,T6_BEAM_KEY_STATE(A0)
+                                                                        bra T6_CB_END
+                                                                ELSE    ;check if released
+                                                                        IF.B   #$FF <EQ> T6_BEAM_KEY_STATE(A0) THEN
+                                                                        ; do the bomb thing
+                                                                        move.b #0,T6_BEAM_KEY_STATE(A0)         
+                                                                        lea	T8_START, A0
+                                                                move.b	#0, D0
+                                                                trap	#0
+*                                                                        lea	T5_START, A0
+*                                                                        move.b	#0, D0
+*                                                                        trap	#0
+                                                                        bra T6_CB_END
+                                                                        ENDI
                                                         ENDI				        
+				                ENDI    
+				        
 				                ENDI    
 				        ENDI 
 				ENDI
@@ -1521,6 +1529,7 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
