@@ -23,7 +23,7 @@
 TK_SCREEN_WIDTH			EQU	640
 TK_SCREEN_HEIGHT		EQU	480
 TK_INFO_SCREEN_WIDTH            EQU     140
-TK_CYCLE                        EQU     20
+TK_CYCLE                        EQU     15
 ; game control
 TK_MAX_POWER                    EQU     12                                      ; max energy available for the player(for shots and bonus)
 TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1)         ; max number of (task)enemies to launch at same time 
@@ -941,6 +941,7 @@ T5_NO_CONTACT:                  clr     D0
 T6_LASER_KEY_STATE      EQU     4 
 T6_FREEZE_KEY_STATE     EQU     5 
 T6_BOMB_KEY_STATE       EQU     6
+T6_GAME_POINTS          EQU     8 ;LONG
 ;bonus keys
 T6_LASER_KEY            EQU     'Z' 
 T6_FREEZE_KEY           EQU     'X' 
@@ -956,6 +957,14 @@ T6_COLOR_1              EQU     $0000FF00       ; first slot
 T6_COLOR_2              EQU     $0000FFFF       ; second slot
 T6_COLOR_3              EQU     $000000FF       ; third slot
 T6_COLOR_4              EQU     $00000000       ; not available energy
+;font
+T6_FONT 		EQU	$07	; terminal
+T6_FONT_COLOR           EQU     $00FFFFFF ;white
+T6_FONT_SIZE		EQU	$09 	
+T6_FONT_STYLE		EQU	$0001	; bold
+T6_FONT_PROP		EQU	(T1_FONT_2*$1000000)+(T1_FONT_2_SIZE*$10000)+T1_FONT_2_STYLE		; $040B0001
+;constants
+T6_STR_ENEM             dc.b     'E: ',0
 ; ==========================================================
 ; Task 6 functions
 ; ==========================================================
@@ -972,6 +981,7 @@ T6_START:
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T6_INIT
 				
+				bsr     T6_ENEM_COUNTER ; show a counter of remaining enemies
 				bsr     T6_SHOW_ENERGY  ; show available energy
 				bsr     T6_CHECK_BONUS  ; launch bonuses
 				
@@ -1012,6 +1022,35 @@ T6_ADD_ENEM:			lea         T4_START, A0
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0
+* ----------------------------------------------------------
+T6_ENEM_COUNTER:
+* outputs number of remaining enemies to kill
+* pre: A1 pointer to shared memory
+* ----------------------------------------------------------
+                movem.l D0-D1/A1,-(A7) ;push
+                
+                ;set font properties
+		move.b	#21,D0
+		move.l	#T6_FONT_COLOR,D1
+		move.l	#T6_FONT_PROP,D2				
+		trap	#15
+                ;set cursor position
+                clr.w	D1
+                move.b  #2,D1
+                rol     #8,D1
+                move.b  #10,D1
+		move.b	#11, D0
+		trap	#15
+		;print counter
+                clr.l   D1
+                move.b  #1,D2
+                move    TK_VAR_ENEM(A1),D1
+                lea     T6_STR_ENEM,A1
+                move.b  #17,D0
+                trap    #15
+                
+                movem.l (A7)+,D0-D1/A1
+                rts
 * ----------------------------------------------------------
 T6_CHECK_BONUS:
 * check bonuses state
@@ -1606,6 +1645,7 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
