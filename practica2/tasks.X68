@@ -538,7 +538,7 @@ T3_START:
                                 ;teclas de movimiento		
                                 MOVE.B #19,D0     
 
-                                MOVE.L #$25<<24+$27<<16,D1 ; check for keypress (left, right)
+                                MOVE.L #$25<<24+$27<<16+$20<<8,D1 ; check for keypress (left, right, space)
 
                                 TRAP   #15
                                 BTST.L #24,D1     ; test for left arrow
@@ -557,14 +557,7 @@ T3_START:
                                         sub     #T3_SPEED,T3_VAR_X(A0)
                                   ENDI
                                 ENDI
-                                
-                                ;teclas de disparo
-                                MOVE.B #19,D0     
-
-                                MOVE.L #$20<<24+$27<<16+$20<<8+'F',D1 ; check for keypress (space,z,x,c)
-
-                                TRAP   #15
-                                BTST.L #24,D1     ; test for space
+                                BTST.L #8,D1     ; test for space
                                 IF <NE> THEN      ; if 'space'
                                     ; get last state
 *				        move.b	T3_SPACE_KEY(A0),D2
@@ -581,18 +574,7 @@ T3_START:
 			                move.b	#0, D0
 			                trap	#0
                                 ENDI
-                                BTST.L #16,D1     ; test for z
-                                IF <NE> THEN      ; if 'z'
-*                                  disparo 'z'
-                                ENDI
-                                BTST.L #8,D1     ; test for x
-                                IF <NE> THEN      ; if 'x'
-*                                  disparo 'x'
-                                ENDI
-                                BTST.L #8,D1     ; test for c
-                                IF <NE> THEN      ; if 'c'
-*                                  disparo 'c'
-                                ENDI
+                                
 ; switch
 T3_SWITCH:		move.b	#3,D0
 			trap	#0
@@ -1539,6 +1521,7 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
