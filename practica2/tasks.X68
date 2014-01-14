@@ -30,7 +30,7 @@ TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1)         
 TK_LASER_PW                     EQU     (TK_MAX_POWER/3)                        ; energy needed to use bonus 1
 TK_FREEZE_PW                    EQU     (TK_MAX_POWER/3*2)                        ; energy needed to use bonus 2
 TK_BOMB_PW                      EQU     TK_MAX_POWER                            ; energy needed to use bonus 3
-TK_BEAM_PW                      EQU     TK_MAX_POWER-1
+TK_BEAM_PW                      EQU     TK_MAX_POWER-11
 ; Task types
 TK_TYPE_MENU			EQU	0
 TK_TYPE_SCREEN			EQU	1
@@ -856,7 +856,7 @@ T5_GET_DATA:            ;recuperamos la info de la task actual
                         ;Y de la nave
                         move	#((TK_SCREEN_HEIGHT-T3_PIXEL_SIZE-3)-(TK_NAVE_ROWS*T3_PIXEL_SIZE)/2),T5_VAR_Y(A0)
                         
-                        sub     #TK_LASER_PW,TK_VAR_POWER(A1)          ; consume energy
+                        sub     #TK_BEAM_PW,TK_VAR_POWER(A1)          ; consume energy
 *                        clr.b   T5_STATE(A0)                            ; set state to 'laser' 
 ; End by switching to next task
 				move.b	#3, D0
@@ -1525,6 +1525,8 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
+
 
 
 
