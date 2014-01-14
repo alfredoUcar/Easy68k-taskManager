@@ -23,7 +23,7 @@
 TK_SCREEN_WIDTH			EQU	640
 TK_SCREEN_HEIGHT		EQU	480
 TK_INFO_SCREEN_WIDTH            EQU     140
-TK_CYCLE                        EQU     15
+TK_CYCLE                        EQU     1
 ; game control
 TK_MAX_POWER                    EQU     12                                      ; max energy available for the player(for shots and bonus)
 TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1)         ; max number of (task)enemies to launch at same time 
@@ -1645,6 +1645,7 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
