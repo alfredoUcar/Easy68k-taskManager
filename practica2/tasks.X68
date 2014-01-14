@@ -1050,7 +1050,7 @@ T6_CHECK_BONUS:
                                                         ENDI
                                                         IF.W #(TK_BEAM_PW-1) <LE> D2 THEN
 				                                ; enough energy for bomb
-                                                                BTST.L #8,D1     ; test for bomb
+                                                                BTST.L #0,D1     ; test for bomb
                                                                 IF <NE> THEN      ; if bomb pressed
                                                                         ; save state 'pressed'
 				                                        move.b	#$FF,T6_BEAM_KEY_STATE(A0)
@@ -1059,12 +1059,9 @@ T6_CHECK_BONUS:
                                                                         IF.B   #$FF <EQ> T6_BEAM_KEY_STATE(A0) THEN
                                                                         ; do the bomb thing
                                                                         move.b #0,T6_BEAM_KEY_STATE(A0)         
-                                                                        lea	T8_START, A0
-                                                                move.b	#0, D0
-                                                                trap	#0
-*                                                                        lea	T5_START, A0
-*                                                                        move.b	#0, D0
-*                                                                        trap	#0
+                                                                        lea	T5_START, A0
+                                                                        move.b	#0, D0
+                                                                        trap	#0
                                                                         bra T6_CB_END
                                                                         ENDI
                                                         ENDI				        
@@ -1529,6 +1526,7 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
