@@ -829,23 +829,18 @@ T5_SWITCH:			move.b	#3,D0
 
 * ----------------------------------------------------------
 T5_INIT:
-* Task 5 initialization
-* 
-* Mueve el disparo por el eje Y de la pantalla de juego
-* ----------------------------------------------------------
 ; Store task ID. When switching to a task, the ID is in D1, but
 ; storing in shared memory makes things easier.
-			move.b	D1, TK_VAR_ID(A0)
-; store the task type
-			move.b #TK_TYPE_SCREEN, TK_VAR_TYPE(A0)
-; la siguiente vez que volvamos a esta task, no sera la primera
-			move.b	#$FF, TK_VAR_FIRST_TIME(A0)
-; set initial position of the ship
-
+				move.b	D1, TK_VAR_ID(A0)
+; Store the task type
+				move.b	#TK_TYPE_LASER, TK_VAR_TYPE(A0)				
+; Remember next time will not be the first one
+				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
+                                
                         move.b  #6,D0                                           ; get first task info
                         trap    #0
                                 
-T5_CHECK:               cmp.b   #TK_TYPE_PLAYER, TK_VAR_TYPE(A1)                  ;it's ship?
+T5_CHECK:              cmp.b   #TK_TYPE_PLAYER, TK_VAR_TYPE(A1)                  ;it's ship?
                         beq     T5_GET_DATA
                         move.b  #7,D0                                           ; get next task info
                         trap    #0
@@ -858,12 +853,16 @@ T5_GET_DATA:            ;recuperamos la info de la task actual
                         trap    #0
                         ; coger la X de la nave
                         move    T3_VAR_X(A2),T5_VAR_X(A0)
-                         ;Y DE LA NAVE
-                        move	#((TK_SCREEN_HEIGHT-T3_PIXEL_SIZE-3)-(TK_NAVE_ROWS*T3_PIXEL_SIZE)/2),T5_VAR_Y(A0)  
+                        ;Y de la nave
+                        move	#((TK_SCREEN_HEIGHT-T3_PIXEL_SIZE-3)-(TK_NAVE_ROWS*T3_PIXEL_SIZE)/2),T5_VAR_Y(A0)
+                        
+                        sub     #TK_LASER_PW,TK_VAR_POWER(A1)          ; consume energy
+*                        clr.b   T5_STATE(A0)                            ; set state to 'laser' 
+; End by switching to next task
+				move.b	#3, D0
+				trap	#0		
+* ----------------------------------------------------------
 
-; switch
-			move.b	#3,D0
-			trap	#0
 			
 * ----------------------------------------------------------
 T5_CHECK_CONTACT:
@@ -1526,6 +1525,7 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
