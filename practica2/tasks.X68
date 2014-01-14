@@ -761,18 +761,20 @@ T5_START:
 
                                 TK_DRAW_SQUARE D1, D2, #T5_PIXEL_SIZE
 ;uptdate beam position
-                                sub     #T5_SPEED,T5_VAR_Y(A0)
+                                sub   #T5_SPEED,T5_VAR_Y(A0)
 
 ;look if an enemy is around
                                 move.b  #6,D0                                           ; get first task info
                                 trap    #0
                                 
-T5_CHECK_ALIEN:                 cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's alien?
+T5_CHECK_ALIEN:                 move.b  D1,D5   ;save D1
+                                cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's alien?
                                 beq    T5_GET_ALIEN
                                 move.b  #7,D0                                           ; get next task info
                                 trap    #0
                                 cmp.b   #$FF,D1
                                 bne     T5_CHECK_ALIEN
+                                bra T5_CHECK_LIMITS              
 
 ;smash the aliens!
                                 ;get coordenates
@@ -1531,6 +1533,7 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
