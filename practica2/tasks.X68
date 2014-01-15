@@ -23,7 +23,7 @@
 TK_SCREEN_WIDTH			EQU	640
 TK_SCREEN_HEIGHT		EQU	480
 TK_INFO_SCREEN_WIDTH            EQU     140
-TK_CYCLE                        EQU     1
+TK_CYCLE                        EQU     2
 ; game control
 TK_MAX_POWER                    EQU     12                                      ; max energy available for the player(for shots and bonus)
 TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1)         ; max number of (task)enemies to launch at same time 
@@ -107,7 +107,7 @@ T1_ENEM_COLOR		EQU	8
 T1_PIXEL_SIZE		EQU	15
 ; Game configuration for each level
 ;LEVEL 1
-T1_EASY_SPEED                   EQU     3
+T1_EASY_SPEED                   EQU     1
 T1_EASY_ENEM                    EQU     25
 T1_EASY_POWER                   EQU     TK_MAX_POWER
 ;LEVEL 2
@@ -115,7 +115,7 @@ T1_MEDIUM_SPEED                 EQU     2
 T1_MEDIUM_ENEM                  EQU     50
 T1_MEDIUM_POWER                 EQU     TK_MAX_POWER  
 ;LEVEL 3
-T1_HARD_SPEED                   EQU     1
+T1_HARD_SPEED                   EQU     3
 T1_HARD_ENEM                    EQU     100
 T1_HARD_POWER                   EQU     TK_MAX_POWER
 ;colors
@@ -1627,6 +1627,14 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
+
+
+
+
+
+
+
 
 
 
