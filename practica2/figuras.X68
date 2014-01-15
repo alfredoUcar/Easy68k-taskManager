@@ -15,12 +15,6 @@ TK_NAVE_ROWS	EQU	3
 TK_NAVE_COLUMNS	EQU	9
 TK_NAVE_COLOR	EQU	$00FFFFFF
 *-----------------------------------------------
-*		DISPARO
-*-----------------------------------------------
-TK_DISP_ROWS	EQU	3
-TK_DISP_COLUMNS	EQU	9
-TK_DISP_COLOR	EQU	$00FF00FF
-*-----------------------------------------------
 *		EXPLOSION
 *-----------------------------------------------
 TK_EXP_ROWS	EQU	7
@@ -254,6 +248,7 @@ TK_EXP_LIST:	dc.b 0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,1,
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~8~
+
 
 
 

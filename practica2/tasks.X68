@@ -733,8 +733,10 @@ T4_CHECK_NEXT:                  move.b  #7,D0                                   
 T5_VAR_Y	EQU	4
 T5_VAR_X        EQU     6
 ;draw:
-T5_PIXEL_SIZE		EQU	8
-T5_SPEED                EQU     2
+T5_PIXEL_SIZE	EQU	8
+T5_SPEED        EQU     2
+T5_COLOR_1      EQU     $0000AAFF
+T5_COLOR_2      EQU     $0000AAFF
 ; ==========================================================
 ; Task 5 functions
 ; ==========================================================
@@ -751,8 +753,8 @@ T5_START:
 ; if not first time
 ; draw beam
 ;set colors and draw
-                                TK_SET_PEN #$00FFFFFF	; fija el color del borde a blanco
-                                TK_SET_FILL #$0000AAFF
+                                TK_SET_PEN  #T5_COLOR_1	
+                                TK_SET_FILL #T5_COLOR_1
                                 
                                 move    T5_VAR_X(A0),D1
                                 sub     #T5_PIXEL_SIZE,D1
@@ -842,7 +844,7 @@ T5_INIT:
 ; Store the task type
 				move.b	#TK_TYPE_LASER, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
-				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
+				move.b	#$FF, TK_VAR_FIRST_TIME(A0)
                                 
                         move.b  #6,D0                                           ; get first task info
                         trap    #0
@@ -887,7 +889,6 @@ T5_CONT_X:			sub     D4,D1
                                 move    #((T5_PIXEL_SIZE*TK_NAVE_COLUMNS)/2),D2
                                 add     #((T4_PIXEL_SIZE*TK_ENEM_COLUMNS)/2),D2
 T5_CONT_Y:                      cmp     D2,D0
-                                ;falta comprobar la Y
                                 bgt     T5_NO_CONTACT
                                 move    #((T5_PIXEL_SIZE*TK_NAVE_ROWS)/2),D2
                                 add     #((T4_PIXEL_SIZE*TK_ENEM_ROWS)/2),D2
@@ -900,9 +901,6 @@ T5_NO_CONTACT:                  clr     D0
                                 rts
 
 
-
-			
-				
 * ----------------------------------------------------------
 ************************************************************
 *                            TASK 6                        *
