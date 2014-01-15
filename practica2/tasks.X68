@@ -41,7 +41,8 @@ TK_TYPE_CONTROL                 EQU     5
 TK_TYPE_EXP                     EQU     6
 TK_TYPE_LASER                   EQU     7
 TK_TYPE_FREEZE                  EQU     8   
-TK_TYPE_BOMB                    EQU     9               
+TK_TYPE_BOMB                    EQU     9
+TK_TYPE_MENU2                   EQU     10                    
 ; Variable offsets used for all tasks
 TK_VAR_FIRST_TIME		EQU	0
 TK_VAR_ID			EQU	1
@@ -1200,6 +1201,7 @@ T7_UPDATE:
 T7_DEAD:                        move.b  TK_VAR_ID(A0),D1                ;remove itself
                                 move.b  #1,D0
                                 trap    #0
+
 				
 ; End by switching to next task
 T7_NEXT:			move.b	#3, D0
@@ -1628,6 +1630,85 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+************************************************************
+*                            TASK 11                       *
+************************************************************
+; ==========================================================
+; Task 11 constants
+; ==========================================================
+T11_FONT 		EQU	$07	; terminal
+T11_FONT_COLOR          EQU     $00FFFFFF ;white
+T11_FONT_SIZE		EQU	$09 	
+T11_FONT_STYLE		EQU	$0001	; bold
+T11_FONT_PROP		EQU	(T1_FONT_2*$1000000)+(T1_FONT_2_SIZE*$10000)+T1_FONT_2_STYLE		; $040B0001
+T11_COLOR		EQU	$00FFFFFF   ;constants
+T11_STRING              dc.b    'Congratulations!!! You saved the day by killing',0
+T11_STRING_2            dc.b    ' poor innocent aliens...',0
+T11_STRING_3            dc.b    ' not cool, men', 0
+
+; ==========================================================
+; Task 11 functions
+; ==========================================================
+* ----------------------------------------------------------
+T11_START:
+* Task 11 entry point.
+* launches the final game sceen
+* ----------------------------------------------------------
+		cmp.b	#0, TK_VAR_FIRST_TIME(A0)
+		beq	T11_INIT
+;set font properties
+		move.b	#21,D0
+		move.l	#T11_FONT_COLOR,D1
+		move.l	#T11_FONT_PROP,D2				
+		trap	#15
+                ;set cursor position
+                clr.w	D1
+                move.b  #2,D1
+                rol     #8,D1
+                move.b  #10,D1
+		move.b	#11, D0
+		trap	#15
+		;print strings
+		lea     T11_STRING,A1
+		move.b  #13,D0
+		trap    #15
+		;print number of aliens killed
+		clr     D1
+		move.b  #1,D2
+		move  TK_VAR_ENEM(A1),D1
+		move.b  #4,D2
+		move.b  #20,D0
+		trap    #15
+		;print the last strings
+		lea    T11_STRING_2,A1
+		move.b  #13,D0
+		trap    #15
+                lea     T11_STRING_3,A1
+                move.b  #14,D0
+                trap    #15
+                
+                ;draw explosion, to make more dramatic
+* ----------------------------------------------------------
+T11_INIT:
+* Task 11 initialization
+* ----------------------------------------------------------
+; Store task ID. When switching to a task, the ID is in D1, but
+; storing in shared memory makes things easier.
+				move.b	D1, TK_VAR_ID(A0)
+; Store the task type
+				move.b	#TK_TYPE_MENU2, TK_VAR_TYPE(A0)				
+*; Remember next time will not be the first one
+				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
+				
+				TK_SET_FILL	#T11_COLOR
+*                                
+*; End by switching to next task
+				move.b	#3, D0
+				trap	#0		
+
+
+
+
 
 
 
