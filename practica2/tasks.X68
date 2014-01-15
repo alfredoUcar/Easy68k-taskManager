@@ -778,7 +778,7 @@ T5_CHECK_ALIEN:                 move.b  D1,D5   ;save D1
 
 ;smash the aliens!
                                 ;get coordenates
-T5_GET_ALIEN:                   move.l  A1,A2   ;save actual state
+T5_GET_ALIEN:                   move.l  A1,A2   ;saving pointer to the alien task memory
                                 move.b  #4,D0
                                 trap    #0
                                 ;brace ourselves, the compares are coming
@@ -883,10 +883,11 @@ T5_CHECK_CONTACT:
 T5_CONT_X:			sub     D4,D1
 				bge     T5_CONT_Y
 				neg     D1
-; At this point, D0=abs(XBomb-XEnem) and D1=abs(YBomb-YEnem)
+; At this point, D0=abs(XBeam-XEnem) and D1=abs(YBeam-YEnem)
                                 move    #((T5_PIXEL_SIZE*TK_NAVE_COLUMNS)/2),D2
                                 add     #((T4_PIXEL_SIZE*TK_ENEM_COLUMNS)/2),D2
 T5_CONT_Y:                      cmp     D2,D0
+                                ;falta comprobar la Y
                                 bgt     T5_NO_CONTACT
                                 move    #((T5_PIXEL_SIZE*TK_NAVE_ROWS)/2),D2
                                 add     #((T4_PIXEL_SIZE*TK_ENEM_ROWS)/2),D2
