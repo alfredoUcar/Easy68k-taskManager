@@ -445,9 +445,9 @@ TM_FINISH_CICLE:
 	; esperamos el tiempo que falta
 	sub.l	D0, D1		; tiempo que falta para completar el ciclo
 	bsr	TM_DELAY
-	bsr	TM_GET_TIME
-	move.l	D1, (TM_PREVIOUS_TIME)		; guardamos el tiempo actual(inicio de ciclo)	
-.END:	movem.l (A7)+,D0-D1	; pop
+.END:	bsr	TM_GET_TIME         ; guardamos el tiempo actual(inicio de ciclo)	
+	move.l	D1, (TM_PREVIOUS_TIME)		
+	movem.l (A7)+,D0-D1	; pop
 	rts
 *-----------------------------------------------------------
 TM_NEXT_TASK:
@@ -499,6 +499,7 @@ TM_CURRENT_TASK:	ds.l	1				; Pointer to the current TCB
 TM_MIN_CYCLE_TIME:	ds.l	1				; Minimum cycle time (units: 1/100 of second)
 TM_PREVIOUS_TIME:	ds.l	1				; Last time stamp used to measure cycle time
 ************************************************************
+
 
 
 
