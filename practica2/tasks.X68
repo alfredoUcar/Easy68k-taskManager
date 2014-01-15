@@ -735,8 +735,7 @@ T5_VAR_X        EQU     6
 ;draw:
 T5_PIXEL_SIZE	EQU	8
 T5_SPEED        EQU     2
-T5_COLOR_1      EQU     $0000AAFF
-T5_COLOR_2      EQU     $0000AAFF
+T5_COLOR      EQU     $0000AAFF
 ; ==========================================================
 ; Task 5 functions
 ; ==========================================================
@@ -753,8 +752,8 @@ T5_START:
 ; if not first time
 ; draw beam
 ;set colors and draw
-                                TK_SET_PEN  #T5_COLOR_1	
-                                TK_SET_FILL #T5_COLOR_1
+                                TK_SET_PEN  #T5_COLOR	
+                                TK_SET_FILL #T5_COLOR
                                 
                                 move    T5_VAR_X(A0),D1
                                 sub     #T5_PIXEL_SIZE,D1
@@ -784,6 +783,7 @@ T5_GET_ALIEN:                   move.l  A1,A2   ;saving pointer to the alien tas
                                 move.b  #4,D0
                                 trap    #0
                                 ;brace ourselves, the compares are coming
+                                clr D0
                                 move.w  T4_X(A2),D0
                                 move.w  T4_Y(A2),D1
                                 ;now the X,Y of the beam
