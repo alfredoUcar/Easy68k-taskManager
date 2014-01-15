@@ -917,8 +917,8 @@ T6_BOMB_KEY_STATE       EQU     6
 T6_BEAM_KEY_STATE       EQU     8
 T6_GAME_POINTS          EQU     8 ;LONG
 ;bonus keys
-T6_LASER_KEY            EQU     'Z' 
-T6_FREEZE_KEY           EQU     'X' 
+T6_LASER_KEY            EQU     'X' 
+T6_FREEZE_KEY           EQU     'Z' 
 T6_BOMB_KEY             EQU     'C' 
 T6_BEAM_KEY             EQU     $20         
 ; energy bar
