@@ -730,12 +730,13 @@ T4_CHECK_NEXT:                  move.b  #7,D0                                   
 ; ==========================================================
 ; Task 5 constants
 ; ==========================================================
-T5_VAR_Y	EQU	4
-T5_VAR_X        EQU     6
+T5_VAR_X	EQU	4
+T5_VAR_Y        EQU     6
 ;draw:
 T5_PIXEL_SIZE	EQU	8
 T5_SPEED        EQU     2
-T5_COLOR      EQU     $0000AAFF
+T5_COLOR        EQU     $0000AAFF
+T5_AREA         EQU     10
 ; ==========================================================
 ; Task 5 functions
 ; ==========================================================
@@ -765,61 +766,55 @@ T5_START:
                                 sub   #T5_SPEED,T5_VAR_Y(A0)
 
 ;look if an enemy is around
-                                move.b  #6,D0                                           ; get first task info
+
+                                move    T5_VAR_X(A0),D3
+                                move    T5_VAR_Y(A0),D4
+                                
+;check the enemies task
+                                move.b  #6,D0
                                 trap    #0
                                 
-T5_CHECK_ALIEN:                 move.b  D1,D5   ;save D1
-                                cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)                  ;it's alien?
-                                beq    T5_GET_ALIEN
-                                move.b  #7,D0                                           ; get next task info
+T5_CHECK_ALIEN:                 move.b  D1,D5           ;copy index to current task
+                                cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)
+                                bne     T5_CHECK_NEXT
+                                ;at this point, we know that it's an enemy
+                                move    T4_Y(A1),D0
+                                move    T4_X(A1),D0
+                                bsr     T5_CHECK_CONTACT
+                                cmp     #0,D0
+                                beq     T5_CHECK_NEXT
+                                
+                                ;we're now preparing to kill
+                                move    T4_X(A1),D2
+                                move    T4_Y(A1),D6
+                                move.b  TK_VAR_ID(A1),D7
+                                ;add explosion
+                                lea     T7_START, A0
+                                move.b  #0,D0
+                                trap    #0
+                                
+                                move.b  #5,D0
+                                trap    #0
+                                ;asign same position
+                                move D2,T7_X(A0)
+                                move D2,T7_Y(A0)
+                                ;remove the enemy task
+                                move.b  D7,D1
+			        move.b	#1, D0
+			        trap	#0 
+
+T5_CHECK_NEXT:                  move.b  D5,D1
+                                move.b  #7,D0
                                 trap    #0
                                 cmp.b   #$FF,D1
                                 bne     T5_CHECK_ALIEN
-                                bra T5_CHECK_LIMITS              
-
-;smash the aliens!
-                                ;get coordenates
-T5_GET_ALIEN:                   move.l  A1,A2   ;saving pointer to the alien task memory
-                                move.b  #4,D0
-                                trap    #0
-                                ;brace ourselves, the compares are coming
-                                clr D0
-                                move.w  T4_X(A2),D0
-                                move.w  T4_Y(A2),D1
-                                ;now the X,Y of the beam
-                                move.w  T5_VAR_X(A0),D3
-                                move.w  T5_VAR_Y(A0),D4
                                 
-                                bsr     T5_CHECK_CONTACT
-                                
-                                cmp     #$FFFF,D0
-                                bne     T5_CHECK_LIMITS
-                                
-                                move    T4_X(A2),D2
-                                move    T4_Y(A2),D6
-                                move.b  TK_VAR_ID(A2),D7
-                                ; add explosion
-                                lea	T7_START, A0
-			        move.b	#0, D0
-			        trap	#0
-			        move.b  #5,D0
-			        trap    #0
-			        ; asign same position of killed enemy
-			        move    D2,T7_X(A0)
-			        move    D6,T7_Y(A0)
-			        ; remove enemy
-			        move.b  D7,D1
-			        move.b	#1, D0
-			        trap	#0  
-			        
-			        bra T5_END			        
-			                                   
-T5_CHECK_LIMITS:                ;check if beam has arrived to the end of the screen
+                                ;check if beam has arrived to the end of the screen
                                 move.b  4,D0
                                 trap    #0
                                 cmp     #0,T5_VAR_Y(A0)   
                                 bgt     T5_SWITCH       ; if shot hasn't reached the top then scape from death claws and switch to next task to live another day (mygod!!)
-T5_END:                         ;kill task if it has
+                                 ;kill task if it has
                                 ;get current task info
 			        move.b  #4,D0
                                 trap    #0
@@ -886,13 +881,9 @@ T5_CONT_X:			sub     D4,D1
 				bge     T5_CONT_Y
 				neg     D1
 ; At this point, D0=abs(XBeam-XEnem) and D1=abs(YBeam-YEnem)
-                                move    #((T5_PIXEL_SIZE*TK_NAVE_COLUMNS)/2),D2
-                                add     #((T4_PIXEL_SIZE*TK_ENEM_COLUMNS)/2),D2
-T5_CONT_Y:                      cmp     D2,D0
+T5_CONT_Y:                      cmp     #(T5_AREA+((T4_PIXEL_SIZE*TK_ENEM_COLUMNS)/2)),D0
                                 bgt     T5_NO_CONTACT
-                                move    #((T5_PIXEL_SIZE*TK_NAVE_ROWS)/2),D2
-                                add     #((T4_PIXEL_SIZE*TK_ENEM_ROWS)/2),D2
-                                cmp     D2,D1
+                                cmp     #(T5_AREA+((T4_PIXEL_SIZE*TK_ENEM_ROWS)/2)),D1
                                 bgt     T5_NO_CONTACT
                                 ;contact
                                 move    #$FFFF,D0
