@@ -736,7 +736,6 @@ T5_VAR_Y        EQU     6
 T5_PIXEL_SIZE	EQU	8
 T5_SPEED        EQU     2
 T5_COLOR        EQU     $0000AAFF
-T5_AREA         EQU     10
 ; ==========================================================
 ; Task 5 functions
 ; ==========================================================
@@ -881,9 +880,9 @@ T5_CONT_X:			sub     D4,D1
 				bge     T5_CONT_Y
 				neg     D1
 ; At this point, D0=abs(XBeam-XEnem) and D1=abs(YBeam-YEnem)
-T5_CONT_Y:                      cmp     #(T5_AREA+((T4_PIXEL_SIZE*TK_ENEM_COLUMNS)/2)),D0
+T5_CONT_Y:                      cmp     #((T4_PIXEL_SIZE*TK_ENEM_COLUMNS)/2),D0
                                 bgt     T5_NO_CONTACT
-                                cmp     #(T5_AREA+((T4_PIXEL_SIZE*TK_ENEM_ROWS)/2)),D1
+                                cmp     #((T4_PIXEL_SIZE*TK_ENEM_ROWS)/2),D1
                                 bgt     T5_NO_CONTACT
                                 ;contact
                                 move    #$FFFF,D0
@@ -1629,6 +1628,7 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
