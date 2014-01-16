@@ -984,25 +984,25 @@ T6_START:
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T6_INIT
 				
-*				bsr     T6_CHECK_ENEMS  ; check if any enemy has reached the goal or if it has to add more enemies
-*				IF.B #$FF <EQ> D0 THEN
-*				;GAME OVER
-*				        clr     TK_VAR_SPEED(A1) ; pone la velocidad a 0 para tener feedback
-*				ELSE
-*				        IF.W #0 <LE> D1 THEN    ; can add D1 enems
-*				        ;lets calculate a random between 1..D1 to add a random number of enemies
-*				                move    #0,D0
-*				                bsr     T4_RANDOM
-*				                sub     #1,D0               ; loop 0..N-1
-*				                move    D0,D2
-*				                ;add D2 enemies
-*T6_NEW_ENEM:			                lea     T4_START, A0
-*			                        move.b	#0, D0
-*        			                trap	#0
-*        			                dbra    D2,T6_NEW_ENEM
-* 
-*                                        ENDI 
-*				ENDI
+				bsr     T6_CHECK_ENEMS  ; check if any enemy has reached the goal or if it has to add more enemies
+				IF.B #$FF <EQ> D0 THEN
+				;GAME OVER
+				        clr     TK_VAR_SPEED(A1) ; pone la velocidad a 0 para tener feedback
+				ELSE
+				        IF.W #0 <LT> D1 THEN    ; can add D1 enems (D1>0)
+				        ;lets calculate a random between 1..D1 to add a random number of enemies
+				                move    #1,D0
+				                bsr     T4_RANDOM
+				                sub     #1,D0               ; loop 0..N-1
+				                move    D0,D2
+				                ;add D2 enemies
+T6_NEW_ENEM:			                lea     T4_START, A0
+			                        move.b	#0, D0
+        			                trap	#0
+        			                dbra    D2,T6_NEW_ENEM 
+                                        ENDI 
+				ENDI
+				
 				bsr     T6_ENEM_COUNTER ; show a counter of remaining enemies
 				bsr     T6_SHOW_ENERGY  ; show available energy
 				bsr     T6_CHECK_BONUS  ; launch bonuses
@@ -1070,9 +1070,9 @@ T6_CHECK:       cmp.b   #TK_TYPE_ENEM,TK_VAR_TYPE(A1)
                 add     #1,D3                   ;count enemy
                 ; all current enemies must be lower enough(higher Y) 
                 ; so that the top is clear to add a new row of enemies
-                move    #((TK_ENEM_ROWS*T4_PIXEL_SIZE)*3/2+5),D4        ; Y limit
+                move    #((TK_ENEM_ROWS*T4_PIXEL_SIZE)*3),D4        ; Y limit
                 cmp     T4_Y(A1),D4
-                bge     .CONT
+                blt     .CONT
                 ; cannot add more enemies
                 move    #$FF,D4                   
 .CONT:          cmp     #TK_ENEM_GOAL,T4_Y(A1)
@@ -1727,6 +1727,7 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
