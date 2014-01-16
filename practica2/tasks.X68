@@ -23,7 +23,9 @@
 TK_SCREEN_WIDTH			EQU	640
 TK_SCREEN_HEIGHT		EQU	480
 TK_INFO_SCREEN_WIDTH            EQU     140
+TK_ENEM_GOAL                    EQU     TK_SCREEN_HEIGHT-20
 TK_CYCLE                        EQU     2
+TK_GAME_WIDTH                   EQU     TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH    ; game window width
 ; game control
 TK_MAX_POWER                    EQU     12                                      ; max energy available for the player(for shots and bonus)
 TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1)         ; max number of (task)enemies to launch at same time 
@@ -596,10 +598,11 @@ T4_X                    EQU     4
 T4_Y                    EQU     6
 ;draw:
 T4_PIXEL_SIZE		EQU	4
+T4_ENEMY_WIDTH_SPACE    EQU     (TK_ENEM_COLUMNS*T4_PIXEL_SIZE+20)
+T4_ENEMS_BY_ROW         EQU     TK_GAME_WIDTH/T4_ENEMY_WIDTH_SPACE
 T4_SPEED                EQU     1
 T4_COLOR_1              EQU     $00FF6600
 T4_COLOR_2              EQU     $00AA0000
-
 ; ==========================================================
 ; Task 4 functions
 ; ==========================================================
@@ -945,13 +948,37 @@ T6_START:
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T6_INIT
 				
+				bsr     T6_CHECK_ENEMS  ; check if any enemy has reached the goal or if it has to add more enemies
+				IF.B #$FF <EQ> D0 THEN
+				;GAME OVER
+				        clr     TK_VAR_SPEED(A1) ; pone la velocidad a 0 para tener feedback
+				ELSE
+				        IF.W #0 <LT> D1 THEN    ; can add D1 enems (D1>0)
+				        ;lets calculate a random between 1..D1 to add a random number of enemies
+				                move    #1,D0
+				                bsr     T4_RANDOM
+				                sub     #1,D0               ; loop 0..N-1
+				                move    D0,D2
+				                ;add D2 enemies
+T6_NEW_ENEM:			                lea     T4_START, A0
+			                        move.b	#0, D0
+        			                trap	#0
+        			                dbra    D2,T6_NEW_ENEM 
+                                        ENDI 
+				ENDI
+				move    #4,D0
+				trap    #0
 				bsr     T6_ENEM_COUNTER ; show a counter of remaining enemies
 				bsr     T6_SHOW_ENERGY  ; show available energy
 				bsr     T6_CHECK_BONUS  ; launch bonuses
 				
-				;draw a line
+				;draw a line which delimits the game space
 				TK_SET_PEN      #$00FFFFFF
-				TK_DRAW_LINE    #TK_INFO_SCREEN_WIDTH,#0,#TK_INFO_SCREEN_WIDTH,#TK_SCREEN_HEIGHT       
+				TK_DRAW_LINE    #TK_INFO_SCREEN_WIDTH,#0,#TK_INFO_SCREEN_WIDTH,#TK_SCREEN_HEIGHT
+                                ;draw a line which marks the enemy goal
+				TK_SET_PEN      #$00FFFFFF
+				TK_DRAW_LINE    #TK_INFO_SCREEN_WIDTH,#TK_ENEM_GOAL,#TK_SCREEN_WIDTH,#TK_ENEM_GOAL  
+     
 				
 ; End by switching to next task
 				move.b	#3, D0
@@ -986,6 +1013,62 @@ T6_ADD_ENEM:			lea         T4_START, A0
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0
+* ----------------------------------------------------------
+T6_CHECK_ENEMS:
+* post:  D0.B -> 0, game goes on
+*        D0.B -> $FF, some enemy has reached the goal(the player lose)
+*        D1.W -> max. number of enemies to add (ignored if D0=FF)
+* ----------------------------------------------------------
+                movem.l D2-D4/A0-A1, -(A7)       ; push
+                
+                move.l  A1,A0                   ; copy shared memory pointer                
+                move.b  #6,D0                   ; get first task info
+                trap    #0                
+                
+                clr     D3                      ; enemies counter (just for enemies on screen)
+                clr     D4                      ; prepare boolean
+                ;through all the tasks seeking enemies
+T6_CHECK:       cmp.b   #TK_TYPE_ENEM,TK_VAR_TYPE(A1)
+                bne     T6_GET_NEXT             ; not enemy, check next task
+                
+                ; At current iteration we found an enemy task (and A1 points to his memory)
+                add     #1,D3                   ;count enemy
+                ; all current enemies must be lower enough(higher Y) 
+                ; so that the top is clear to add a new row of enemies
+                move    #((TK_ENEM_ROWS*T4_PIXEL_SIZE)*3),D4        ; Y limit
+                cmp     T4_Y(A1),D4
+                blt     .CONT
+                ; cannot add more enemies
+                move    #$FF,D4                   
+.CONT:          cmp     #TK_ENEM_GOAL,T4_Y(A1)
+                bge     T6_GAME_OVER            ; the enemy has reached the goal                
+                
+T6_GET_NEXT:    move.b  #7,D0                   ; get next task info
+                trap    #0
+                cmp.b   #$FF,D1
+                bne     T6_CHECK
+                
+                ;At this point any enemy has reached the goal and D3 contains current playing enemies                
+                cmp     #$FF,D4
+                bne     T6_MAX_ADD      ; enemies can be added, lets calculate how many    
+                ;still can not add more enemies
+                clr     D1
+                bra     T6_CE_END
+                
+T6_MAX_ADD:     move    #TK_MAX_ENEMIES,D1
+                sub     D3,D1                   ; D1=MAX_SCREEN-CURRENT_SCREEN, note: CURRENT is supposed to be lower than MAX always
+                cmp     #T4_ENEMS_BY_ROW,D1
+                ble     T6_MA_CONT
+                move    #T4_ENEMS_BY_ROW,D1
+T6_MA_CONT:     cmp     TK_VAR_ENEM(A0),D1      
+                ble     T6_CE_END
+                move    TK_VAR_ENEM(A0),D1
+                bra     T6_CE_END
+     
+T6_GAME_OVER:   move.b  #$FF,D1                 ; save result 'GAME OVER'
+
+T6_CE_END:      movem.l (A7)+, D2-D4/A0-A1       ; pop   
+                rts
 * ----------------------------------------------------------
 T6_ENEM_COUNTER:
 * outputs number of remaining enemies to kill
@@ -1705,6 +1788,10 @@ T11_INIT:
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
+
+
+
 
 
 
