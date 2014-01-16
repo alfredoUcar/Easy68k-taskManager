@@ -1002,7 +1002,8 @@ T6_NEW_ENEM:			                lea     T4_START, A0
         			                dbra    D2,T6_NEW_ENEM 
                                         ENDI 
 				ENDI
-				
+				move    #4,D0
+				trap    #0
 				bsr     T6_ENEM_COUNTER ; show a counter of remaining enemies
 				bsr     T6_SHOW_ENERGY  ; show available energy
 				bsr     T6_CHECK_BONUS  ; launch bonuses
@@ -1727,6 +1728,7 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
