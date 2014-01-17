@@ -747,7 +747,7 @@ T5_COLOR        EQU     $0000AAFF
 * ----------------------------------------------------------
 T5_START:
 * Task 5 entry point.
-* Draws a laser beam from the position of the ship
+* Draws a shot from the position of the ship
 * ----------------------------------------------------------
 ; Vemos si es la primera vez que se ha iniciado esta tarea
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
@@ -760,9 +760,9 @@ T5_START:
                                 TK_SET_FILL #T5_COLOR
                                 
                                 move    T5_VAR_X(A0),D1
-                                sub     #T5_PIXEL_SIZE,D1
+                                sub     #T5_PIXEL_SIZE/2,D1
                                 move    T5_VAR_Y(A0),D2
-                                sub     #T5_PIXEL_SIZE,D2
+                                sub     #T5_PIXEL_SIZE/2,D2
 
                                 TK_DRAW_SQUARE D1, D2, #T5_PIXEL_SIZE
 ;uptdate beam position
@@ -772,7 +772,7 @@ T5_START:
 
                                 move    T5_VAR_X(A0),D3
                                 move    T5_VAR_Y(A0),D4
-                                
+                                move.l  A1,A2                   ;copy shared memory pointer
 ;check the enemies task
                                 move.b  #6,D0
                                 trap    #0
@@ -781,7 +781,7 @@ T5_CHECK_ALIEN:                 move.b  D1,D5           ;copy index to current t
                                 cmp.b   #TK_TYPE_ENEM, TK_VAR_TYPE(A1)
                                 bne     T5_CHECK_NEXT
                                 ;at this point, we know that it's an enemy
-                                move    T4_Y(A1),D0
+                                move    T4_Y(A1),D1
                                 move    T4_X(A1),D0
                                 bsr     T5_CHECK_CONTACT
                                 cmp     #0,D0
@@ -799,12 +799,14 @@ T5_CHECK_ALIEN:                 move.b  D1,D5           ;copy index to current t
                                 move.b  #5,D0
                                 trap    #0
                                 ;asign same position
-                                move D2,T7_X(A0)
-                                move D2,T7_Y(A0)
+                                move    D2,T7_X(A0)
+                                move    D6,T7_Y(A0)
                                 ;remove the enemy task
+                                sub     #1,TK_VAR_ENEM(A2)
                                 move.b  D7,D1
 			        move.b	#1, D0
 			        trap	#0 
+			        bra     T5_END
 
 T5_CHECK_NEXT:                  move.b  D5,D1
                                 move.b  #7,D0
@@ -819,7 +821,7 @@ T5_CHECK_NEXT:                  move.b  D5,D1
                                 bgt     T5_SWITCH       ; if shot hasn't reached the top then scape from death claws and switch to next task to live another day (mygod!!)
                                  ;kill task if it has
                                 ;get current task info
-			        move.b  #4,D0
+T5_END:			        move.b  #4,D0
                                 trap    #0
                                 
                                 ;restore the energy spended on the beam
@@ -954,19 +956,19 @@ T6_START:
 				IF.B #$FF <EQ> D0 THEN
 				;GAME OVER
 				        clr     TK_VAR_SPEED(A1) ; pone la velocidad a 0 para tener feedback
-				ELSE
-				        IF.W #0 <LT> D1 THEN    ; can add D1 enems (D1>0)
-				        ;lets calculate a random between 1..D1 to add a random number of enemies
-				                move    #1,D0
-				                bsr     T4_RANDOM
-				                sub     #1,D0               ; loop 0..N-1
-				                move    D0,D2
-				                ;add D2 enemies
-T6_NEW_ENEM:			                lea     T4_START, A0
-			                        move.b	#0, D0
-        			                trap	#0
-        			                dbra    D2,T6_NEW_ENEM 
-                                        ENDI 
+*				ELSE
+*				        IF.W #0 <LT> D1 THEN    ; can add D1 enems (D1>0)
+*				        ;lets calculate a random between 1..D1 to add a random number of enemies
+*				                move    #1,D0
+*				                bsr     T4_RANDOM
+*				                sub     #1,D0               ; loop 0..N-1
+*				                move    D0,D2
+*				                ;add D2 enemies
+*T6_NEW_ENEM:			                lea     T4_START, A0
+*			                        move.b	#0, D0
+*        			                trap	#0
+*        			                dbra    D2,T6_NEW_ENEM 
+*                                        ENDI 
 				ENDI
 				move    #4,D0
 				trap    #0
@@ -1807,6 +1809,7 @@ T11_INIT:
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
 
 
 
