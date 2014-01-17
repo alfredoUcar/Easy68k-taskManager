@@ -28,7 +28,7 @@ TK_CYCLE                        EQU     2
 TK_GAME_WIDTH                   EQU     TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH    ; game window width
 ; game control
 TK_MAX_POWER                    EQU     12                                      ; max energy available for the player(for shots and bonus)
-TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1)         ; max number of (task)enemies to launch at same time 
+TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1-1)         ; max number of (task)enemies to launch at same time 
 TK_LASER_PW                     EQU     (TK_MAX_POWER/3)                        ; energy needed to use bonus 1
 TK_FREEZE_PW                    EQU     (TK_MAX_POWER/3*2)                        ; energy needed to use bonus 2
 TK_BOMB_PW                      EQU     TK_MAX_POWER                            ; energy needed to use bonus 3
@@ -961,13 +961,15 @@ T6_COLOR_2              EQU     $0000FFFF       ; second slot
 T6_COLOR_3              EQU     $000000FF       ; third slot
 T6_COLOR_4              EQU     $00000000       ; not available energy
 ;font
-T6_FONT 		EQU	$07	; terminal
+T6_FONT 		EQU	$01	; courier new
 T6_FONT_COLOR           EQU     $00FFFFFF ;white
 T6_FONT_SIZE		EQU	$09 	
-T6_FONT_STYLE		EQU	$0001	; bold
+T6_FONT_STYLE		EQU	$0000	; bold
 T6_FONT_PROP		EQU	(T1_FONT_2*$1000000)+(T1_FONT_2_SIZE*$10000)+T1_FONT_2_STYLE		; $040B0001
 ;constants
-T6_STR_ENEM             dc.b     'E: ',0
+T6_STR_ENEM             dc.b     'Enem: ',0
+T6_STR_SCREEN           dc.b     ' Scr: ',0
+T6_STR_SHOTS            dc.b     '  Shots: ',0
 ; ==========================================================
 ; Task 6 functions
 ; ==========================================================
@@ -1055,7 +1057,7 @@ T6_CHECK_ENEMS:
 *        D0.B -> $FF, some enemy has reached the goal(the player lose)
 *        D1.W -> max. number of enemies to add (ignored if D0=FF)
 * ----------------------------------------------------------
-                movem.l D2-D4/A0-A1, -(A7)       ; push
+                movem.l D2/D4/A0-A1, -(A7)       ; push
                 
                 move.l  A1,A0                   ; copy shared memory pointer                
                 move.b  #6,D0                   ; get first task info
@@ -1101,9 +1103,9 @@ T6_MA_CONT:     cmp     TK_VAR_ENEM(A0),D1
                 move    TK_VAR_ENEM(A0),D1
                 bra     T6_CE_END
      
-T6_GAME_OVER:   move.b  #$FF,D1                 ; save result 'GAME OVER'
+T6_GAME_OVER:   move.b  #$FF,D0                 ; save result 'GAME OVER'
 
-T6_CE_END:      movem.l (A7)+, D2-D4/A0-A1       ; pop   
+T6_CE_END:      movem.l (A7)+, D2/D4/A0-A1       ; pop   
                 rts
 * ----------------------------------------------------------
 T6_ENEM_COUNTER:
@@ -1119,7 +1121,7 @@ T6_ENEM_COUNTER:
 		trap	#15
                 ;set cursor position
                 clr.w	D1
-                move.b  #2,D1
+                move.b  #1,D1
                 rol     #8,D1
                 move.b  #10,D1
 		move.b	#11, D0
@@ -1131,6 +1133,19 @@ T6_ENEM_COUNTER:
                 lea     T6_STR_ENEM,A1
                 move.b  #17,D0
                 trap    #15
+                ;set cursor position
+                clr.w	D1
+                move.b  #1,D1   
+                rol     #8,D1
+                move.b  #11,D1  
+		move.b	#11, D0
+		trap	#15
+                ;print counter 2
+                move.b  #1,D2
+                move    D3,D1
+                lea     T6_STR_SCREEN,A1
+                move.b  #17,D0
+                trap    #15                
                 
                 movem.l (A7)+,D0-D1/A1
                 rts
@@ -1389,6 +1404,7 @@ T8_KILL:
                                 ; save bomb position
                                 move    T8_X(A0),D3
                                 move    T8_Y(A0),D4
+                                move.l  A1,A2           ;save shared memory pointer
 ; check if there's enemies to kill
                                 move.b  #6,D0                                           ; get first task info
                                 trap    #0                                
@@ -1406,6 +1422,7 @@ T8_KILL_CHECK:                  move.b  D1,D5                                   
                                 move    T4_X(A1),D2
                                 move    T4_Y(A1),D6
                                 move.b  TK_VAR_ID(A1),D7
+                                sub     #1,TK_VAR_ENEM(A2)                              ; updates remaining enemies
                                 ; add explosion
                                 lea	T7_START, A0
 			        move.b	#0, D0
@@ -1611,6 +1628,7 @@ T10_CHECK_STATE: 		cmp.b   #0,T10_STATE(A0)
 T10_LASER:                      ;draw a line
 				TK_SET_PEN      #T10_COLOR
 				TK_DRAW_LINE    T10_X(A0),T10_Y(A0), T10_X(A0),#0 
+				move.l  A1,A2                                           ; save shared memory pointer
 				
 			        ; check if there's enemies to kill
                                 move.b  #6,D0                                           ; get first task info
@@ -1629,6 +1647,7 @@ T10_KILL_CHECK:                 move.b  D1,D5                                   
                                 move    T4_Y(A1),D6
                                 move.b  TK_VAR_ID(A1),D7
                                 ; add explosion
+                                sub     #1,TK_VAR_ENEM(A2)                              ; updates remaining enemies
                                 lea	T7_START, A0
 			        move.b	#0, D0
 			        trap	#0
@@ -1728,6 +1747,7 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 				move.b	#3, D0
 				trap	#0		
 * ----------------------------------------------------------
+
 
 
 
