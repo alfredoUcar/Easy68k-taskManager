@@ -599,7 +599,7 @@ T4_Y                    EQU     6
 ;draw:
 T4_PIXEL_SIZE		EQU	4
 T4_ENEMY_WIDTH_SPACE    EQU     (TK_ENEM_COLUMNS*T4_PIXEL_SIZE+20)
-T4_ENEMS_BY_ROW         EQU     TK_GAME_WIDTH/T4_ENEMY_WIDTH_SPACE
+T4_ENEMS_BY_ROW         EQU     3 ;TK_GAME_WIDTH/T4_ENEMY_WIDTH_SPACE
 T4_SPEED                EQU     1
 T4_COLOR_1              EQU     $00FF6600
 T4_COLOR_2              EQU     $00AA0000
@@ -640,11 +640,14 @@ T4_START:
 * ----------------------------------------------------------
 T4_RANDOM:
 * return a random number between two limits
-* pre:  D0.W min limit 
+* the function use two dynamic values to 
+* calculate it: the current timestamp and the task ID
+* pre:  A0 task memory pointer
+*       D0.W min limit 
 *       D1.W max limit
 * post: D0.W result
 * ----------------------------------------------------------
-                movem.w D1-D3,-(A7)             ; push
+                movem.l D1-D4,-(A7)             ; push
                 
                 move    D1,D2                   ; copy
                 move    D0,D4
@@ -654,18 +657,19 @@ T4_RANDOM:
                 clr     D3
 		move.b  TK_VAR_ID(A0),D3
 		add     #1,D3                   ; [1..31] avoid case ID=0 for next operations
-		*mulu    TK_VAR_POWER(A1),D3     ; (my ID)*(current power)
 		and.l   #$0000FFFF,D1
 		and.l   #$0000FFFF,D3
 		divu    D3,D1
+		and.l   #$0000FFFF,D1
+		;at this point D1.W contains a random number, let's adjust it to desired range
 		sub     D0,D2                   ; max-min
-		and.l   #$0000FFFF,D2
-		divu    D2,D1                   
+		and.l   #$0000FFFF,D2		
+                divu    D2,D1                   
 		swap    D1
 		add     D1,D0
 		and.l   #$0000FFFF,D0           ; clear high word
 		
-		movem.w (A7)+,D1-D3             ; pop
+		movem.l (A7)+,D1-D4             ; pop
                 rts
 		
 * ----------------------------------------------------------
@@ -914,7 +918,7 @@ T6_GAME_POINTS          EQU     8 ;LONG
 T6_LASER_KEY            EQU     'X' 
 T6_FREEZE_KEY           EQU     'Z' 
 T6_BOMB_KEY             EQU     'C' 
-T6_BEAM_KEY             EQU     $20         
+T6_BEAM_KEY             EQU     $20
 ; energy bar
 T6_ENERGY_BOX_WIDTH     EQU     (TK_INFO_SCREEN_WIDTH*90/100)   ;90% of info screen
 T6_ENERGY_BOX_HEIGHT    EQU     25
@@ -922,9 +926,9 @@ T6_ENERGY_LEFT          EQU     (TK_INFO_SCREEN_WIDTH*5/100)
 T6_ENERGY_BOTTOM        EQU     (TK_SCREEN_HEIGHT-20)
 T6_ENERGY_TOP           EQU     (T6_ENERGY_BOTTOM-T6_ENERGY_BOX_HEIGHT)
 T6_ENERGY_POINT         EQU     T6_ENERGY_BOX_WIDTH/TK_MAX_POWER
-T6_COLOR_1              EQU     $0000FF00       ; first slot
+T6_COLOR_1              EQU     $000000FF       ; first slot
 T6_COLOR_2              EQU     $0000FFFF       ; second slot
-T6_COLOR_3              EQU     $000000FF       ; third slot
+T6_COLOR_3              EQU     $0000FF00       ; third slot
 T6_COLOR_4              EQU     $00000000       ; not available energy
 ;font
 T6_FONT 		EQU	$01	; courier new
@@ -935,7 +939,7 @@ T6_FONT_PROP		EQU	(T1_FONT_2*$1000000)+(T1_FONT_2_SIZE*$10000)+T1_FONT_2_STYLE		
 ;constants
 T6_STR_ENEM             dc.b     'Enem: ',0
 T6_STR_SCREEN           dc.b     ' Scr: ',0
-T6_STR_SHOTS            dc.b     '  Shots: ',0
+T6_STR_SHOTS            dc.b     'Shots: ',0
 ; ==========================================================
 ; Task 6 functions
 ; ==========================================================
@@ -956,19 +960,19 @@ T6_START:
 				IF.B #$FF <EQ> D0 THEN
 				;GAME OVER
 				        clr     TK_VAR_SPEED(A1) ; pone la velocidad a 0 para tener feedback
-*				ELSE
-*				        IF.W #0 <LT> D1 THEN    ; can add D1 enems (D1>0)
-*				        ;lets calculate a random between 1..D1 to add a random number of enemies
-*				                move    #1,D0
-*				                bsr     T4_RANDOM
-*				                sub     #1,D0               ; loop 0..N-1
-*				                move    D0,D2
-*				                ;add D2 enemies
-*T6_NEW_ENEM:			                lea     T4_START, A0
-*			                        move.b	#0, D0
-*        			                trap	#0
-*        			                dbra    D2,T6_NEW_ENEM 
-*                                        ENDI 
+				ELSE
+				        IF.W #0 <LT> D1 THEN    ; can add D1 enems (D1>0)
+				        ;lets calculate a random between 1..D1 to add a random number of enemies
+				                move    #1,D0
+				                bsr     T4_RANDOM
+				                sub     #1,D0               ; loop 0..N-1
+				                move    D0,D2
+				                ;add D2 enemies
+T6_NEW_ENEM:			                lea     T4_START, A0
+			                        move.b	#0, D0
+        			                trap	#0
+        			                dbra    D2,T6_NEW_ENEM 
+                                        ENDI 
 				ENDI
 				move    #4,D0
 				trap    #0
@@ -1340,9 +1344,9 @@ T8_X            EQU     8
 T8_Y            EQU     10
 T8_TIMEOUT      EQU     12 ;LONG
 ;draw
-T8_RADIUS       EQU     50
+T8_RADIUS       EQU     75
 T8_DELAY        EQU     500 ; 5 seconds
-T8_ANIM_STEP    EQU     T8_RADIUS/10
+T8_ANIM_STEP    EQU     T8_RADIUS/20
 T8_COLOR        EQU     $000000FF
 ; ==========================================================
 ; Task 8 functions
@@ -1809,6 +1813,7 @@ T11_INIT:
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
 
 
 
