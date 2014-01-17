@@ -202,12 +202,13 @@ LS_FIRST:
 		beq	F_END	; se trata del primer elemento
 		;buscamos a partir del primero
 		move.l	A0, -(A7) 	; parametro: elemento actual
-		move.l	12(A7), -(A7)	; parametro: puntero a la lista
+;16(A7)	move.l	12(A7), -(A7)	; parametro: puntero a la lista
 		bsr 	LS_NEXT
+;girar estas dos lineas
 		move.l	(A7)+, A0	; resultado
 		add	#4, A7		; restaura la pila		
 
-F_END:		move.l	A0, 12(A7) 	;guarda el resultado en la pila
+F_END:	move.l	A0, 12(A7) 	;guarda el resultado en la pila
 		; restaura los registros
 		movem.w (A7)+, D1-D2
 		movem.l	(A7)+,A0		
