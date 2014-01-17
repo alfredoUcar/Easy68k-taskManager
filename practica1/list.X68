@@ -204,11 +204,12 @@ LS_FIRST:
 		move.l	A0, -(A7) 	; parametro: elemento actual
 		move.l	16(A7), -(A7)	; parametro: puntero a la lista
 		bsr 	LS_NEXT
-		add	#4, A7		; restaura la pila
 		move.l	(A7)+, A0	; resultado
+		add	#4, A7		; restaura la pila
+		
 				
 
-F_END:		move.l	A0, 12(A7) 	;guarda el resultado en la pila
+F_END:	move.l	A0, 12(A7) 	;guarda el resultado en la pila
 		; restaura los registros
 		movem.w (A7)+, D1-D2
 		movem.l	(A7)+,A0		
@@ -266,6 +267,7 @@ N_END:
 		movem.l	(A7)+, A0		
 		rts	
 *-------------------------------------------------------------
+
 
 
 
