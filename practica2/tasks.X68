@@ -5,7 +5,7 @@
 * List of tasks :
 *
 *       task 1: main menu
-*       task 2: double buffer
+*       task 2: double buffer 
 *       task 3: ship(player)
 *       task 4: enemy
 *       task 5: normal shot
@@ -937,6 +937,7 @@ T6_FONT_SIZE		EQU	$09
 T6_FONT_STYLE		EQU	$0000	; bold
 T6_FONT_PROP		EQU	(T1_FONT_2*$1000000)+(T1_FONT_2_SIZE*$10000)+T1_FONT_2_STYLE		; $040B0001
 ;constants
+T6_BONUS                dc.b    ' BONUS ',0
 T6_STR_ENEM             dc.b     'Enem: ',0
 T6_STR_SCREEN           dc.b     ' Scr: ',0
 T6_STR_SHOTS            dc.b     'Shots: ',0
@@ -979,7 +980,8 @@ T6_NEW_ENEM:			                lea     T4_START, A0
 				bsr     T6_ENEM_COUNTER ; show a counter of remaining enemies
 				bsr     T6_SHOW_ENERGY  ; show available energy
 				bsr     T6_CHECK_BONUS  ; launch bonuses
-				
+				bsr     T6_SHOW_CLOCK   
+				bsr     T6_DRAW_BONUS
 				;draw a line which delimits the game space
 				TK_SET_PEN      #$00FFFFFF
 				TK_DRAW_LINE    #TK_INFO_SCREEN_WIDTH,#0,#TK_INFO_SCREEN_WIDTH,#TK_SCREEN_HEIGHT
@@ -1021,6 +1023,15 @@ T6_ADD_ENEM:			lea         T4_START, A0
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0
+*----------------------------------------------------------
+T6_SHOW_CLOCK:
+*----------------------------------------------------------
+                                move.b	#2,TK_PIXEL(A1) 	; set global pixel
+				move	#30,D0		; set x
+				swap	D0
+				move	#50,D0 	        ; set y				
+				bsr	TK_DRAW_CLOCK
+
 * ----------------------------------------------------------
 T6_CHECK_ENEMS:
 * post:  D0.B -> 0, game goes on
@@ -1035,7 +1046,7 @@ T6_CHECK_ENEMS:
                 
                 clr     D3                      ; enemies counter (just for enemies on screen)
                 clr     D4                      ; prepare boolean
-                ;through all the tasks seeking enemies
+                ;loop all the tasks seeking enemies
 T6_CHECK:       cmp.b   #TK_TYPE_ENEM,TK_VAR_TYPE(A1)
                 bne     T6_GET_NEXT             ; not enemy, check next task
                 
@@ -1057,7 +1068,7 @@ T6_GET_NEXT:    move.b  #7,D0                   ; get next task info
                 bne     T6_CHECK
                 
                 ;At this point any enemy has reached the goal and D3 contains current playing enemies                
-                cmp     #$FF,D4
+                cmp     #$FF,D4         ; the top is clear?
                 bne     T6_MAX_ADD      ; enemies can be added, lets calculate how many    
                 ;still can not add more enemies
                 clr     D1
@@ -1091,31 +1102,24 @@ T6_ENEM_COUNTER:
 		trap	#15
                 ;set cursor position
                 clr.w	D1
-                move.b  #1,D1
+                move.b  #7,D1
                 rol     #8,D1
                 move.b  #10,D1
 		move.b	#11, D0
 		trap	#15
 		;print counter
                 clr.l   D1
-                move.b  #1,D2
                 move    TK_VAR_ENEM(A1),D1
-                lea     T6_STR_ENEM,A1
-                move.b  #17,D0
+                move.b  #3,D0
                 trap    #15
-                ;set cursor position
-                clr.w	D1
-                move.b  #1,D1   
-                rol     #8,D1
-                move.b  #11,D1  
-		move.b	#11, D0
-		trap	#15
-                ;print counter 2
-                move.b  #1,D2
-                move    D3,D1
-                lea     T6_STR_SCREEN,A1
-                move.b  #17,D0
-                trap    #15                
+                ;draw an enemy
+                move.b	#T4_PIXEL_SIZE,TK_PIXEL(A1) 	; set global pixel
+		move.l	#T4_COLOR_1,TK_VAR_COLOR_1(A1) 	; pixel pen
+		move.l	#T4_COLOR_2,TK_VAR_COLOR_2(A1)	        ; pixel fill
+		move	#50,D0		; set x
+		swap	D0
+		move	#155,D0 	        ; set y				
+		bsr	TK_DRAW_ENEM   
                 
                 movem.l (A7)+,D0-D1/A1
                 rts
@@ -1136,7 +1140,7 @@ T6_CHECK_BONUS:
 				
 				move    TK_VAR_POWER(A1),D2     ; current energy
 				
-				IF.W #(TK_BEAM_PW-1) <LE> D2 THEN
+				IF.W #(TK_BEAM_PW) <LE> D2 THEN
 				      ; enough energy for beam
                                       BTST.L #0,D1     ; test for beam
                                       IF <NE> THEN      ; if beam pressed
@@ -1153,7 +1157,7 @@ T6_CHECK_BONUS:
                                        ENDI				        
 				  ENDI
 				
-				IF.W #(TK_LASER_PW-1) <LE> D2 THEN
+				IF.W #(TK_LASER_PW) <LE> D2 THEN
 				; enough energy for laser
 				        BTST.L #24,D1     ; test for laser
                                         IF <NE> THEN      ; if laser pressed
@@ -1170,7 +1174,7 @@ T6_CHECK_BONUS:
                                                  bra T6_CB_END
                                                 ENDI
                                         ENDI
-				        IF.W #(TK_FREEZE_PW-1) <LE> D2 THEN
+				        IF.W #(TK_FREEZE_PW) <LE> D2 THEN
 				        ; enough energy for freeze
 				                BTST.L #16,D1     ; test for freeze 
                                                 IF <NE> THEN      ; if freeze pressed
@@ -1187,7 +1191,7 @@ T6_CHECK_BONUS:
                                                         bra T6_CB_END
                                                         ENDI
                                                 ENDI
-				                IF.W #(TK_BOMB_PW-1) <LE> D2 THEN
+				                IF.W #(TK_BOMB_PW) <LE> D2 THEN
 				                ; enough energy for bomb
                                                         BTST.L #8,D1     ; test for bomb
                                                         IF <NE> THEN      ; if bomb pressed
@@ -1213,6 +1217,39 @@ T6_CHECK_BONUS:
 T6_CB_END:		        move.l  (A7)+,D1		
 				rts
 *-----------------------------------------------------------
+T6_DRAW_BONUS:
+*-----------------------------------------------------------
+                        move.b          #93,D0
+                        move.b          #2,D1
+                        trap            #15  
+                        
+                        TK_SET_PEN      #$00FFFFFF
+                        TK_SET_FILL     #$00000000
+                        TK_DRAW_RECTANGLE  #10,#200,#130,#340
+                        
+                        TK_LOCATE 	#2,#14
+                        TK_SET_FILL	#$00000000
+        	        TK_PRINT_STR	T6_BONUS
+        	        
+*        	        TK_LOCATE 	#4,#16
+*                        TK_SET_FILL	#$00000000
+*        	        TK_PRINT_STR	T6_BOMB_KEY
+                        
+                        TK_SET_PEN      #$000000FF
+                        TK_DRAW_CIRCLE  #50,#250,#10
+                        
+                        TK_SET_PEN      #$00CC6600
+                        TK_SET_FILL     #$00FF9900
+                        TK_DRAW_SQUARE  #40,#280,#20
+                        
+                        TK_SET_PEN      #T10_COLOR
+			TK_DRAW_LINE    #40,#320,#60,#320
+			
+			move.b          #93,D0
+                        move.b          #1,D1
+                        trap            #15
+                        
+                        rts
 * ----------------------------------------------------------
 T6_SHOW_ENERGY:
 * show energy bar
@@ -1813,6 +1850,8 @@ T11_INIT:
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
+
 
 
 

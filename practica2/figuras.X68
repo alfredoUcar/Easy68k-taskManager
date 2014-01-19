@@ -21,6 +21,13 @@ TK_EXP_ROWS	EQU	7
 TK_EXP_COLUMNS	EQU	10
 TK_EXP_COLOR1	EQU	$000033FF
 TK_EXP_COLOR2	EQU	$000066FF
+*-----------------------------------------------
+*		CLOCK
+*-----------------------------------------------
+TK_CLOCK_ROWS	        EQU	13
+TK_CLOCK_COLUMNS        EQU	13
+TK_CLOCK_COLOR1	        EQU	$00FFFFFF
+TK_CLOCK_COLOR2	        EQU	$00333333
 *-----------------------------------------------------------
 TK_DRAW_ENEM:
 
@@ -137,6 +144,41 @@ TK_DRAW_EXP:
 		rts
 
 *-----------------------------------------------------------
+TK_DRAW_CLOCK:
+* Description : dibuja un reloj en la posici?n indicada
+* Pre         : D0.L: coordenadas del centro(W1:X,W2:Y)
+* Post        : 
+* Modified    : Nothing: all registers are restored.
+* Note        : When calling this macro, the required constants
+*               are assumed to have the correct values.
+*-----------------------------------------------------------
+		;push
+		movem.l	D0-D5/A0,-(A7)
+		;paso de parametros
+		clr	D7
+		move.b	TK_PIXEL(A1),D7		; guarda el tama?o de pixel en un word
+		
+		move	D7,D1
+		mulu	#TK_CLOCK_ROWS,D1
+		divu	#2,D1		; height/2
+
+		move	D7,D2
+		mulu	#TK_CLOCK_COLUMNS,D2
+		divu	#2,D2		; width/2
+		
+		move.l	#TK_CLOCK_COLOR1,D3
+		move.l	#TK_CLOCK_COLOR1,D4
+		move.w	#TK_CLOCK_COLUMNS-1, D5
+		swap	D5
+		move.w	#TK_CLOCK_ROWS-1, D5
+		lea	TK_CLOCK_LIST, A0	; lista de puntos
+		;dibuja la figura
+		bsr	TK_DRAW_FIG				
+
+.END:		;pop
+		movem.l (A7)+, D0-D5/A0
+		rts
+*--------------------------------------------------------
 TK_DRAW_FIG:
 * Description : dibuja una figura en la posici?n indicada
 * Pre         : D0.L: coordenadas del centro(W1:X,W2:Y)
@@ -212,7 +254,7 @@ TK_ENEM_LIST:	dc.b 0,0,1,0,0,0,0,1,0,0,0,1,1,1,1,1,1,1,1,0,1,1,0,0,1,1,0,0,1,1,1
 *1,1,1,1,1,1,1,1,1
 *********************
 TK_NAVE_LIST:	dc.b 0,0,0,0,1,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1
-*** EXPLOSI?N ****
+*** EXPLOSION ****
 *0,1,0,0,0,0,0,0,1,0,
 *0,0,1,0,0,0,0,1,0,0,
 *0,0,0,1,0,0,1,0,0,0,
@@ -222,6 +264,23 @@ TK_NAVE_LIST:	dc.b 0,0,0,0,1,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1
 *0,1,0,0,0,0,0,0,1,0
 *********************
 TK_EXP_LIST:	dc.b 0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,1,1,0,0,0,0,0,0,1,1,0,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0
+*** CLOCK ****
+*0,0,1,1,1,1,1,1,1,1,1,0,0,
+*0,1,1,1,1,1,1,1,1,1,1,1,0,
+*1,1,1,0,0,0,0,0,0,0,1,1,1,
+*1,1,0,0,0,0,0,0,0,0,0,1,1,
+*1,1,0,0,0,0,0,0,0,1,0,1,1,
+*1,1,0,0,1,0,0,0,1,0,0,1,1,
+*1,1,0,0,0,1,0,1,0,0,0,1,1,
+*1,1,0,0,0,0,1,0,0,0,0,1,1,
+*1,1,0,0,0,0,0,0,0,0,0,1,1,
+*1,1,0,0,0,0,0,0,0,0,0,1,1,
+*1,1,1,0,0,0,0,0,0,0,1,1,1,
+*0,0,1,1,1,1,1,1,1,1,1,0,0,
+*0,0,1,1,1,1,1,1,1,1,1,0,0
+*********************
+TK_CLOCK_LIST:	dc.b 0,0,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,0,1,1,1,1,0,0,1,0,0,0,1,0,0,1,1,1,1,0,0,0,1,0,1,0,0,0,1,1,1,1,0,0
+TK_CLK_CONT:    dc.b 0,0,1,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,1,1,1,1,1,1,0,0,0,0,1,1,1,1,1,1,1,1,1,0,0
 		ds.w	0		; Memory alignment
 ************************************************************
 
@@ -248,6 +307,7 @@ TK_EXP_LIST:	dc.b 0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,1,
 *~Font size~10~
 *~Tab type~1~
 *~Tab size~8~
+
 
 
 
