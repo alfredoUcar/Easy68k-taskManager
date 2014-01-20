@@ -1848,6 +1848,26 @@ T11_INIT:
 				TK_SET_FILL	#T11_COLOR
 				
 ;killing all remaining tasks
+                                move.b  #6,D0
+                                trap    #0
+                                
+T11_CHECK:                	cmp.b   #TK_TYPE_MENU2, TK_VAR_TYPE(A1) ;if is this one
+                                bne	T11_DEREZZE
+				;save my stuff
+				move.b	D1,D3
+				move.b	D2,D4
+				move.l	A1,A2
+
+                                ;remove other tasks
+T11_DEREZZE:	                move.b  #7,D0
+                                trap    #0
+                                cmp.b   #$FF,D1 ;we're finished
+				beq	T11_START
+				
+				;real derezze
+				move.b	#1, D0
+			        trap	#0
+				bra	T11_CHECK	
 				
 *                                
 *; End by switching to next task
