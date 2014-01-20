@@ -1846,10 +1846,14 @@ T11_INIT:
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
 				
 				TK_SET_FILL	#T11_COLOR
+				
+;killing all remaining tasks
+				
 *                                
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
 
 
 
