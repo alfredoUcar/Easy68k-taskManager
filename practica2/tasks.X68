@@ -1051,7 +1051,7 @@ T6_REMOVE_TASK: move.b  D2,D1
                 move.b	    #0, D0
         	trap	    #0
                 ;add final menu task
-                lea         T11_START, A0
+                lea         T1_START, A0
                 move.b	    #0, D0
         	trap	    #0
                 
@@ -1886,7 +1886,7 @@ T11_START:
 * ----------------------------------------------------------
 		cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 		beq	T11_INIT
-;set font properties
+                ;set font properties
 		move.b	#21,D0
 		move.l	#T11_FONT_COLOR,D1
 		move.l	#T11_FONT_PROP,D2				
@@ -1910,7 +1910,7 @@ T11_START:
 		move.b  #20,D0
 		trap    #15
 		;print the last strings
-		lea    T11_STRING_2,A1
+		lea     T11_STRING_2,A1
 		move.b  #13,D0
 		trap    #15
                 lea     T11_STRING_3,A1
@@ -1918,6 +1918,10 @@ T11_START:
                 trap    #15
                 
                 ;draw explosion, to make more dramatic
+                
+; End by switching to next task
+		move.b	#3, D0
+		trap	#0
 * ----------------------------------------------------------
 T11_INIT:
 * Task 11 initialization
