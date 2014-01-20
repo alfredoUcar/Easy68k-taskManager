@@ -112,7 +112,7 @@ T1_PIXEL_SIZE		EQU	15
 ; Game configuration for each level
 ;LEVEL 1
 T1_EASY_SPEED                   EQU     1
-T1_EASY_ENEM                    EQU     25
+T1_EASY_ENEM                    EQU     5
 T1_EASY_POWER                   EQU     TK_MAX_POWER
 ;LEVEL 2
 T1_MEDIUM_SPEED                 EQU     2
@@ -515,7 +515,7 @@ T3_VAR_SX	EQU	6
 T3_SPACE_KEY    EQU     7
 ;draw:
 T3_PIXEL_SIZE   EQU	4
-T3_SPEED        EQU     2
+T3_SPEED        EQU     6
 ; ==========================================================
 ; Task 3 functions
 ; ==========================================================
@@ -742,7 +742,7 @@ T5_VAR_X	EQU	4
 T5_VAR_Y        EQU     6
 ;draw:
 T5_PIXEL_SIZE	EQU	8
-T5_SPEED        EQU     2
+T5_SPEED        EQU     4
 T5_COLOR        EQU     $0000AAFF
 ; ==========================================================
 ; Task 5 functions
@@ -938,6 +938,9 @@ T6_FONT_STYLE		EQU	$0000	; bold
 T6_FONT_PROP		EQU	(T1_FONT_2*$1000000)+(T1_FONT_2_SIZE*$10000)+T1_FONT_2_STYLE		; $040B0001
 ;constants
 T6_BONUS                dc.b    ' BONUS ',0
+T6_LASER_CHAR           dc.b    T6_LASER_KEY,0
+T6_FREEZE_CHAR          dc.b    T6_FREEZE_KEY,0
+T6_BOMB_CHAR            dc.b    T6_BOMB_KEY,0
 T6_STR_ENEM             dc.b     'Enem: ',0
 T6_STR_SCREEN           dc.b     ' Scr: ',0
 T6_STR_SHOTS            dc.b     'Shots: ',0
@@ -964,10 +967,11 @@ T6_START:
 				ELSE
 				        IF.W #0 <LT> D1 THEN    ; can add D1 enems (D1>0)
 				        ;lets calculate a random between 1..D1 to add a random number of enemies
-				                move    #1,D0
-				                bsr     T4_RANDOM
-				                sub     #1,D0               ; loop 0..N-1
-				                move    D0,D2
+*				                move    #1,D0
+*				                bsr     T4_RANDOM
+*				                sub     #1,D0               ; loop 0..N-1
+                                                sub     #1,D1
+				                move    D1,D2
 				                ;add D2 enemies
 T6_NEW_ENEM:			                lea     T4_START, A0
 			                        move.b	#0, D0
@@ -1031,7 +1035,7 @@ T6_SHOW_CLOCK:
 				swap	D0
 				move	#50,D0 	        ; set y				
 				bsr	TK_DRAW_CLOCK
-
+                                rts
 * ----------------------------------------------------------
 T6_CHECK_ENEMS:
 * post:  D0.B -> 0, game goes on
@@ -1040,7 +1044,9 @@ T6_CHECK_ENEMS:
 * ----------------------------------------------------------
                 movem.l D2/D4/A0-A1, -(A7)       ; push
                 
-                move.l  A1,A0                   ; copy shared memory pointer                
+                move.l  A1,A0                   ; copy shared memory pointer
+                cmp     #0,TK_VAR_ENEM(A0)
+                beq     T6_GAME_END             ; all enemies are dead(player wins)                
                 move.b  #6,D0                   ; get first task info
                 trap    #0                
                 
@@ -1060,7 +1066,7 @@ T6_CHECK:       cmp.b   #TK_TYPE_ENEM,TK_VAR_TYPE(A1)
                 ; cannot add more enemies
                 move    #$FF,D4                   
 .CONT:          cmp     #TK_ENEM_GOAL,T4_Y(A1)
-                bge     T6_GAME_OVER            ; the enemy has reached the goal                
+                bge     T6_GAME_END           ; the enemy has reached the goal                
                 
 T6_GET_NEXT:    move.b  #7,D0                   ; get next task info
                 trap    #0
@@ -1074,17 +1080,22 @@ T6_GET_NEXT:    move.b  #7,D0                   ; get next task info
                 clr     D1
                 bra     T6_CE_END
                 
-T6_MAX_ADD:     move    #TK_MAX_ENEMIES,D1
-                sub     D3,D1                   ; D1=MAX_SCREEN-CURRENT_SCREEN, note: CURRENT is supposed to be lower than MAX always
+T6_MAX_ADD:     move    TK_VAR_ENEM(A0),D4
+                sub     D3,D4                   ; D4 = remaining enemies to kill - enemies on screen (remaining to add)
+                ; adjust top limit
+                move    #TK_MAX_ENEMIES,D1
+                sub     D3,D1                   ; D1=MAX_SCREEN-CURRENT_SCREEN, note: CURRENT is supposed to be lower than MAX always                
                 cmp     #T4_ENEMS_BY_ROW,D1
-                ble     T6_MA_CONT
-                move    #T4_ENEMS_BY_ROW,D1
-T6_MA_CONT:     cmp     TK_VAR_ENEM(A0),D1      
+                ble     T6_MA_CONT              
+                move    #T4_ENEMS_BY_ROW,D1     ; D1 = [1..T4_ENEMS_BY_ROW]
+T6_MA_CONT:     ; At this point D4 contains remaining enemies to add and D1 contains
+                ; max number of enemies that can be added to game right now
+                cmp     D4,D1      
                 ble     T6_CE_END
-                move    TK_VAR_ENEM(A0),D1
+                move    D4,D1
                 bra     T6_CE_END
      
-T6_GAME_OVER:   move.b  #$FF,D0                 ; save result 'GAME OVER'
+T6_GAME_END:   move.b  #$FF,D0                 ; save result 'GAME END'
 
 T6_CE_END:      movem.l (A7)+, D2/D4/A0-A1       ; pop   
                 rts
@@ -1219,29 +1230,74 @@ T6_CB_END:		        move.l  (A7)+,D1
 *-----------------------------------------------------------
 T6_DRAW_BONUS:
 *-----------------------------------------------------------
+                        move    TK_VAR_POWER(A1),D7     ; current energy
+                        
                         move.b          #93,D0
                         move.b          #2,D1
                         trap            #15  
-                        
+                        ;draw bonus box
                         TK_SET_PEN      #$00FFFFFF
                         TK_SET_FILL     #$00000000
                         TK_DRAW_RECTANGLE  #10,#200,#130,#340
                         
+			TK_DRAW_LINE    #10,#230,#130,#230
+                        
                         TK_LOCATE 	#2,#14
                         TK_SET_FILL	#$00000000
         	        TK_PRINT_STR	T6_BONUS
-        	        
-*        	        TK_LOCATE 	#4,#16
-*                        TK_SET_FILL	#$00000000
-*        	        TK_PRINT_STR	T6_BOMB_KEY
-                        
+				
+		        IF.W #(TK_BOMB_PW) <LE> D7 THEN
+		                ; set green color (available)
+		                move.l  #T6_COLOR_3,D1
+		        ELSE    ;set default color (not available)
+		                move.l  #T6_FONT_COLOR,D1
+		        ENDI
+		        ;set font properties
+			move.b	#21,D0
+			move.l	#T6_FONT_PROP,D2				
+			trap	#15
+        	        ;write bomb key
+        	        TK_LOCATE 	#7,#16
+                        TK_SET_FILL	#$00000000
+        	        TK_PRINT_STR	T6_BOMB_CHAR
+                        ;draw bomb symbol
                         TK_SET_PEN      #$000000FF
                         TK_DRAW_CIRCLE  #50,#250,#10
                         
+                        IF.W #(TK_FREEZE_PW) <LE> D7 THEN
+		                ; set green color (available)
+		                move.l  #T6_COLOR_3,D1
+		        ELSE    ;set default color (not available)
+		                move.l  #T6_FONT_COLOR,D1
+		        ENDI
+		        ;set font properties
+			move.b	#21,D0
+			move.l	#T6_FONT_PROP,D2				
+			trap	#15
+                        ;write freeze key
+                        TK_LOCATE 	#7,#19
+                        TK_SET_FILL	#$00000000
+        	        TK_PRINT_STR	T6_FREEZE_CHAR
+                        ;draw freeze symbol
                         TK_SET_PEN      #$00CC6600
                         TK_SET_FILL     #$00FF9900
                         TK_DRAW_SQUARE  #40,#280,#20
                         
+                        IF.W #(TK_BEAM_PW) <LE> D7 THEN
+		                ; set green color (available)
+		                move.l  #T6_COLOR_3,D1
+		        ELSE    ;set default color (not available)
+		                move.l  #T6_FONT_COLOR,D1
+		        ENDI
+		        ;set font properties
+			move.b	#21,D0
+			move.l	#T6_FONT_PROP,D2				
+			trap	#15
+                        ;write laser key
+                        TK_LOCATE 	#7,#21
+                        TK_SET_FILL	#$00000000
+        	        TK_PRINT_STR	T6_LASER_CHAR
+                        ;draw laser symbol
                         TK_SET_PEN      #T10_COLOR
 			TK_DRAW_LINE    #40,#320,#60,#320
 			
