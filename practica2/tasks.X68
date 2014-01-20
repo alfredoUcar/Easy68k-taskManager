@@ -960,10 +960,12 @@ T6_START:
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T6_INIT
 				
-				bsr     T6_CHECK_ENEMS  ; check if any enemy has reached the goal or if it has to add more enemies
+				bsr     T6_CHECK_ENEMS 
 				IF.B #$FF <EQ> D0 THEN
-				;GAME OVER
-				        clr     TK_VAR_SPEED(A1) ; pone la velocidad a 0 para tener feedback
+				;some enemy has reached the goal or the player destroyed all the enemies
+*				        clr     TK_VAR_SPEED(A1) ; pone la velocidad a 0 para tener feedback
+                                        bsr     T6_END_GAME
+                                        bra     T6_NEXT          ; next task should be task 11
 				ELSE
 				        IF.W #0 <LT> D1 THEN    ; can add D1 enems (D1>0)
 				        ;lets calculate a random between 1..D1 to add a random number of enemies
@@ -995,7 +997,7 @@ T6_NEW_ENEM:			                lea     T4_START, A0
      
 				
 ; End by switching to next task
-				move.b	#3, D0
+T6_NEXT:			move.b	#3, D0
 				trap	#0		
 								
 
@@ -1027,6 +1029,33 @@ T6_ADD_ENEM:			lea         T4_START, A0
 ; End by switching to next task
 				move.b	#3, D0
 				trap	#0
+*----------------------------------------------------------
+T6_END_GAME:
+* Remove all tasks(but double buffer) and then add a final menu
+*----------------------------------------------------------
+                move.b  #6,D0                   ; get first task info
+                trap    #0
+                
+T6_REMOVE_TASK: move.b  D2,D1
+                move.b  #1,D0
+                trap    #0
+                
+                move.b  #7,D0                   ; get next task info
+                trap    #0
+                cmp.b   #$FF,D1
+                bne     T6_REMOVE_TASK
+                ;At this point all task have been removed, also T6
+                
+                ;restore double buffer task
+                lea         T2_START, A0
+                move.b	    #0, D0
+        	trap	    #0
+                ;add final menu task
+                lea         T11_START, A0
+                move.b	    #0, D0
+        	trap	    #0
+                
+                rts
 *----------------------------------------------------------
 T6_SHOW_CLOCK:
 *----------------------------------------------------------
@@ -1929,6 +1958,7 @@ T11_DEREZZE:	                move.b  #7,D0
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
 
 
 
