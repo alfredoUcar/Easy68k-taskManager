@@ -57,7 +57,8 @@ TK_VAR_ENEM                     EQU     14
 TK_VAR_POWER                    EQU     16 
 TK_VAR_GAME_STATE               EQU     18 ;BYTE
 TK_VAR_X                        EQU     20   
-TK_VAR_Y                        EQU     22   
+TK_VAR_Y                        EQU     22
+TK_VAR_ENEM_DEAD		EQU	24   
 
 ************************************************************
 *                   SOURCE FILE INCLUDES                   *
@@ -1787,9 +1788,14 @@ T11_FONT_SIZE		EQU	$09
 T11_FONT_STYLE		EQU	$0001	; bold
 T11_FONT_PROP		EQU	(T1_FONT_2*$1000000)+(T1_FONT_2_SIZE*$10000)+T1_FONT_2_STYLE		; $040B0001
 T11_COLOR		EQU	$00FFFFFF   ;constants
+;succesful mision
 T11_STRING              dc.b    'Congratulations!!! You saved the day by killing',0
 T11_STRING_2            dc.b    ' poor innocent aliens...',0
 T11_STRING_3            dc.b    ' not cool, men', 0
+;not so succesful
+T11_STRING_BAD		dc.b	'You are dead'
+T11_STRING_BAD1		dc.b	'The aliens won and invaded planet earth'
+T11_STRING_BAD2		dc.b	'But hey, at least you will not see how people suffers because of you!'
 
 ; ==========================================================
 ; Task 11 functions
@@ -1813,6 +1819,11 @@ T11_START:
                 move.b  #10,D1
 		move.b	#11, D0
 		trap	#15
+		
+		;check if we have a good end or a bad end
+		;(TK_VAR_ENEM_DEAD - TK_VAR_ENEM > 0) = BAD END
+		beq	T11_BAD
+		
 		;print strings
 		lea     T11_STRING,A1
 		move.b  #13,D0
@@ -1831,8 +1842,22 @@ T11_START:
                 lea     T11_STRING_3,A1
                 move.b  #14,D0
                 trap    #15
+                bra	T11_EXP
+                
+                ;print strings
+T11_BAD:	lea     T11_STRING_BAD,A1
+		move.b  #13,D0
+		trap    #15
+		;print the last strings
+		lea    T11_STRING_BAD1,A1
+		move.b  #14,D0
+		trap    #15
+                lea     T11_STRING_BAD2,A1
+                move.b  #14,D0
+                trap    #15
                 
                 ;draw explosion, to make more dramatic
+T11_EXP:	
 * ----------------------------------------------------------
 T11_INIT:
 * Task 11 initialization
