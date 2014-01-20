@@ -549,7 +549,7 @@ T3_START:
                                 IF <NE> THEN      ; if 'left'
                                   sub #T3_SPEED, T3_VAR_X(A0)
                                   cmp #(TK_INFO_SCREEN_WIDTH+((TK_NAVE_COLUMNS*T3_PIXEL_SIZE)/2)), T3_VAR_X(A0)
-                                  IF <EQ> THEN
+                                  IF <LE> THEN
                                         add     #T3_SPEED,T3_VAR_X(A0)
                                   ENDI
                                 ENDI
@@ -557,7 +557,7 @@ T3_START:
                                 IF <NE> THEN      ; if 'right'
                                   add #T3_SPEED, T3_VAR_X(A0)
                                   cmp #(TK_SCREEN_WIDTH-((TK_NAVE_COLUMNS*T3_PIXEL_SIZE)/2)), T3_VAR_X(A0)
-                                  IF <EQ> THEN
+                                  IF <GE> THEN
                                         sub     #T3_SPEED,T3_VAR_X(A0)
                                   ENDI
                                 ENDI
@@ -1929,6 +1929,7 @@ T11_DEREZZE:	                move.b  #7,D0
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
 
 
 
