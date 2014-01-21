@@ -1,5 +1,5 @@
                                         
- *-----------------------------------------------------------
+*-----------------------------------------------------------
 * Program    : Main file for task manager testing.
 * Written by : A. Burguera
 * Date       : 1-November-2012
