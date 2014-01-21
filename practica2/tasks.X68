@@ -148,6 +148,7 @@ T1_STR_3			dc.b	'    HARD    ',0	; option 3
 T1_STR_4			dc.b	10,13,0
 T1_STR_PRESS			dc.b	'Press "enter" to start the game',0
 T1_STR_COPYRIGHT		dc.b	'©antoil',10,13,'Made by Pablo Riutort & Alfredo Ucendo',0
+                                ds.w    0 ;memory alignment
 
 ; ==========================================================
 ; Task 1 functions
@@ -768,7 +769,7 @@ T5_START:
                                 move    T5_VAR_Y(A0),D2
                                 sub     #T5_PIXEL_SIZE/2,D2
 
-                                TK_DRAW_SQUARE D1, D2, #T5_PIXEL_SIZE
+                                TK_DRAW_BALL D1, D2, #T5_PIXEL_SIZE/2
 ;uptdate beam position
                                 sub   #T5_SPEED,T5_VAR_Y(A0)
 
@@ -890,9 +891,9 @@ T5_CONT_X:			sub     D4,D1
 				bge     T5_CONT_Y
 				neg     D1
 ; At this point, D0=abs(XBeam-XEnem) and D1=abs(YBeam-YEnem)
-T5_CONT_Y:                      cmp     #((T4_PIXEL_SIZE*TK_ENEM_COLUMNS)/2),D0
+T5_CONT_Y:                      cmp     #((T4_PIXEL_SIZE*TK_ENEM_COLUMNS)/2+T5_PIXEL_SIZE/2),D0
                                 bgt     T5_NO_CONTACT
-                                cmp     #((T4_PIXEL_SIZE*TK_ENEM_ROWS)/2),D1
+                                cmp     #((T4_PIXEL_SIZE*TK_ENEM_ROWS)/2+T5_PIXEL_SIZE/2),D1
                                 bgt     T5_NO_CONTACT
                                 ;contact
                                 move    #$FFFF,D0
@@ -912,7 +913,7 @@ T5_NO_CONTACT:                  clr     D0
 T6_LASER_KEY_STATE      EQU     4 
 T6_FREEZE_KEY_STATE     EQU     5 
 T6_BOMB_KEY_STATE       EQU     6
-T6_BEAM_KEY_STATE       EQU     8
+T6_BEAM_KEY_STATE       EQU     7
 T6_GAME_POINTS          EQU     8 ;LONG
 ;bonus keys
 T6_LASER_KEY            EQU     'X' 
@@ -961,16 +962,13 @@ T6_START:
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T6_INIT
 				
-				bsr     T6_CHECK_ENEMS 
+				bsr     T6_CHECK_ENEMS
 				IF.B #$FF <EQ> D0 THEN
 				;some enemy has reached the goal or the player destroyed all the enemies
                                         bsr     T6_END_GAME
                                         bra     T6_NEXT          ; next task should be task 11
 				ELSE
 				        IF.W #0 <LT> D1 THEN    ; can add D1 enems (D1>0)
-				                IF.W #3 <LT> D1 THEN
-				                add     #0,D1
-				                ENDI
                                                 sub     #1,D1
 				                move    D1,D2
 				                ;add D2 enemies
@@ -985,7 +983,7 @@ T6_NEW_ENEM:			                lea     T4_START, A0
 				bsr     T6_ENEM_COUNTER ; show a counter of remaining enemies
 				bsr     T6_SHOW_ENERGY  ; show available energy
 				bsr     T6_CHECK_BONUS  ; launch bonuses
-*				bsr     T6_SHOW_CLOCK   
+				bsr     T6_SHOW_CLOCK   
 				bsr     T6_DRAW_BONUS
 				;draw a line which delimits the game space
 				TK_SET_PEN      #$00FFFFFF
@@ -1011,7 +1009,7 @@ T6_INIT:
 				move.b	#TK_TYPE_CONTROL, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
 				move.b  #$ff, TK_VAR_FIRST_TIME(A0)
-      			        
+				      			        
       			        ; set keys as not pressed
 				move.b  #0,T6_LASER_KEY_STATE(A0)
 				move.b  #0,T6_FREEZE_KEY_STATE(A0)
@@ -1117,6 +1115,7 @@ T6_SHOW_CLOCK:
 T6_CHECK_ENEMS:
 * post:  D0.B -> 0, game goes on
 *        D0.B -> $FF, some enemy has reached the goal(the player lose)
+*               or the player killed all enemies(the player win)
 *        D1.W -> max. number of enemies to add (ignored if D0=FF)
 * ----------------------------------------------------------
                 movem.l D2/D4/A0-A1, -(A7)       ; push
@@ -1128,7 +1127,7 @@ T6_CHECK_ENEMS:
                 trap    #0                
                 
                 clr     D3                      ; enemies counter (just for enemies on screen)
-                clr     D4                      ; prepare boolean
+                clr     D4                      ; prepare boolean (FF if some enemy on the top)
                 ;loop all the tasks seeking enemies
 T6_CHECK:       cmp.b   #TK_TYPE_ENEM,TK_VAR_TYPE(A1)
                 bne     T6_GET_NEXT             ; not enemy, check next task
@@ -1137,11 +1136,13 @@ T6_CHECK:       cmp.b   #TK_TYPE_ENEM,TK_VAR_TYPE(A1)
                 add     #1,D3                   ;count enemy
                 ; all current enemies must be lower enough(higher Y) 
                 ; so that the top is clear to add a new row of enemies
+                cmp.b   #$FF,D4         
+                beq     .CONT                   ; some enemy is still on the top
                 move    #((TK_ENEM_ROWS*T4_PIXEL_SIZE)*3),D4        ; Y limit
                 cmp     T4_Y(A1),D4
                 blt     .CONT
                 ; cannot add more enemies
-                move    #$FF,D4                   
+                move.b  #$FF,D4                   
 .CONT:          cmp     #TK_ENEM_GOAL,T4_Y(A1)
                 bge     T6_GAME_END           ; the enemy has reached the goal                
                 
@@ -1151,7 +1152,7 @@ T6_GET_NEXT:    move.b  #7,D0                   ; get next task info
                 bne     T6_CHECK
                 
                 ;At this point any enemy has reached the goal and D3 contains current playing enemies                
-                cmp     #$FF,D4         ; the top is clear?
+                cmp.b   #$FF,D4         ; the top is clear?
                 bne     T6_MAX_ADD      ; enemies can be added, lets calculate how many    
                 ;still can not add more enemies
                 clr     D1
@@ -1161,7 +1162,7 @@ T6_MAX_ADD:     move    TK_VAR_ENEM(A0),D4
                 sub     D3,D4                   ; D4 = remaining enemies to kill - enemies on screen (remaining to add)
                 ; adjust top limit
                 move    #TK_MAX_ENEMIES,D1
-                sub     D3,D1                   ; D1=MAX_SCREEN-CURRENT_SCREEN, note: CURRENT is supposed to be lower than MAX always                
+                sub     D3,D1                   ; D1=MAX_SCREEN-CURRENT_SCREEN               
                 cmp     #T4_ENEMS_BY_ROW,D1
                 ble     T6_MA_CONT              
                 move    #T4_ENEMS_BY_ROW,D1     ; D1 = [1..T4_ENEMS_BY_ROW]
@@ -1189,13 +1190,8 @@ T6_ENEM_COUNTER:
 		move.l	#T6_FONT_COLOR,D1
 		move.l	#T6_FONT_PROP,D2				
 		trap	#15
-                ;set cursor position
-                clr.w	D1
-                move.b  #7,D1
-                rol     #8,D1
-                move.b  #10,D1
-		move.b	#11, D0
-		trap	#15
+                TK_LOCATE #7,#10
+                
 		;print counter
                 clr.l   D1
                 move    TK_VAR_ENEM(A1),D1
@@ -1948,7 +1944,6 @@ T11_START:
 		move.l	#T11_FONT_COLOR,D1
 		move.l	#T11_FONT_PROP,D2				
 		trap	#15
-                ;set cursor position
                 TK_LOCATE #2,#10
 		
 		cmp     #0, TK_VAR_ENEM(A1)
@@ -2022,6 +2017,9 @@ T11_INIT:
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
+
+
 
 
 

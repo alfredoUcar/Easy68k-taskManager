@@ -203,6 +203,28 @@ TK_DRAW_CIRCLE MACRO
 		move.b	#91, D0
 		trap	#15
 		ENDM
+
+*---------------------------------------------------------
+* Macro to draw a filled ball
+* Parameters: \1: Left X
+* Parameters: \2: Upper Y
+* Parameters: \3: radius
+* Modifies: D0, D1, D2, D3, D4, D5
+*----------------------------------------------------------------------
+
+TK_DRAW_BALL MACRO                
+		move.w	\1, D1
+		move.w	\2, D2
+		move.w	\1, D3
+		move.w	\2, D4
+		move.w	\3, D5                
+                sub     D5,D1
+                sub     D5,D2
+                add     D5,D3
+                add     D5,D4
+		move.b	#88, D0
+		trap	#15
+		ENDM
 		
 *---------------------------------------------------------
 * Macro to calculate next(upper left) element position
@@ -248,6 +270,7 @@ TK_SET_FONT	MACRO
 		movem.w	(A7)+, D0-D2
 		ENDM
 		
+
 
 
 
