@@ -516,7 +516,7 @@ T3_VAR_SX	EQU	6
 T3_SPACE_KEY    EQU     7
 ;draw:
 T3_PIXEL_SIZE   EQU	4
-T3_SPEED        EQU     2
+T3_SPEED        EQU     6
 ; ==========================================================
 ; Task 3 functions
 ; ==========================================================
@@ -550,7 +550,7 @@ T3_START:
                                 IF <NE> THEN      ; if 'left'
                                   sub #T3_SPEED, T3_VAR_X(A0)
                                   cmp #(TK_INFO_SCREEN_WIDTH+((TK_NAVE_COLUMNS*T3_PIXEL_SIZE)/2)), T3_VAR_X(A0)
-                                  IF <EQ> THEN
+                                  IF <LE> THEN
                                         add     #T3_SPEED,T3_VAR_X(A0)
                                   ENDI
                                 ENDI
@@ -558,7 +558,7 @@ T3_START:
                                 IF <NE> THEN      ; if 'right'
                                   add #T3_SPEED, T3_VAR_X(A0)
                                   cmp #(TK_SCREEN_WIDTH-((TK_NAVE_COLUMNS*T3_PIXEL_SIZE)/2)), T3_VAR_X(A0)
-                                  IF <EQ> THEN
+                                  IF <GE> THEN
                                         sub     #T3_SPEED,T3_VAR_X(A0)
                                   ENDI
                                 ENDI
@@ -743,7 +743,7 @@ T5_VAR_X	EQU	4
 T5_VAR_Y        EQU     6
 ;draw:
 T5_PIXEL_SIZE	EQU	8
-T5_SPEED        EQU     2
+T5_SPEED        EQU     4
 T5_COLOR        EQU     $0000AAFF
 ; ==========================================================
 ; Task 5 functions
@@ -939,9 +939,13 @@ T6_FONT_STYLE		EQU	$0000	; bold
 T6_FONT_PROP		EQU	(T1_FONT_2*$1000000)+(T1_FONT_2_SIZE*$10000)+T1_FONT_2_STYLE		; $040B0001
 ;constants
 T6_BONUS                dc.b    ' BONUS ',0
-T6_STR_ENEM             dc.b     'Enem: ',0
-T6_STR_SCREEN           dc.b     ' Scr: ',0
-T6_STR_SHOTS            dc.b     'Shots: ',0
+T6_LASER_CHAR           dc.b    T6_LASER_KEY,0
+T6_FREEZE_CHAR          dc.b    T6_FREEZE_KEY,0
+T6_BOMB_CHAR            dc.b    T6_BOMB_KEY,0
+;debugging
+T6_DEBUG_TASKS          dc.b     'Tasks: ',0
+T6_DEBUG_ENEMS          dc.b     'Enems: ',0
+T6_DEBUG_SHOTS          dc.b     'Shots: ',0
 ; ==========================================================
 ; Task 6 functions
 ; ==========================================================
@@ -958,17 +962,18 @@ T6_START:
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T6_INIT
 				
-				bsr     T6_CHECK_ENEMS  ; check if any enemy has reached the goal or if it has to add more enemies
+				bsr     T6_CHECK_ENEMS 
 				IF.B #$FF <EQ> D0 THEN
-				;GAME OVER
-				        clr     TK_VAR_SPEED(A1) ; pone la velocidad a 0 para tener feedback
+				;some enemy has reached the goal or the player destroyed all the enemies
+                                        bsr     T6_END_GAME
+                                        bra     T6_NEXT          ; next task should be task 11
 				ELSE
 				        IF.W #0 <LT> D1 THEN    ; can add D1 enems (D1>0)
-				        ;lets calculate a random between 1..D1 to add a random number of enemies
-				                move    #1,D0
-				                bsr     T4_RANDOM
-				                sub     #1,D0               ; loop 0..N-1
-				                move    D0,D2
+				                IF.W #3 <LT> D1 THEN
+				                add     #0,D1
+				                ENDI
+                                                sub     #1,D1
+				                move    D1,D2
 				                ;add D2 enemies
 T6_NEW_ENEM:			                lea     T4_START, A0
 			                        move.b	#0, D0
@@ -981,7 +986,7 @@ T6_NEW_ENEM:			                lea     T4_START, A0
 				bsr     T6_ENEM_COUNTER ; show a counter of remaining enemies
 				bsr     T6_SHOW_ENERGY  ; show available energy
 				bsr     T6_CHECK_BONUS  ; launch bonuses
-				bsr     T6_SHOW_CLOCK   
+*				bsr     T6_SHOW_CLOCK   
 				bsr     T6_DRAW_BONUS
 				;draw a line which delimits the game space
 				TK_SET_PEN      #$00FFFFFF
@@ -989,10 +994,10 @@ T6_NEW_ENEM:			                lea     T4_START, A0
                                 ;draw a line which marks the enemy goal
 				TK_SET_PEN      #$00FFFFFF
 				TK_DRAW_LINE    #TK_INFO_SCREEN_WIDTH,#TK_ENEM_GOAL,#TK_SCREEN_WIDTH,#TK_ENEM_GOAL  
-     
+                                bsr     T6_DEBUG
 				
 ; End by switching to next task
-				move.b	#3, D0
+T6_NEXT:			move.b	#3, D0
 				trap	#0		
 								
 
@@ -1025,6 +1030,82 @@ T6_ADD_ENEM:			lea         T4_START, A0
 				move.b	#3, D0
 				trap	#0
 *----------------------------------------------------------
+T6_END_GAME:
+* Remove all tasks(but double buffer) and then add a final menu
+*----------------------------------------------------------
+                move.b  #6,D0                   ; get first task info
+                trap    #0
+                
+T6_REMOVE_TASK: move.b  D2,D1
+                move.b  #1,D0
+                trap    #0
+                
+                move.b  #7,D0                   ; get next task info
+                trap    #0
+                cmp.b   #$FF,D1
+                bne     T6_REMOVE_TASK
+                ;At this point all task have been removed, also T6
+                
+                ;restore double buffer task
+                lea         T2_START, A0
+                move.b	    #0, D0
+        	trap	    #0
+                ;add final menu task
+                lea         T1_START, A0
+                move.b	    #0, D0
+        	trap	    #0
+                
+                rts
+*----------------------------------------------------------
+T6_DEBUG:
+*----------------------------------------------------------
+                move.b  #6,D0                   ; get first task info
+                trap    #0
+                
+                clr     D3
+                clr     D4
+                clr     D5
+T6_DEBUG_TASK:  add     #1,D3
+                cmp.b  #TK_TYPE_ENEM,TK_VAR_TYPE(A1)
+                beq	T6_DBG_ENEM
+                cmp.b  #TK_TYPE_SHOT,TK_VAR_TYPE(A1)
+                beq	T6_DBG_SHOT
+                
+T6_DEBUG_NEXT:  move.b  #7,D0                   ; get next task info
+                trap    #0
+                cmp.b   #$FF,D1
+                bne     T6_DEBUG_TASK
+                bra     T6_DBG_DISPLAY
+                
+T6_DBG_ENEM:    add     #1,D4
+                bra     T6_DEBUG_NEXT
+T6_DBG_SHOT:    add     #1,D5
+                bra     T6_DEBUG_NEXT
+                
+T6_DBG_DISPLAY: 
+                TK_LOCATE 	#0,#0       
+                lea	T6_DEBUG_TASKS, A1
+		clr.l	D1
+		move	D3, D1
+		move.b	#17, D0
+		trap	#15
+                
+                TK_LOCATE 	#0,#1
+                lea	T6_DEBUG_ENEMS, A1
+		clr.l	D1
+		move	D4, D1
+		move.b	#17, D0
+		trap	#15
+                
+                TK_LOCATE 	#0,#2
+                lea	T6_DEBUG_SHOTS, A1
+		clr.l	D1
+		move	D5, D1
+		move.b	#17, D0
+		trap	#15             
+
+                rts
+*----------------------------------------------------------
 T6_SHOW_CLOCK:
 *----------------------------------------------------------
                                 move.b	#2,TK_PIXEL(A1) 	; set global pixel
@@ -1032,7 +1113,7 @@ T6_SHOW_CLOCK:
 				swap	D0
 				move	#50,D0 	        ; set y				
 				bsr	TK_DRAW_CLOCK
-
+                                rts
 * ----------------------------------------------------------
 T6_CHECK_ENEMS:
 * post:  D0.B -> 0, game goes on
@@ -1041,7 +1122,9 @@ T6_CHECK_ENEMS:
 * ----------------------------------------------------------
                 movem.l D2/D4/A0-A1, -(A7)       ; push
                 
-                move.l  A1,A0                   ; copy shared memory pointer                
+                move.l  A1,A0                   ; copy shared memory pointer
+                cmp     #0,TK_VAR_ENEM(A0)
+                beq     T6_GAME_END             ; all enemies are dead(player wins)                
                 move.b  #6,D0                   ; get first task info
                 trap    #0                
                 
@@ -1061,7 +1144,7 @@ T6_CHECK:       cmp.b   #TK_TYPE_ENEM,TK_VAR_TYPE(A1)
                 ; cannot add more enemies
                 move    #$FF,D4                   
 .CONT:          cmp     #TK_ENEM_GOAL,T4_Y(A1)
-                bge     T6_GAME_OVER            ; the enemy has reached the goal                
+                bge     T6_GAME_END           ; the enemy has reached the goal                
                 
 T6_GET_NEXT:    move.b  #7,D0                   ; get next task info
                 trap    #0
@@ -1075,17 +1158,22 @@ T6_GET_NEXT:    move.b  #7,D0                   ; get next task info
                 clr     D1
                 bra     T6_CE_END
                 
-T6_MAX_ADD:     move    #TK_MAX_ENEMIES,D1
-                sub     D3,D1                   ; D1=MAX_SCREEN-CURRENT_SCREEN, note: CURRENT is supposed to be lower than MAX always
+T6_MAX_ADD:     move    TK_VAR_ENEM(A0),D4
+                sub     D3,D4                   ; D4 = remaining enemies to kill - enemies on screen (remaining to add)
+                ; adjust top limit
+                move    #TK_MAX_ENEMIES,D1
+                sub     D3,D1                   ; D1=MAX_SCREEN-CURRENT_SCREEN, note: CURRENT is supposed to be lower than MAX always                
                 cmp     #T4_ENEMS_BY_ROW,D1
-                ble     T6_MA_CONT
-                move    #T4_ENEMS_BY_ROW,D1
-T6_MA_CONT:     cmp     TK_VAR_ENEM(A0),D1      
+                ble     T6_MA_CONT              
+                move    #T4_ENEMS_BY_ROW,D1     ; D1 = [1..T4_ENEMS_BY_ROW]
+T6_MA_CONT:     ; At this point D4 contains remaining enemies to add and D1 contains
+                ; max number of enemies that can be added to game right now
+                cmp     D4,D1      
                 ble     T6_CE_END
-                move    TK_VAR_ENEM(A0),D1
+                move    D4,D1
                 bra     T6_CE_END
      
-T6_GAME_OVER:   move.b  #$FF,D0                 ; save result 'GAME OVER'
+T6_GAME_END:   move.b  #$FF,D0                 ; save result 'GAME END'
 
 T6_CE_END:      movem.l (A7)+, D2/D4/A0-A1       ; pop   
                 rts
@@ -1096,6 +1184,7 @@ T6_ENEM_COUNTER:
 * ----------------------------------------------------------
                 movem.l D0-D1/A1,-(A7) ;push
                 
+                TK_SET_FILL     #$00000000
                 ;set font properties
 		move.b	#21,D0
 		move.l	#T6_FONT_COLOR,D1
@@ -1211,38 +1300,81 @@ T6_CHECK_BONUS:
                                                         ENDI    
 				                ENDI    
 				        ENDI 
-				ENDI
-				
-				
+				ENDI			
 				
 T6_CB_END:		        move.l  (A7)+,D1		
 				rts
 *-----------------------------------------------------------
 T6_DRAW_BONUS:
 *-----------------------------------------------------------
+                        move    TK_VAR_POWER(A1),D7     ; current energy
+                        
                         move.b          #93,D0
                         move.b          #2,D1
                         trap            #15  
-                        
+                        ;draw bonus box
                         TK_SET_PEN      #$00FFFFFF
                         TK_SET_FILL     #$00000000
                         TK_DRAW_RECTANGLE  #10,#200,#130,#340
                         
+			TK_DRAW_LINE    #10,#230,#130,#230
+                        
                         TK_LOCATE 	#2,#14
                         TK_SET_FILL	#$00000000
         	        TK_PRINT_STR	T6_BONUS
-        	        
-*        	        TK_LOCATE 	#4,#16
-*                        TK_SET_FILL	#$00000000
-*        	        TK_PRINT_STR	T6_BOMB_KEY
-                        
+				
+		        IF.W #(TK_BOMB_PW) <LE> D7 THEN
+		                ; set green color (available)
+		                move.l  #T6_COLOR_3,D1
+		        ELSE    ;set default color (not available)
+		                move.l  #T6_FONT_COLOR,D1
+		        ENDI
+		        ;set font properties
+			move.b	#21,D0
+			move.l	#T6_FONT_PROP,D2				
+			trap	#15
+        	        ;write bomb key
+        	        TK_LOCATE 	#7,#16
+                        TK_SET_FILL	#$00000000
+        	        TK_PRINT_STR	T6_BOMB_CHAR
+                        ;draw bomb symbol
                         TK_SET_PEN      #$000000FF
                         TK_DRAW_CIRCLE  #50,#250,#10
                         
+                        IF.W #(TK_FREEZE_PW) <LE> D7 THEN
+		                ; set green color (available)
+		                move.l  #T6_COLOR_3,D1
+		        ELSE    ;set default color (not available)
+		                move.l  #T6_FONT_COLOR,D1
+		        ENDI
+		        ;set font properties
+			move.b	#21,D0
+			move.l	#T6_FONT_PROP,D2				
+			trap	#15
+                        ;write freeze key
+                        TK_LOCATE 	#7,#19
+                        TK_SET_FILL	#$00000000
+        	        TK_PRINT_STR	T6_FREEZE_CHAR
+                        ;draw freeze symbol
                         TK_SET_PEN      #$00CC6600
                         TK_SET_FILL     #$00FF9900
                         TK_DRAW_SQUARE  #40,#280,#20
                         
+                        IF.W #(TK_BEAM_PW) <LE> D7 THEN
+		                ; set green color (available)
+		                move.l  #T6_COLOR_3,D1
+		        ELSE    ;set default color (not available)
+		                move.l  #T6_FONT_COLOR,D1
+		        ENDI
+		        ;set font properties
+			move.b	#21,D0
+			move.l	#T6_FONT_PROP,D2				
+			trap	#15
+                        ;write laser key
+                        TK_LOCATE 	#7,#21
+                        TK_SET_FILL	#$00000000
+        	        TK_PRINT_STR	T6_LASER_CHAR
+                        ;draw laser symbol
                         TK_SET_PEN      #T10_COLOR
 			TK_DRAW_LINE    #40,#320,#60,#320
 			
@@ -1807,7 +1939,7 @@ T11_START:
 * ----------------------------------------------------------
 		cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 		beq	T11_INIT
-;set font properties
+                ;set font properties
 		move.b	#21,D0
 		move.l	#T11_FONT_COLOR,D1
 		move.l	#T11_FONT_PROP,D2				
@@ -1836,7 +1968,7 @@ T11_START:
 		move.b  #20,D0
 		trap    #15
 		;print the last strings
-		lea    T11_STRING_2,A1
+		lea     T11_STRING_2,A1
 		move.b  #13,D0
 		trap    #15
                 lea     T11_STRING_3,A1
@@ -1857,7 +1989,14 @@ T11_BAD:	lea     T11_STRING_BAD,A1
                 trap    #15
                 
                 ;draw explosion, to make more dramatic
+<<<<<<< HEAD
 T11_EXP:	
+=======
+                
+; End by switching to next task
+		move.b	#3, D0
+		trap	#0
+>>>>>>> master
 * ----------------------------------------------------------
 T11_INIT:
 * Task 11 initialization
@@ -1898,6 +2037,10 @@ T11_DEREZZE:	                move.b  #7,D0
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
+
+
+
 
 
 
