@@ -1081,19 +1081,22 @@ T6_DBG_ENEM:    add     #1,D4
 T6_DBG_SHOT:    add     #1,D5
                 bra     T6_DEBUG_NEXT
                 
-T6_DBG_DISPLAY:                
+T6_DBG_DISPLAY: 
+                TK_LOCATE 	#0,#0       
                 lea	T6_DEBUG_TASKS, A1
 		clr.l	D1
 		move	D3, D1
 		move.b	#17, D0
 		trap	#15
-
+                
+                TK_LOCATE 	#0,#1
                 lea	T6_DEBUG_ENEMS, A1
 		clr.l	D1
 		move	D4, D1
 		move.b	#17, D0
 		trap	#15
                 
+                TK_LOCATE 	#0,#2
                 lea	T6_DEBUG_SHOTS, A1
 		clr.l	D1
 		move	D5, D1
@@ -2006,6 +2009,7 @@ T11_DEREZZE:	                move.b  #7,D0
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
 
 
 
