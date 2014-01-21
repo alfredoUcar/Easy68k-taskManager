@@ -1919,14 +1919,19 @@ T11_FONT_SIZE		EQU	$09
 T11_FONT_STYLE		EQU	$0001	; bold
 T11_FONT_PROP		EQU	(T11_FONT*$1000000)+(T11_FONT_SIZE*$10000)+T11_FONT_STYLE		; $040B0001
 T11_COLOR		EQU	$00FFFFFF   ;constants
+T11_FONT_2_SIZE		EQU	$12 	; 18
+T11_FONT_2_STYLE	EQU	$0001	; bold
+T11_FONT_2_COLOR        EQU     $00FF6600
+
 ;happy end strings
-T11_STRING              dc.b    'Congratulations!!! You saved the day by killing',0
+T11_STRING              dc.b    'Congratulations!!! You saved the day by killing:',0
 T11_STRING_2            dc.b    ' poor innocent aliens...',0
-T11_STRING_3            dc.b    ' not cool, men', 0
+T11_STRING_3            dc.b    ' Not cool, men', 0
 ;bad end strings
 T11_BAD_STRING          dc.b    'You are dead', 0
 T11_BAD_STRING_2        dc.b    'The aliens will invade the earth and kill everyone', 0
 T11_BAD_STRING_3        dc.b    'Well.. at least you would not see it', 0
+                        ds.w    0 ;word align
 
 ; ==========================================================
 ; Task 11 functions
@@ -1944,32 +1949,33 @@ T11_START:
 		move.l	#T11_FONT_PROP,D2				
 		trap	#15
                 ;set cursor position
-*                clr.w	D1
-*                move.b  #2,D1
-*                rol     #8,D1
-*                move.b  #10,D1
-*		move.b	#11, D0
-*		trap	#15
                 TK_LOCATE #2,#10
 		
 		cmp     #0, TK_VAR_ENEM(A1)
-		bne     T11_BAD
+		beq     T11_BAD
 		
 		;print strings
 		lea     T11_STRING,A1
 		move.b  #13,D0
 		trap    #15
+		
 		;print number of aliens killed
-		clr     D1
+		TK_LOCATE #20,#11
+		
+		clr.l     D1
 		move.b  #1,D2
-		move    TK_VAR_ENEM(A1),D1
+		move.w  TK_VAR_ENEM(A1),D1
 		move.b  #4,D2
 		move.b  #20,D0
 		trap    #15
+		TK_LOCATE #2,#13
+
 		;print the last strings
 		lea     T11_STRING_2,A1
 		move.b  #13,D0
 		trap    #15
+		TK_LOCATE #2,#15
+
                 lea     T11_STRING_3,A1
                 move.b  #14,D0
                 trap    #15
@@ -1980,10 +1986,14 @@ T11_BAD:        ;print strings
 		lea     T11_BAD_STRING,A1
 		move.b  #13,D0
 		trap    #15
+		TK_LOCATE #2,#11
+
 		;print the last strings
 		lea     T11_BAD_STRING_2,A1
-		move.b  #14,D0
+		move.b  #13,D0
 		trap    #15
+		TK_LOCATE #2,#14
+
                 lea     T11_BAD_STRING_3,A1
                 move.b  #14,D0
                 trap    #15
