@@ -1050,7 +1050,7 @@ T6_REMOVE_TASK: move.b  D2,D1
                 move.b	    #0, D0
         	trap	    #0
                 ;add final menu task
-                lea         T1_START, A0
+                lea         T11_START, A0
                 move.b	    #0, D0
         	trap	    #0
                 
@@ -1913,11 +1913,11 @@ T10_GET_DATA:            ;recuperamos la info de la task actual
 ; ==========================================================
 ; Task 11 constants
 ; ==========================================================
-T11_FONT 		EQU	$07	; terminal
+T11_FONT 		EQU	$07	; terminal   
 T11_FONT_COLOR          EQU     $00FFFFFF ;white
 T11_FONT_SIZE		EQU	$09 	
 T11_FONT_STYLE		EQU	$0001	; bold
-T11_FONT_PROP		EQU	(T1_FONT_2*$1000000)+(T1_FONT_2_SIZE*$10000)+T1_FONT_2_STYLE		; $040B0001
+T11_FONT_PROP		EQU	(T11_FONT*$1000000)+(T11_FONT_SIZE*$10000)+T11_FONT_STYLE		; $040B0001
 T11_COLOR		EQU	$00FFFFFF   ;constants
 ;happy end strings
 T11_STRING              dc.b    'Congratulations!!! You saved the day by killing',0
@@ -1926,7 +1926,7 @@ T11_STRING_3            dc.b    ' not cool, men', 0
 ;bad end strings
 T11_BAD_STRING          dc.b    'You are dead', 0
 T11_BAD_STRING_2        dc.b    'The aliens will invade the earth and kill everyone', 0
-T11_BAD_STRING3         dc.b    'Well.. at least you would not see it', 0
+T11_BAD_STRING_3        dc.b    'Well.. at least you would not see it', 0
 
 ; ==========================================================
 ; Task 11 functions
@@ -1944,15 +1944,16 @@ T11_START:
 		move.l	#T11_FONT_PROP,D2				
 		trap	#15
                 ;set cursor position
-                clr.w	D1
-                move.b  #2,D1
-                rol     #8,D1
-                move.b  #10,D1
-		move.b	#11, D0
-		trap	#15
+*                clr.w	D1
+*                move.b  #2,D1
+*                rol     #8,D1
+*                move.b  #10,D1
+*		move.b	#11, D0
+*		trap	#15
+                TK_LOCATE #2,#10
 		
-		cmp     #0, #TK_VAR_ENEM(A1)
-		beq     T1_BAD
+		cmp     #0, TK_VAR_ENEM(A1)
+		bne     T11_BAD
 		
 		;print strings
 		lea     T11_STRING,A1
@@ -1961,7 +1962,7 @@ T11_START:
 		;print number of aliens killed
 		clr     D1
 		move.b  #1,D2
-		move    #TK_VAR_ENEM(A1),D1
+		move    TK_VAR_ENEM(A1),D1
 		move.b  #4,D2
 		move.b  #20,D0
 		trap    #15
@@ -1989,8 +1990,6 @@ T11_BAD:        ;print strings
 
 T11_EXP:        
 
-
-                
                 ;draw explosion, to make more dramatic
                 
 ; End by switching to next task
@@ -2007,8 +2006,8 @@ T11_INIT:
 				move.b	#TK_TYPE_MENU2, TK_VAR_TYPE(A0)				
 *; Remember next time will not be the first one
 				move.b	#$ff, TK_VAR_FIRST_TIME(A0)
-				
-				TK_SET_FILL	#T11_COLOR				
+
+				TK_SET_FILL	#T11_COLOR
 *                                
 *; End by switching to next task
 				move.b	#3, D0
