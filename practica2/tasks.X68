@@ -846,7 +846,7 @@ T5_INIT:
 ; storing in shared memory makes things easier.
 				move.b	D1, TK_VAR_ID(A0)
 ; Store the task type
-				move.b	#TK_TYPE_LASER, TK_VAR_TYPE(A0)				
+				move.b	#TK_TYPE_SHOT, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
 				move.b	#$FF, TK_VAR_FIRST_TIME(A0)
                                 
