@@ -1980,39 +1980,37 @@ T11_START:
 		move.l	#T11_FONT_COLOR,D1
 		move.l	#T11_FONT_PROP,D2				
 		trap	#15
-                TK_LOCATE #2,#10
-		
+
 		cmp     #0, TK_VAR_ENEM(A1)
 		bne     T11_BAD
 		
 		;print strings
+		TK_LOCATE #2,#10
 		lea     T11_STRING,A1
 		move.b  #13,D0
 		trap    #15
 		
 		;print number of aliens killed
 		TK_LOCATE #20,#11
-		
 		clr.l     D1
 		move.b  #1,D2
 		move.w  TK_VAR_ENEM(A1),D1
 		move.b  #4,D2
 		move.b  #20,D0
 		trap    #15
+		
 		TK_LOCATE #2,#13
-
 		;print the last strings
 		lea     T11_STRING_2,A1
 		move.b  #13,D0
 		trap    #15
+		
 		TK_LOCATE #2,#15
-
                 lea     T11_STRING_3,A1
                 move.b  #14,D0
                 trap    #15
                 
-                TK_LOCATE #2,#20
-
+                TK_LOCATE #30,#49
                 lea     T11_CONT_STRING,A1
                 move.b  #14,D0
                 trap    #15
@@ -2020,23 +2018,23 @@ T11_START:
                 bra     T11_KEY
                 
 T11_BAD:        ;print strings
+                TK_LOCATE #20,#10
 		lea     T11_BAD_STRING,A1
 		move.b  #13,D0
 		trap    #15
-		TK_LOCATE #2,#11
-
+		
+		TK_LOCATE #2,#12
 		;print the last strings
 		lea     T11_BAD_STRING_2,A1
 		move.b  #13,D0
 		trap    #15
-		TK_LOCATE #2,#14
-
+		
+		TK_LOCATE #10,#20
                 lea     T11_BAD_STRING_3,A1
                 move.b  #14,D0
                 trap    #15
                 
-                TK_LOCATE #2,#20
-
+                TK_LOCATE #30,#49
                 lea     T11_CONT_STRING,A1
                 move.b  #14,D0
                 trap    #15
