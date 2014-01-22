@@ -1901,10 +1901,12 @@ T11_FONT_2_SIZE		EQU	$12 	; 18
 T11_FONT_2_STYLE	EQU	$0001	; bold
 T11_FONT_2_COLOR        EQU     $00FF6600
 
+T11_CONT_KEY            EQU     'C'
+T11_CONT_STRING         dc.b    'Press (c) to play again',0
 ;happy end strings
 T11_STRING              dc.b    'Congratulations!!! You saved the day by killing:',0
-T11_STRING_2            dc.b    ' poor innocent aliens...',0
-T11_STRING_3            dc.b    ' Not cool, men', 0
+T11_STRING_2            dc.b    'poor innocent aliens...',0
+T11_STRING_3            dc.b    'Not cool, men', 0
 ;bad end strings
 T11_BAD_STRING          dc.b    'You are dead', 0
 T11_BAD_STRING_2        dc.b    'The aliens will invade the earth and kill everyone', 0
@@ -1926,58 +1928,101 @@ T11_START:
 		move.l	#T11_FONT_COLOR,D1
 		move.l	#T11_FONT_PROP,D2				
 		trap	#15
-                TK_LOCATE #2,#10
 		
-		cmp     #0, TK_VAR_ENEM(A1)
-		beq     T11_BAD
+		move.w  TK_VAR_ENEM(A1),D4
+
+                cmp.w   #T1_EASY_SPEED,TK_VAR_SPEED(A1)
+                IF      <EQ> THEN
+                        move.w  #T1_EASY_ENEM,D3
+                ENDI        
+                
+                cmp.w   #T1_MEDIUM_SPEED,TK_VAR_SPEED(A1)
+                IF      <EQ> THEN
+                        move.w  #T1_MEDIUM_ENEM,D3
+                ENDI
+                
+                cmp.w   #T1_HARD_SPEED,TK_VAR_SPEED(A1)
+                IF      <EQ> THEN
+                        move.w  #T1_HARD_ENEM,D3
+                ENDI
+                
+                sub.w   D4,D3
+
+		cmp   #0, D4
+		bne   T11_BAD
+		
+		;tk_game_time
 		
 		;print strings
+		TK_LOCATE #3,#10
 		lea     T11_STRING,A1
 		move.b  #13,D0
 		trap    #15
 		
 		;print number of aliens killed
-		TK_LOCATE #20,#11
-		
+		TK_LOCATE #23,#12
 		clr.l     D1
 		move.b  #1,D2
-		move.w  TK_VAR_ENEM(A1),D1
+		move.w  D3,D1
 		move.b  #4,D2
 		move.b  #20,D0
 		trap    #15
-		TK_LOCATE #2,#13
-
+		
+		TK_LOCATE #14,#14
 		;print the last strings
 		lea     T11_STRING_2,A1
 		move.b  #13,D0
 		trap    #15
-		TK_LOCATE #2,#15
-
+		
+		TK_LOCATE #20,#20
                 lea     T11_STRING_3,A1
                 move.b  #14,D0
                 trap    #15
-                ;jump to draw explosion
-                bra     T11_EXP
+                
+                ;jump to check if 'c' pressed
+                bra     T11_KEY
                 
 T11_BAD:        ;print strings
+                TK_LOCATE #20,#10
 		lea     T11_BAD_STRING,A1
 		move.b  #13,D0
 		trap    #15
-		TK_LOCATE #2,#11
-
+		
+		TK_LOCATE #2,#12
 		;print the last strings
 		lea     T11_BAD_STRING_2,A1
 		move.b  #13,D0
 		trap    #15
-		TK_LOCATE #2,#14
-
+		
+		TK_LOCATE #10,#20
                 lea     T11_BAD_STRING_3,A1
                 move.b  #14,D0
                 trap    #15
+                
+T11_KEY:        TK_LOCATE #30,#49
+                lea     T11_CONT_STRING,A1
+                move.b  #14,D0
+                trap    #15
 
-T11_EXP:        
 
-                ;draw explosion, to make more dramatic
+                move.b	#19, D0
+		move.l	#T11_CONT_KEY<<24,D1
+		trap	#15
+
+                BTST.L #24,D1     ; test for c
+                IF <NE> THEN      ; if c pressed
+                    ;remove itself
+	            move.b  #4,D0
+	            trap    #0
+		    move.b  #1,D0
+                    trap    #0
+
+		    lea	T1_START, A0
+                    move.b	#0, D0
+                    trap	#0
+			        
+		ENDI
+
                 
 ; End by switching to next task
 		move.b	#3, D0
