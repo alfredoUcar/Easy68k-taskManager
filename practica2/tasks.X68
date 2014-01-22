@@ -55,9 +55,7 @@ TK_VAR_COLOR_2			EQU	8
 TK_VAR_SPEED                    EQU     12
 TK_VAR_ENEM                     EQU     14
 TK_VAR_POWER                    EQU     16 
-TK_VAR_GAME_STATE               EQU     18 ;BYTE
-TK_VAR_X                        EQU     20   
-TK_VAR_Y                        EQU     22   
+TK_GAME_TIME                    EQU     18 ;long
 
 ************************************************************
 *                   SOURCE FILE INCLUDES                   *
@@ -962,6 +960,7 @@ T6_START:
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T6_INIT
 				
+				add.l   #TK_CYCLE,TK_GAME_TIME(A1)      ; update time
 				bsr     T6_CHECK_ENEMS
 				IF.B #$FF <EQ> D0 THEN
 				;some enemy has reached the goal or the player destroyed all the enemies
@@ -982,8 +981,8 @@ T6_NEW_ENEM:			                lea     T4_START, A0
 				trap    #0
 				bsr     T6_ENEM_COUNTER ; show a counter of remaining enemies
 				bsr     T6_SHOW_ENERGY  ; show available energy
-				bsr     T6_CHECK_BONUS  ; launch bonuses
-				bsr     T6_SHOW_CLOCK   
+				bsr     T6_CHECK_BONUS  ; launch bonuses(just in case)
+				bsr     T6_SHOW_CLOCK   ; show game time
 				bsr     T6_DRAW_BONUS
 				;draw a line which delimits the game space
 				TK_SET_PEN      #$00FFFFFF
@@ -991,7 +990,7 @@ T6_NEW_ENEM:			                lea     T4_START, A0
                                 ;draw a line which marks the enemy goal
 				TK_SET_PEN      #$00FFFFFF
 				TK_DRAW_LINE    #TK_INFO_SCREEN_WIDTH,#TK_ENEM_GOAL,#TK_SCREEN_WIDTH,#TK_ENEM_GOAL  
-                                bsr     T6_DEBUG
+*                                bsr     T6_DEBUG
 				
 ; End by switching to next task
 T6_NEXT:			move.b	#3, D0
@@ -1009,7 +1008,8 @@ T6_INIT:
 				move.b	#TK_TYPE_CONTROL, TK_VAR_TYPE(A0)				
 ; Remember next time will not be the first one
 				move.b  #$ff, TK_VAR_FIRST_TIME(A0)
-				      			        
+				
+                                move.l  #0,TK_GAME_TIME(A1) ; init game time      			        
       			        ; set keys as not pressed
 				move.b  #0,T6_LASER_KEY_STATE(A0)
 				move.b  #0,T6_FREEZE_KEY_STATE(A0)
@@ -1104,12 +1104,46 @@ T6_DBG_DISPLAY:
                 rts
 *----------------------------------------------------------
 T6_SHOW_CLOCK:
+* shows time playing
 *----------------------------------------------------------
+                                ; first draw a clock
                                 move.b	#2,TK_PIXEL(A1) 	; set global pixel
-				move	#30,D0		; set x
+				move	#40,D0		           ; set x
 				swap	D0
 				move	#50,D0 	        ; set y				
 				bsr	TK_DRAW_CLOCK
+                                
+                                ;get time
+                                move.l  TK_GAME_TIME(A1),D3
+                                divu    #(100*60),D3    
+                                move    D3,D4           ; get minutes
+                                swap    D3              ; move remainder to lower word
+                                and.l   #$FFFF,D3       ; clear minutes
+                                divu    #100,D3         ; get seconds in D3.W
+                                and.l   #$FFFF,D3       ; clear remainder
+
+                                
+                                TK_SET_FILL #0
+                                ;display minutes
+                                TK_LOCATE #5,#3
+                                move.b  #10,D2          ; decimal
+                                move.l  D4,D1
+                                move.b  #15,D0
+                                trap    #15
+                                
+                                ;display separator
+                                TK_LOCATE #6,#3
+                                move.b  #$3A,D1         ;  ':'
+                                move.b  #6,D0
+                                trap    #15
+                                
+                                ;display seconds
+                                TK_LOCATE #7,#3
+                                move.b  #10,D2          ; decimal
+                                move.l  D3,D1
+                                move.b  #15,D0
+                                trap    #15
+                                
                                 rts
 * ----------------------------------------------------------
 T6_CHECK_ENEMS:
@@ -1143,7 +1177,7 @@ T6_CHECK:       cmp.b   #TK_TYPE_ENEM,TK_VAR_TYPE(A1)
                 blt     .CONT
                 ; cannot add more enemies
                 move.b  #$FF,D4                   
-.CONT:          cmp     #TK_ENEM_GOAL,T4_Y(A1)
+.CONT:          cmp     #TK_ENEM_GOAL-(TK_ENEM_ROWS*T4_PIXEL_SIZE/2),T4_Y(A1)
                 bge     T6_GAME_END           ; the enemy has reached the goal                
                 
 T6_GET_NEXT:    move.b  #7,D0                   ; get next task info
@@ -2017,6 +2051,7 @@ T11_INIT:
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
 
 
 
