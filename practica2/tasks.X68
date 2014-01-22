@@ -989,9 +989,7 @@ T6_NEW_ENEM:			                lea     T4_START, A0
 				TK_DRAW_LINE    #TK_INFO_SCREEN_WIDTH,#0,#TK_INFO_SCREEN_WIDTH,#TK_SCREEN_HEIGHT
                                 ;draw a line which marks the enemy goal
 				TK_SET_PEN      #$00FFFFFF
-				TK_DRAW_LINE    #TK_INFO_SCREEN_WIDTH,#TK_ENEM_GOAL,#TK_SCREEN_WIDTH,#TK_ENEM_GOAL  
-*                                bsr     T6_DEBUG
-				
+				TK_DRAW_LINE    #TK_INFO_SCREEN_WIDTH,#TK_ENEM_GOAL,#TK_SCREEN_WIDTH,#TK_ENEM_GOAL  				
 ; End by switching to next task
 T6_NEXT:			move.b	#3, D0
 				trap	#0		
@@ -1052,55 +1050,6 @@ T6_REMOVE_TASK: move.b  D2,D1
                 move.b	    #0, D0
         	trap	    #0
                 
-                rts
-*----------------------------------------------------------
-T6_DEBUG:
-*----------------------------------------------------------
-                move.b  #6,D0                   ; get first task info
-                trap    #0
-                
-                clr     D3
-                clr     D4
-                clr     D5
-T6_DEBUG_TASK:  add     #1,D3
-                cmp.b  #TK_TYPE_ENEM,TK_VAR_TYPE(A1)
-                beq	T6_DBG_ENEM
-                cmp.b  #TK_TYPE_SHOT,TK_VAR_TYPE(A1)
-                beq	T6_DBG_SHOT
-                
-T6_DEBUG_NEXT:  move.b  #7,D0                   ; get next task info
-                trap    #0
-                cmp.b   #$FF,D1
-                bne     T6_DEBUG_TASK
-                bra     T6_DBG_DISPLAY
-                
-T6_DBG_ENEM:    add     #1,D4
-                bra     T6_DEBUG_NEXT
-T6_DBG_SHOT:    add     #1,D5
-                bra     T6_DEBUG_NEXT
-                
-T6_DBG_DISPLAY: 
-                TK_LOCATE 	#0,#0       
-                lea	T6_DEBUG_TASKS, A1
-		clr.l	D1
-		move	D3, D1
-		move.b	#17, D0
-		trap	#15
-                
-                TK_LOCATE 	#0,#1
-                lea	T6_DEBUG_ENEMS, A1
-		clr.l	D1
-		move	D4, D1
-		move.b	#17, D0
-		trap	#15
-                
-                TK_LOCATE 	#0,#2
-                lea	T6_DEBUG_SHOTS, A1
-		clr.l	D1
-		move	D5, D1
-		move.b	#17, D0
-		trap	#15             
-
                 rts
 *----------------------------------------------------------
 T6_SHOW_CLOCK:
@@ -1560,7 +1509,6 @@ T8_START:
 * Further executions
 * - state 1: kill
 * - state 2: timeout
-* - paint an explosion
 * ----------------------------------------------------------
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T8_INIT
@@ -2051,6 +1999,7 @@ T11_INIT:
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
 
 
 
