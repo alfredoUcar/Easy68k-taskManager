@@ -28,10 +28,10 @@ TK_CYCLE                        EQU     2
 TK_GAME_WIDTH                   EQU     TK_SCREEN_WIDTH-TK_INFO_SCREEN_WIDTH    ; game window width
 ; game control
 TK_MAX_POWER                    EQU     12                                      ; max energy available for the player(for shots and bonus)
-TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1-1)         ; max number of (task)enemies to launch at same time 
-TK_LASER_PW                     EQU     (TK_MAX_POWER/3)                        ; energy needed to use bonus 1
-TK_FREEZE_PW                    EQU     (TK_MAX_POWER/3*2)                        ; energy needed to use bonus 2
-TK_BOMB_PW                      EQU     TK_MAX_POWER                            ; energy needed to use bonus 3
+TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1-1)       ; max number of (task)enemies to launch at same time 
+TK_LASER_PW                     EQU     4                                       ; energy needed to use bonus 1
+TK_FREEZE_PW                    EQU     6                                       ; energy needed to use bonus 2
+TK_BOMB_PW                      EQU     3                                       ; energy needed to use bonus 3
 TK_BEAM_PW                      EQU     1
 ; Task types
 TK_TYPE_MENU			EQU	0
@@ -1108,7 +1108,7 @@ T6_SHOW_CLOCK:
 *----------------------------------------------------------
                                 ; first draw a clock
                                 move.b	#2,TK_PIXEL(A1) 	; set global pixel
-				move	#40,D0		           ; set x
+				move	#50,D0		           ; set x
 				swap	D0
 				move	#50,D0 	        ; set y				
 				bsr	TK_DRAW_CLOCK
@@ -1125,20 +1125,20 @@ T6_SHOW_CLOCK:
                                 
                                 TK_SET_FILL #0
                                 ;display minutes
-                                TK_LOCATE #5,#3
+                                TK_LOCATE #6,#3
                                 move.b  #10,D2          ; decimal
                                 move.l  D4,D1
                                 move.b  #15,D0
                                 trap    #15
                                 
                                 ;display separator
-                                TK_LOCATE #6,#3
+                                TK_LOCATE #7,#3
                                 move.b  #$3A,D1         ;  ':'
                                 move.b  #6,D0
                                 trap    #15
                                 
                                 ;display seconds
-                                TK_LOCATE #7,#3
+                                TK_LOCATE #8,#3
                                 move.b  #10,D2          ; decimal
                                 move.l  D3,D1
                                 move.b  #15,D0
@@ -1224,7 +1224,7 @@ T6_ENEM_COUNTER:
 		move.l	#T6_FONT_COLOR,D1
 		move.l	#T6_FONT_PROP,D2				
 		trap	#15
-                TK_LOCATE #7,#10
+                TK_LOCATE #7,#8
                 
 		;print counter
                 clr.l   D1
@@ -1237,7 +1237,7 @@ T6_ENEM_COUNTER:
 		move.l	#T4_COLOR_2,TK_VAR_COLOR_2(A1)	        ; pixel fill
 		move	#50,D0		; set x
 		swap	D0
-		move	#155,D0 	        ; set y				
+		move	#125,D0 	        ; set y				
 		bsr	TK_DRAW_ENEM   
                 
                 movem.l (A7)+,D0-D1/A1
