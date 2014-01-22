@@ -1953,10 +1953,12 @@ T11_FONT_2_SIZE		EQU	$12 	; 18
 T11_FONT_2_STYLE	EQU	$0001	; bold
 T11_FONT_2_COLOR        EQU     $00FF6600
 
+T11_CONT_KEY            EQU     'C'
+T11_CONT_STRING         dc.b    'Press (c) to play again',0
 ;happy end strings
 T11_STRING              dc.b    'Congratulations!!! You saved the day by killing:',0
-T11_STRING_2            dc.b    ' poor innocent aliens...',0
-T11_STRING_3            dc.b    ' Not cool, men', 0
+T11_STRING_2            dc.b    'poor innocent aliens...',0
+T11_STRING_3            dc.b    'Not cool, men', 0
 ;bad end strings
 T11_BAD_STRING          dc.b    'You are dead', 0
 T11_BAD_STRING_2        dc.b    'The aliens will invade the earth and kill everyone', 0
@@ -1981,7 +1983,7 @@ T11_START:
                 TK_LOCATE #2,#10
 		
 		cmp     #0, TK_VAR_ENEM(A1)
-		beq     T11_BAD
+		bne     T11_BAD
 		
 		;print strings
 		lea     T11_STRING,A1
@@ -2008,8 +2010,14 @@ T11_START:
                 lea     T11_STRING_3,A1
                 move.b  #14,D0
                 trap    #15
-                ;jump to draw explosion
-                bra     T11_EXP
+                
+                TK_LOCATE #2,#20
+
+                lea     T11_CONT_STRING,A1
+                move.b  #14,D0
+                trap    #15
+                ;jump to check if 'c' pressed
+                bra     T11_KEY
                 
 T11_BAD:        ;print strings
 		lea     T11_BAD_STRING,A1
@@ -2026,10 +2034,32 @@ T11_BAD:        ;print strings
                 lea     T11_BAD_STRING_3,A1
                 move.b  #14,D0
                 trap    #15
+                
+                TK_LOCATE #2,#20
 
-T11_EXP:        
+                lea     T11_CONT_STRING,A1
+                move.b  #14,D0
+                trap    #15
 
-                ;draw explosion, to make more dramatic
+
+T11_KEY:        move.b	#19, D0
+		move.l	#T11_CONT_KEY<<24,D1
+		trap	#15
+
+                BTST.L #24,D1     ; test for c
+                IF <NE> THEN      ; if c pressed
+                    ;remove itself
+	            move.b  #4,D0
+	            trap    #0
+		    move.b  #1,D0
+                    trap    #0
+
+		    lea	T1_START, A0
+                    move.b	#0, D0
+                    trap	#0
+			        
+		ENDI
+
                 
 ; End by switching to next task
 		move.b	#3, D0
@@ -2051,6 +2081,7 @@ T11_INIT:
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
 
 
 
