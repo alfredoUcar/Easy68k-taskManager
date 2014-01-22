@@ -1980,40 +1980,57 @@ T11_START:
 		move.l	#T11_FONT_COLOR,D1
 		move.l	#T11_FONT_PROP,D2				
 		trap	#15
+		
+		move.w  TK_VAR_ENEM(A1),D4
 
-		cmp     #0, TK_VAR_ENEM(A1)
-		bne     T11_BAD
+                cmp.w   #T1_EASY_SPEED,TK_VAR_SPEED(A1)
+                IF      <EQ> THEN
+                        move.w  #T1_EASY_ENEM,D3
+                ENDI        
+                
+                cmp.w   #T1_MEDIUM_SPEED,TK_VAR_SPEED(A1)
+                IF      <EQ> THEN
+                        move.w  #T1_MEDIUM_ENEM,D3
+                ENDI
+                
+                cmp.w   #T1_HARD_SPEED,TK_VAR_SPEED(A1)
+                IF      <EQ> THEN
+                        move.w  #T1_HARD_ENEM,D3
+                ENDI
+                
+                sub.w   D4,D3
+
+		cmp   #0, D4
+		bne   T11_BAD
+		
+		;tk_game_time
 		
 		;print strings
-		TK_LOCATE #2,#10
+		TK_LOCATE #3,#10
 		lea     T11_STRING,A1
 		move.b  #13,D0
 		trap    #15
 		
 		;print number of aliens killed
-		TK_LOCATE #20,#11
+		TK_LOCATE #23,#12
 		clr.l     D1
 		move.b  #1,D2
-		move.w  TK_VAR_ENEM(A1),D1
+		move.w  D3,D1
 		move.b  #4,D2
 		move.b  #20,D0
 		trap    #15
 		
-		TK_LOCATE #2,#13
+		TK_LOCATE #14,#14
 		;print the last strings
 		lea     T11_STRING_2,A1
 		move.b  #13,D0
 		trap    #15
 		
-		TK_LOCATE #2,#15
+		TK_LOCATE #20,#20
                 lea     T11_STRING_3,A1
                 move.b  #14,D0
                 trap    #15
                 
-                TK_LOCATE #30,#49
-                lea     T11_CONT_STRING,A1
-                move.b  #14,D0
-                trap    #15
                 ;jump to check if 'c' pressed
                 bra     T11_KEY
                 
@@ -2034,13 +2051,13 @@ T11_BAD:        ;print strings
                 move.b  #14,D0
                 trap    #15
                 
-                TK_LOCATE #30,#49
+T11_KEY:        TK_LOCATE #30,#49
                 lea     T11_CONT_STRING,A1
                 move.b  #14,D0
                 trap    #15
 
 
-T11_KEY:        move.b	#19, D0
+                move.b	#19, D0
 		move.l	#T11_CONT_KEY<<24,D1
 		trap	#15
 
