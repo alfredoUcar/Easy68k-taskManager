@@ -2,7 +2,7 @@
 * Program    : Main file for game.
 * Written by : Pablo Riutort & Alfredo Ucendo
 * Date       : December-2013
-* List of tasks :
+* List of tasks : 
 *
 *       task 1: main menu
 *       task 2: double buffer 
@@ -2051,6 +2051,7 @@ T11_INIT:
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
 
 
 
