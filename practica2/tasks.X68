@@ -32,7 +32,7 @@ TK_MAX_ENEMIES                  EQU     (TM_MAX_TASKS-TK_MAX_POWER-1-1-1)       
 TK_LASER_PW                     EQU     4                                       ; energy needed to use bonus 1
 TK_FREEZE_PW                    EQU     6                                       ; energy needed to use bonus 2
 TK_BOMB_PW                      EQU     3                                       ; energy needed to use bonus 3
-TK_BEAM_PW                      EQU     1
+TK_BEAM_PW                      EQU     1                                       ; energy needed to use normal shot
 ; Task types
 TK_TYPE_MENU			EQU	0
 TK_TYPE_SCREEN			EQU	1
@@ -55,7 +55,7 @@ TK_VAR_COLOR_2			EQU	8
 TK_VAR_SPEED                    EQU     12
 TK_VAR_ENEM                     EQU     14
 TK_VAR_POWER                    EQU     16 
-TK_GAME_TIME                    EQU     18 ;long
+TK_GAME_TIME                    EQU     18
 
 ************************************************************
 *                   SOURCE FILE INCLUDES                   *
@@ -78,12 +78,12 @@ TK_INIT:
 			move.b	#8, D0
 			trap	#0
 
-; Add task 1
+; Add menu
 			lea	T1_START, A0
 			move.b	#0, D0
 			trap	#0
 		
-; add task 2
+; add double buffer
 			lea	T2_START, A0
 			move.b	#0, D0
 			trap	#0
@@ -109,9 +109,9 @@ T1_ENEM_COLOR		EQU	8
 T1_PIXEL_SIZE		EQU	15
 ; Game configuration for each level
 ;LEVEL 1
-T1_EASY_SPEED                   EQU     1
-T1_EASY_ENEM                    EQU     25
-T1_EASY_POWER                   EQU     TK_MAX_POWER
+T1_EASY_SPEED                   EQU     1               ;speed of enemies
+T1_EASY_ENEM                    EQU     25              ;number of enemies to kill
+T1_EASY_POWER                   EQU     TK_MAX_POWER    ;initial energy available
 ;LEVEL 2
 T1_MEDIUM_SPEED                 EQU     2
 T1_MEDIUM_ENEM                  EQU     50
@@ -161,7 +161,7 @@ T1_START:
 ; this to decide whether is the first time or not.
 				cmp.b	#0, TK_VAR_FIRST_TIME(A0)
 				beq	T1_INIT				
-				move.l  A1,A2   ; copy, A1 used for print strings
+				move.l  A1,A2   ; copy, A1 used to print strings
 ; draw enemy(decoration)	
 				move.b	T1_PIXEL(A0),TK_PIXEL(A1) 	; set global pixel
 				; set global color
@@ -342,7 +342,7 @@ T1_UPDATE_COLOR:
 * There's always a value 00 and FF while the other one vary between 00~FF	
 * Pre:	D0.L color to be updated
 * Post:	D0.L color updated
-* Modifies: nothinh
+* Modifies: nothing
 *----------------------------------------------------------
 				movem.w	D1-D3,-(A7); push
 				
@@ -437,7 +437,7 @@ T1_INIT:
 				move.b	#0, T1_DOWN_KEY(A0)
 ; init properties for decorative enemy
 				move.l	#$000000FF,T1_ENEM_COLOR(A0) ; red
-				move.b	#T1_PIXEL_SIZE, T1_PIXEL(A0) ; set pixel size to 15
+				move.b	#T1_PIXEL_SIZE, T1_PIXEL(A0) ; set pixel size
 ; Switch to the next task				
 				move.b	#3, D0
 				trap	#0				
@@ -521,7 +521,7 @@ T3_SPEED        EQU     6
 
 * ----------------------------------------------------------
 T3_START:
-* Task 5 entry point.
+* Task 3 entry point.
 * Draws a ship on the bottom of the screen
 * ----------------------------------------------------------
 ; Vemos si es la primera vez que se ha iniciado esta tarea
@@ -888,7 +888,7 @@ T5_CHECK_CONTACT:
 T5_CONT_X:			sub     D4,D1
 				bge     T5_CONT_Y
 				neg     D1
-; At this point, D0=abs(XBeam-XEnem) and D1=abs(YBeam-YEnem)
+; At this point, D0=abs(XShot-XEnem) and D1=abs(YShot-YEnem)
 T5_CONT_Y:                      cmp     #((T4_PIXEL_SIZE*TK_ENEM_COLUMNS)/2+T5_PIXEL_SIZE/2),D0
                                 bgt     T5_NO_CONTACT
                                 cmp     #((T4_PIXEL_SIZE*TK_ENEM_ROWS)/2+T5_PIXEL_SIZE/2),D1
@@ -912,7 +912,6 @@ T6_LASER_KEY_STATE      EQU     4
 T6_FREEZE_KEY_STATE     EQU     5 
 T6_BOMB_KEY_STATE       EQU     6
 T6_BEAM_KEY_STATE       EQU     7
-T6_GAME_POINTS          EQU     8 ;LONG
 ;bonus keys
 T6_LASER_KEY            EQU     'X' 
 T6_FREEZE_KEY           EQU     'Z' 
@@ -940,10 +939,6 @@ T6_BONUS                dc.b    ' BONUS ',0
 T6_LASER_CHAR           dc.b    T6_LASER_KEY,0
 T6_FREEZE_CHAR          dc.b    T6_FREEZE_KEY,0
 T6_BOMB_CHAR            dc.b    T6_BOMB_KEY,0
-;debugging
-T6_DEBUG_TASKS          dc.b     'Tasks: ',0
-T6_DEBUG_ENEMS          dc.b     'Enems: ',0
-T6_DEBUG_SHOTS          dc.b     'Shots: ',0
 ; ==========================================================
 ; Task 6 functions
 ; ==========================================================
@@ -969,7 +964,7 @@ T6_START:
 				ELSE
 				        IF.W #0 <LT> D1 THEN    ; can add D1 enems (D1>0)
                                                 sub     #1,D1
-				                move    D1,D2
+				                move    D1,D2   ; loop 0..D1-1
 				                ;add D2 enemies
 T6_NEW_ENEM:			                lea     T4_START, A0
 			                        move.b	#0, D0
@@ -1056,10 +1051,10 @@ T6_SHOW_CLOCK:
 * shows time playing
 *----------------------------------------------------------
                                 ; first draw a clock
-                                move.b	#2,TK_PIXEL(A1) 	; set global pixel
+                                move.b	#2,TK_PIXEL(A1) 	   ; set global pixel
 				move	#50,D0		           ; set x
 				swap	D0
-				move	#50,D0 	        ; set y				
+				move	#50,D0 	                   ; set y				
 				bsr	TK_DRAW_CLOCK
                                 
                                 ;get time
@@ -1195,10 +1190,6 @@ T6_ENEM_COUNTER:
 T6_CHECK_BONUS:
 * check bonuses state
 * pre: A0 pointer to task memory
-* post: D0.b    0 => do nothing
-*               1 => do the laser
-*               2 => do the freeze
-*               3 => do the bomb
 * ----------------------------------------------------------
                 move.l  D1,-(A7) ; push                                
 ; Check for bonus keys	
@@ -1379,11 +1370,11 @@ T6_SHOW_ENERGY:
                         bgt     .C1
                         move.l  #T6_COLOR_4,D1
                         bra     .FILL
-.C1                     cmp     #(TK_LASER_PW-1),D5   
+.C1                     cmp     #3,D5   
                         bgt     .C2
                         move.l  #T6_COLOR_1,D1
                         bra     .FILL
-.C2:                    cmp     #(TK_FREEZE_PW-1),D5
+.C2:                    cmp     #7,D5
                         bgt     .C3
                         move.l  #T6_COLOR_2,D1
                         bra     .FILL
@@ -2044,6 +2035,7 @@ T11_INIT:
 *; End by switching to next task
 				move.b	#3, D0
 				trap	#0		
+
 
 
 
